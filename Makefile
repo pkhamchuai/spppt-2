@@ -7,7 +7,7 @@ install-python-package:
 	@$(PYTHON) -m venv .venv
 	@.venv/bin/pip install -r requirements.txt
 	@.venv/bin/pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-	@.venv/bin/pip install torchsummary==1.5.1 pytorch_model_summary==0.2.4
+	@.venv/bin/pip install torchsummary pytorch_model_summary
 
 clean:
 	@echo "Cleaning up"
@@ -15,3 +15,7 @@ clean:
 
 # Add a target for setup that depends on installing Python packages
 setup: install-python-package
+
+# To use setup and cleanup, you can run:
+# make setup
+# make clean

@@ -32,11 +32,11 @@ sniffio==1.3.0
 sortedcontainers==2.4.0
 trio==0.22.2
 trio-websocket==0.11.1
-undetected-chromedriver==3.5.3
-urllib3==2.0.7
-webdriver-manager==4.0.1
-websockets==12.0
-wsproto==1.2.0
+# undetected-chromedriver==3.5.3
+# urllib3==2.0.7
+# webdriver-manager==4.0.1
+# websockets==12.0
+# wsproto==1.2.0
 
 # Additional libraries
 argparse==1.4.0
