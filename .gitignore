@@ -1,0 +1,5 @@
+\.venv
+\.ipynb_checkpoints
+*:Zone.Identifier
+*.pyc
+/trained_models/DHR*.pth

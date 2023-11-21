@@ -15,6 +15,8 @@ clean:
 
 # Add a target for setup that depends on installing Python packages
 setup: install-python-package
+	@mkdir trained_models output
+	@echo "ALL requirements are installed"
 
 # To use setup and cleanup, you can run:
 # make setup
