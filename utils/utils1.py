@@ -45,7 +45,7 @@ def model_loader(model_name, model_params):
         elif model_name == 'SP_AffineNet4':
             from utils.SPaffineNet4 import SP_AffineNet4
             model = SP_AffineNet4(model_params).to(device)
-        elif model == 'DHR':
+        elif model_name == 'DHR':
             print('Loading DHR model (networks/affine_network_simple.py)')
             from utils.SP_DHR import SP_DHR_Net
             model = SP_DHR_Net(model_params).to(device)
@@ -461,10 +461,8 @@ class loss_affine:
     
 
 class ModelParams:
-    def __init__(self, name=None, model_path=None, dataset=0, sup=0, image=1, 
-                 heatmaps=0, loss_image=0, learning_rate=0.001, decay_rate = 0.96, 
-                 num_epochs=10, batch_size=1, source_image=None, target_image=None, 
-                 idx=None):
+    def __init__(self, dataset=0, sup=0, image=1, heatmaps=0, loss_image=0, 
+                 learning_rate=0.001, decay_rate = 0.96, num_epochs=10, batch_size=1):
         # dataset: dataset used
         # dataset=0: actual eye
         # dataset=1: synthetic eye easy
@@ -536,8 +534,6 @@ class ModelParams:
             self.loss_affine = None
 
         self.start_epoch = 0
-        self.name = name
-        self.model_path = model_path
         self.model_name = self.get_model_name()
         self.model_code = self.get_model_code()
         print('Model name: ', self.model_name)
@@ -546,13 +542,13 @@ class ModelParams:
 
     def get_model_name(self):
         # model name code
-        model_name = str(self.name) + '_dataset' + str(self.dataset) + '_sup' + str(self.sup) + '_image' + str(self.image) + \
+        model_name = 'dataset' + str(self.dataset) + '_sup' + str(self.sup) + '_image' + str(self.image) + \
             '_heatmaps' + str(self.heatmaps) + '_loss_image' + str(self.loss_image_case)
         return model_name
     
     def get_model_code(self):
         # model code
-        model_code = str(self.name) + '_' + str(self.dataset) + str(self.sup) + str(self.image) + \
+        model_code = str(self.dataset) + str(self.sup) + str(self.image) + \
             str(self.heatmaps) + str(self.loss_image_case) + \
             '_' + str(self.learning_rate) + '_' + str(self.start_epoch) + '_' + \
                 str(self.num_epochs) + '_' + str(self.batch_size)
@@ -560,8 +556,6 @@ class ModelParams:
 
     def to_dict(self):
         return {
-            'name': self.name,
-            'model_path': self.model_path,
             'dataset': self.dataset,
             'sup': self.sup,
             'image': self.image,
@@ -574,11 +568,7 @@ class ModelParams:
             'start_epoch': self.start_epoch, 
             'num_epochs': self.num_epochs,
             'batch_size': self.batch_size,
-            'model_name': self.model_name,
-            'model_code': self.model_code,
-            'source_image': self.source_image,
-            'target_image': self.target_image,
-            'idx': self.idx
+            'model_name': self.model_name
         }
 
     # @classmethod
@@ -590,39 +580,37 @@ class ModelParams:
     #     loss_image_case = int(model_name.split('_')[4][10:]) if model_name.split('_')[4][10:] else 0
     #     return cls(sup, dataset, image, heatmaps, loss_image_case)
 
-    # @classmethod
-    # def model_code_from_model_path(cls, model_code):
-    #     # print(model_code.split('/')[-1].split('_')[0:-1])
-    #     split_string = model_code.split('/')[-1].split('_')[0:-1]
-    #     dataset = int(split_string[0][0])
-    #     sup = int(split_string[0][1])
-    #     image = int(split_string[0][2])
-    #     heatmaps = int(split_string[0][3])
-    #     loss_image_case = int(split_string[0][4])
-    #     learning_rate = float(split_string[1])
-    #     if len(split_string) == 5:
-    #         start_epoch = int(split_string[2])
-    #         num_epochs = int(split_string[3])
-    #         batch_size = int(split_string[4])
-    #     else:
-    #         start_epoch = 0
-    #         num_epochs = int(split_string[2])
-    #         batch_size = int(split_string[3])
-    #     # decay_rate = 0.96
-    #     return cls(dataset, sup, image, heatmaps, loss_image_case, learning_rate, start_epoch, num_epochs, batch_size)
+    @classmethod
+    def model_code_from_model_path(cls, model_code):
+        # print(model_code.split('/')[-1].split('_')[0:-1])
+        split_string = model_code.split('/')[-1].split('_')[0:-1]
+        dataset = int(split_string[0][0])
+        sup = int(split_string[0][1])
+        image = int(split_string[0][2])
+        heatmaps = int(split_string[0][3])
+        loss_image_case = int(split_string[0][4])
+        learning_rate = float(split_string[1])
+        if len(split_string) == 5:
+            start_epoch = int(split_string[2])
+            num_epochs = int(split_string[3])
+            batch_size = int(split_string[4])
+        else:
+            start_epoch = 0
+            num_epochs = int(split_string[2])
+            batch_size = int(split_string[3])
+        # decay_rate = 0.96
+        return cls(dataset, sup, image, heatmaps, loss_image_case, learning_rate, start_epoch, num_epochs, batch_size)
     
-    # @classmethod
-    # def from_dict(cls, model_dict):
-    #     return cls(model_dict['dataset'], model_dict['sup'], model_dict['image'], \
-    #                model_dict['heatmaps'], model_dict['loss_image'])
+    @classmethod
+    def from_dict(cls, model_dict):
+        return cls(model_dict['dataset'], model_dict['sup'], model_dict['image'], \
+                   model_dict['heatmaps'], model_dict['loss_image'])
     
     def __str__(self):
         return self.model_name
     
     def print_explanation(self):
         print('\nModel name: ', self.model_name)
-        print('Model: ', self.name)
-        print('Model path: ', self.model_path)
         print('Model code: ', self.model_code)
         print('Dataset used: ', 'Actual eye' if self.dataset == 0 else \
                 'Synthetic eye easy' if self.dataset == 1 else \
@@ -644,19 +632,14 @@ class ModelParams:
         print('Number of epochs: ', self.num_epochs)
         print('Batch size: ', self.batch_size)
         # print('Model params: ', self.to_dict())
-        print('Source image: ', self.source_image)
-        print('Target image: ', self.target_image)
-        print('Index: ', self.idx)
         print('\n')
 
     def __repr__(self):
         return self.model_name
     
 
-def print_summary(model_params, loss_list, timestamp, test=False):
-    model_name = model_params.name
-    model_path = model_params.model_path
-    
+def print_summary(model_name, model_path, model_params, 
+                  loss_list, timestamp, test=False):
     print("Training output:")
     if loss_list is not None:
         for i in range(len(loss_list)):
@@ -1185,7 +1168,8 @@ def transform_points_DVF(points, M, image):
 
 
 def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, image1_transformed,
-                       matches1, matches2, matches1_transformed, desc1, desc2, affine_params_true=None, affine_params_predict=None, heatmap1=None, heatmap2=None, plot=True):
+                       matches1, matches2, matches1_transformed, desc1, desc2, affine_params_true=None, 
+                       affine_params_predict=None, heatmap1=None, heatmap2=None, plot=True):
     
 
     # BEGIN: 4j8d9fj3j9fj
@@ -1279,7 +1263,7 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # show also MSE and SSIM between the two images
             imgA = draw_lines(overlaid1, overlaid2, matches1, matches2, match=None)
             axes["A"].imshow(imgA)
-            axes["A"].set_title(f"Pair {image1_name}. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}")
+            axes["A"].set_title(f"Pair {image1_name}. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}, {matches1.shape[1]} matches")
             axes["A"].axis('off')
 
             # axes G shows edge of image 1 over image 2
@@ -1299,7 +1283,19 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # dir_name = f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}"
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name) 
-            plt.savefig(os.path.join(dir_name, f"{name}_{image1_name}.png"))
+            save_file_name = os.path.join(dir_name, f"{name}_{image1_name}.png")
+            # Check if the file already exists
+            if os.path.exists(save_file_name):
+                suffix = 1
+                while True:
+                    # Add a suffix to the file name
+                    new_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{suffix}.png")
+                    if not os.path.exists(new_file_name):
+                        save_file_name = new_file_name
+                        break
+                    suffix += 1
+
+            plt.savefig(save_file_name)
             
             # save images to output folder
             '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image1_transformed*255)
