@@ -115,7 +115,7 @@ def test_repeat(model_name, model_, model_params, timestamp):
                 heatmap1 = outputs[7]
                 heatmap2 = outputs[8]
 
-                if i < 10:
+                if i < 50:
                     plot_ = True
                 else:
                     plot_ = False
