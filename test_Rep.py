@@ -145,13 +145,13 @@ def test_repeat(model_name, model_, model_params, timestamp):
                 identity = np.array([[1, 0, 0], [0, 1, 0]])
                 # print(np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()),
                 #       np.linalg.norm(affine_params_predicted[0].cpu().numpy() - identity))
-                if np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()) < 1e-3 \
+                if np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()) < 1e-4 \
                     or np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()) > 20 \
                     or np.linalg.norm(affine_params_predicted[0].cpu().numpy() - identity) < 1e-3 or points1.shape[1] < 6:
                     
                     break
 
-                source_image = transformed_source_affine
+                source_image = transformed_source_affine # update the source image
 
             
     with open(csv_file, 'w', newline='') as file:

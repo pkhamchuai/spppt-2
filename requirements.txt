@@ -43,6 +43,6 @@ sortedcontainers==2.4.0
 # Additional libraries
 argparse==1.4.0
 opencv-python==4.6.0.66
-matplotlib==3.4.3
-scikit-image==0.18.3
+# matplotlib==3.4.3
+# scikit-image==0.18.3
 
