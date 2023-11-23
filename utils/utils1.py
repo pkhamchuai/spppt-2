@@ -82,9 +82,24 @@ def train(model_name, model_path, model_params, timestamp):
 
     # if a model is loaded, the training will continue from the epoch it was saved at
     if model_path is not None:
-        model.load_state_dict(torch.load(model_path))
-        print(model_path.split('/')[-1].split('_'))
-        model_params.start_epoch = int(model_path.split('/')[-1].split('_')[5])
+        # if the model is a string, load the model
+        # if the model is a loaded model, use the model
+        if isinstance(model_path, str):
+            model = model_loader(model_name, model_params)
+            buffer = io.BytesIO()
+            torch.save(model.state_dict(), buffer)
+            buffer.seek(0)
+            model.load_state_dict(torch.load(model_path))
+            print(f'Loaded model from {model_path}')
+            # print(model_path.split('/')[-1].split('_'))
+            model_params.start_epoch = int(model_path.split('/')[-1].split('_')[5])
+        elif isinstance(model_path, nn.Module):
+            print(f'Using model {model_name}')
+            model = model_path
+        else:
+            print('Input a valid model')
+            sys.exit()
+        
         print(f'Loaded model from {model_path}\nStarting at epoch {model_params.start_epoch}')
         if model_params.start_epoch >= model_params.num_epochs:
             model_params.num_epochs += model_params.start_epoch
@@ -462,7 +477,8 @@ class loss_affine:
 
 class ModelParams:
     def __init__(self, dataset=0, sup=0, image=1, heatmaps=0, loss_image=0, 
-                 learning_rate=0.001, decay_rate = 0.96, num_epochs=10, batch_size=1):
+                 learning_rate=0.001, decay_rate = 0.96, start_epoch=0, 
+                 num_epochs=10, batch_size=1):
         # dataset: dataset used
         # dataset=0: actual eye
         # dataset=1: synthetic eye easy
@@ -533,7 +549,7 @@ class ModelParams:
             # self.loss_affine = loss_extra()
             self.loss_affine = None
 
-        self.start_epoch = 0
+        self.start_epoch = start_epoch
         self.model_name = self.get_model_name()
         self.model_code = self.get_model_code()
         print('Model name: ', self.model_name)

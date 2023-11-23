@@ -1,9 +1,3 @@
-# import subprocess
-
-# dataset = [1, 2, 3]
-# for i in dataset:
-#     subprocess.run([python ])
-
 # import sys
 import argparse
 import cv2
@@ -52,20 +46,31 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     args = parser.parse_args()
 
-    model_path = 'trained_models/' + args.model_path
+    if args.model_path is None:
+      model_path = None
+    else:
+      model_path = 'trained_models/' + args.model_path
 
-    dataset = [1, 2, 3]
-    for i in dataset:
-        args.dataset = i
-        model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, heatmaps=args.heatmaps, 
-                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
+    datasets = [1, 2, 3, 0]
+    epochs = [5, 10, 15, 20]
+    sups = [1, 1, 1, 0]
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+
+    model_params = ModelParams(dataset=datasets[0], sup=sups[0], image=args.image, heatmaps=args.heatmaps, 
+                              loss_image=args.loss_image, start_epoch=0, num_epochs=epochs[0], 
+                              learning_rate=args.learning_rate, decay_rate=args.decay_rate)
+    model_params.print_explanation()
+    
+    trained_model, loss_list = train(args.model, model_path, model_params, timestamp)
+    
+    for i in range(1, 4):
+      model_params = ModelParams(dataset=datasets[i], sup=sups[i], image=args.image, heatmaps=args.heatmaps, 
+                                loss_image=args.loss_image, start_epoch=epochs[i-1], num_epochs=epochs[i], 
                                 learning_rate=args.learning_rate, decay_rate=args.decay_rate)
-        model_params.print_explanation()
+      model_params.print_explanation()
+      
+      model, loss_list = train(args.model, model_path, model_params, timestamp)
 
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        model, loss_list = train(args.model, model_path, model_params, timestamp)
-
-        print("\nTesting the trained model +++++++++++++++++++++++")
-        test(args.model, model, model_params, timestamp)
-        
-        print("Test model finished +++++++++++++++++++++++++++++")
+      print("\nTesting the trained model +++++++++++++++++++++++")
+      test(args.model, trained_model, model_params, timestamp)
+      print("Test model finished +++++++++++++++++++++++++++++")
