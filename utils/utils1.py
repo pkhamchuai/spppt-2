@@ -84,7 +84,10 @@ def train(model_name, model_path, model_params, timestamp):
     if model_path is not None:
         # if the model is a string, load the model
         # if the model is a loaded model, use the model
-        if isinstance(model_path, str):
+        if isinstance(model_path, nn.Module):
+            print(f'Using model {model_name}')
+            model = model_path
+        elif isinstance(model_path, str):
             model = model_loader(model_name, model_params)
             buffer = io.BytesIO()
             torch.save(model.state_dict(), buffer)
@@ -93,9 +96,6 @@ def train(model_name, model_path, model_params, timestamp):
             print(f'Loaded model from {model_path}')
             # print(model_path.split('/')[-1].split('_'))
             model_params.start_epoch = int(model_path.split('/')[-1].split('_')[5])
-        elif isinstance(model_path, nn.Module):
-            print(f'Using model {model_name}')
-            model = model_path
         else:
             print('Input a valid model')
             sys.exit()

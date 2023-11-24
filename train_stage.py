@@ -63,13 +63,18 @@ if __name__ == '__main__':
     
     trained_model, loss_list = train(args.model, model_path, model_params, timestamp)
     
+    print("\nTesting the trained model +++++++++++++++++++++++")
+    test(args.model, trained_model, model_params, timestamp)
+    print("Test model finished +++++++++++++++++++++++++++++")
+    
     for i in range(1, 4):
+      print(datasets[i], sups[i], epochs[i])
       model_params = ModelParams(dataset=datasets[i], sup=sups[i], image=args.image, heatmaps=args.heatmaps, 
                                 loss_image=args.loss_image, start_epoch=epochs[i-1], num_epochs=epochs[i], 
                                 learning_rate=args.learning_rate, decay_rate=args.decay_rate)
       model_params.print_explanation()
       
-      model, loss_list = train(args.model, model_path, model_params, timestamp)
+      trained_model, loss_list = train(args.model, trained_model, model_params, timestamp)
 
       print("\nTesting the trained model +++++++++++++++++++++++")
       test(args.model, trained_model, model_params, timestamp)

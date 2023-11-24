@@ -1,0 +1,25 @@
+DHR
+trained_models/DHR_31100_0.0001_10_15_1_20231123-185054.pth
+31100_0.0001_10_15_1
+
+Model name:  dataset3_sup1_image1_heatmaps0_loss_image0
+Model code:  31100_0.0001_10_15_1
+Dataset used:  Synthetic eye hard
+Supervised or unsupervised model:  Supervised
+Image type:  Image used
+Heatmaps used:  Heatmaps not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7feaf225c730>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  10
+Number of epochs:  15
+Batch size:  1
+
+
+[11, 0.24592255767434834, 0.2424468557536602]
+[12, 0.24591044917702676, 0.24244595848023892]
+[13, 0.2459328319504857, 0.24249429240822792]
+[14, 0.2459524644166231, 0.24248987019062043]
+[15, 0.24596251264214516, 0.24247266739606857]
