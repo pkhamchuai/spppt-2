@@ -92,15 +92,25 @@ def test_repeat(model_name, model_, model_params, timestamp):
             # 3. until the mse is not change anymore and the affine parameters are not change anymore
 
             # use for loop with a large number of iterations 
-            # and check the mse and affine parameters
-            # if the mse and affine parameters are not change anymore, stop the loop
-            for j in range(100):
+            # check TRE of points1 and points2
+            # if TRE grows larger than the last iteration, stop the loop
+            TRE_last = 1e10
+            MSE_last = 1e10
+            for j in range(10):
                 # Forward pass
                 outputs = model(source_image, target_image)
                 # for i in range(len(outputs)):
                 #     print(i, outputs[i].shape)
-                transformed_source_affine = outputs[0]
+                # transformed_source_affine = outputs[0]
                 affine_params_predicted = outputs[1]
+
+                if j < 0:
+                    # reduce the values of affine_params_predicted
+                    identity = torch.tensor([[1, 0, 0], [0, 1, 0]]).to(device)
+                    affine_params_predicted = (affine_params_predicted + (j)*identity)/(j+1)
+                # apply affine transformation to source_image
+                transformed_source_affine = tensor_affine_transform(source_image, affine_params_predicted)
+
                 points1 = np.array(outputs[2])
                 points2 = np.array(outputs[3])
                 points1_transformed = np.array(outputs[4])
@@ -126,7 +136,6 @@ def test_repeat(model_name, model_, model_params, timestamp):
                     points1, points2, points1_transformed, desc1_2, desc2, affine_params_true=affine_params_true,
                     affine_params_predict=affine_params_predicted, heatmap1=heatmap1, heatmap2=heatmap2, plot=plot_)
 
-
                 # calculate metrics
                 # matches1_transformed = results[0]
                 mse_before = results[1]
@@ -138,21 +147,18 @@ def test_repeat(model_name, model_, model_params, timestamp):
                 ssim12_image_before = results[7]
                 ssim12_image = results[8]
 
-                # append metrics to metrics list
-                metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, points2.shape[-1]])
-
                 # check if the mse and affine parameters are not change anymore
-                identity = np.array([[1, 0, 0], [0, 1, 0]])
                 # print(np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()),
                 #       np.linalg.norm(affine_params_predicted[0].cpu().numpy() - identity))
-                if np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()) < 1e-4 \
-                    or np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()) > 20 \
-                    or np.linalg.norm(affine_params_predicted[0].cpu().numpy() - identity) < 1e-3 or points1.shape[1] < 6:
-                    
+                if tre12 > TRE_last or mse12 > MSE_last:
                     break
-
+                
+                # append metrics to metrics list
+                metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, \
+                                mse12_image, ssim12_image_before, ssim12_image, points2.shape[-1]])
+                TRE_last = tre12
+                MSE_last = mse12
                 source_image = transformed_source_affine # update the source image
-
             
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
