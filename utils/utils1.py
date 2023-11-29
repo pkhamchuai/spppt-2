@@ -466,6 +466,7 @@ class GaussianWeightedMSELoss:
     
     def __call__(self, image1, image2):
         weight = 3 * self.gaussian_weight(image1.shape)
+        weight = weight.to(device)
         mse = (image1 - image2)**2
         weighted_mse = mse * weight.expand_as(mse)
         weighted_mse_mean = torch.mean(weighted_mse)
