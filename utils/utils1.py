@@ -453,7 +453,23 @@ class MSE_SSIM_NCC:
         img1_numpy = img1.detach().cpu().numpy()
         img2_numpy = img2.detach().cpu().numpy()
         return self.mse(img1, img2) + (1/SSIM(img1_numpy, img2_numpy, data_range=img2_numpy.max() - img2_numpy.min())) + (1/self.ncc(img1, img2))
-    
+
+
+class GaussianWeightedMSELoss:
+    def __init__(self, center, sigma):
+        self.center = center
+        self.sigma = sigma
+        
+    def gaussian_weight(self, shape):
+        x, y = torch.meshgrid(torch.arange(shape[-2]), torch.arange(shape[-1]))
+        return torch.exp(-((x - self.center[0])**2 + (y - self.center[1])**2) / (2 * self.sigma**2))
+
+    def __call__(self, image1, image2):
+        weight = 3 * self.gaussian_weight(image1.shape)
+        weight = weight.to(device)
+        weighted_mse = torch.mean(weight * (image1 - image2)**2)
+        return weighted_mse
+
 
 class loss_extra:
     def __init__(self):
@@ -501,6 +517,7 @@ class ModelParams:
         # loss_image=2: MSE + SSIM
         # loss_image=3: MSE + NCC
         # loss_image=4: MSE + SSIM + NCC
+        # loss_image=5: Gaussian weighted MSE
         # loss_affine is depending on sup
         # loss_affine: loss function for affine
         # loss_affine=0: loss_extra
@@ -542,6 +559,9 @@ class ModelParams:
         elif loss_image == 4:
             self.loss_image_case = 4
             self.loss_image = MSE_SSIM_NCC()
+        elif loss_image == 5:
+            self.loss_image_case = 5
+            self.loss_image = GaussianWeightedMSELoss(center=(128, 128), sigma=70)
         
         if sup == 1:
             self.loss_affine = loss_affine()
