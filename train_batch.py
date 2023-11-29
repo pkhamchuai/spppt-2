@@ -8,14 +8,14 @@ for i in range(len(dataset)):
     subprocess.run(['python', 'train.py', '--model', 'DHR', '--sup', str(sups[i]), '--dataset', str(dataset[i]),
                     '--num_epochs', '5', '--loss_image', '5'])
     
-    subprocess.run(['python', 'train.py', '--model', 'DHR', '--sup', str(sups[i]), '--dataset', str(dataset[i]),
-                    '--num_epochs', '5', '--loss_image', '6'])
+    # subprocess.run(['python', 'train.py', '--model', 'DHR', '--sup', str(sups[i]), '--dataset', str(dataset[i]),
+    #                 '--num_epochs', '5', '--loss_image', '6'])
     
     subprocess.run(['python', 'train.py', '--model', 'SP_AffineNet4', '--sup', str(sups[i]), '--dataset', str(dataset[i]),
                     '--num_epochs', '5', '--loss_image', '5'])
     
-    subprocess.run(['python', 'train.py', '--model', 'SP_AffineNet4', '--sup', str(sups[i]), '--dataset', str(dataset[i]),
-                    '--num_epochs', '5', '--loss_image', '6'])
+    # subprocess.run(['python', 'train.py', '--model', 'SP_AffineNet4', '--sup', str(sups[i]), '--dataset', str(dataset[i]),
+    #                 '--num_epochs', '5', '--loss_image', '6'])
     
     # subprocess.run(['.venv/bin/python', 'test_Rep.py', '--model', 'SP_AffineNet4', '--sup', '1', '--dataset', str(i), 
     #                 '--model_path', 'SP_AffineNet4_31103_0.0001_10_15_1_20231114-125116.pth'])

@@ -465,7 +465,7 @@ class GaussianWeightedMSELoss:
         return torch.exp(-((x - self.center[0])**2 + (y - self.center[1])**2) / (2 * self.sigma**2))
     
     def __call__(self, image1, image2):
-        weight = 3 * self.gaussian_weight(image1.shape)
+        weight = 1 * self.gaussian_weight(image1.shape)
         weight = weight.to(device)
         mse = (image1 - image2)**2
         weighted_mse = mse * weight.expand_as(mse)
@@ -585,7 +585,7 @@ class ModelParams:
             self.loss_image = MSE_SSIM_NCC()
         elif loss_image == 5:
             self.loss_image_case = 5
-            self.loss_image = GaussianWeightedMSELoss(center=(128, 128), sigma=80)
+            self.loss_image = GaussianWeightedMSELoss(center=(128, 128), sigma=100000)
         elif loss_image == 6:
             self.loss_image_case = 6
             self.loss_image = intensityBased_mse()
