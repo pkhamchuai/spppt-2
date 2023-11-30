@@ -2,5 +2,6 @@
 \.ipynb_checkpoints
 *:Zone.Identifier
 *.pyc
-trained_models/DHR*.pth
+trained_models/*.pth
+trained_models/*.pth.filepart
 output/*/*.png

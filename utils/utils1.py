@@ -506,13 +506,23 @@ class loss_extra:
         # otherwise, return 0
         return torch.sum(torch.abs(affine1) > 20) * 1000
 
-
 class loss_affine:
     def __init__(self):
         self.mse = nn.MSELoss()
 
     def __call__(self, affine1, affine2):
         return self.mse(affine1, affine2) #+ loss_extra(affine1)
+    
+
+class loss_points:
+    def __init__(self):
+        pass
+
+    def __call__(self, points1, points2):
+        # points1 and points2 are 2D arrays of shape (2, num_points)
+        # calculate the Euclidean distance between points1 and points2
+        # return the mean of the distances
+        return np.mean(np.sqrt(np.sum((points1 - points2)**2, axis=0)))/10
     
 
 class ModelParams:
@@ -542,6 +552,7 @@ class ModelParams:
         # loss_image=3: MSE + NCC
         # loss_image=4: MSE + SSIM + NCC
         # loss_image=5: Gaussian weighted MSE
+        # loss_image=6: intensity based MSE
         # loss_affine is depending on sup
         # loss_affine: loss function for affine
         # loss_affine=0: loss_extra
