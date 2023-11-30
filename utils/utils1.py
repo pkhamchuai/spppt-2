@@ -519,10 +519,11 @@ class loss_points:
         pass
 
     def __call__(self, points1, points2):
-        # points1 and points2 are 2D arrays of shape (2, num_points)
+        # points1 and points2 are 2D tensors of shape (2, num_points)
         # calculate the Euclidean distance between points1 and points2
         # return the mean of the distances
-        return np.mean(np.sqrt(np.sum((points1 - points2)**2, axis=0)))/10
+        distances = torch.sqrt(torch.sum((points1 - points2)**2, dim=0))
+        return torch.mean(distances) / 10
     
 
 class ModelParams:

@@ -15,11 +15,11 @@ for j in range(len(models)):
 
     for i in range(len(dataset)):
         runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
-                        '--num_epochs', '5', '--loss_image', '0', '--learning_rate', learning_rate])
+                        '--num_epochs', '5', '--loss_image', '0', '--learning_rate', str(learning_rate)])
 
-    for i in range(len(dataset)):
-        runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
-                        '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])
+    # for i in range(len(dataset)):
+    #     runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
+    #                     '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])
 
         
         # subprocess.run(['.venv/bin/python', 'test_Rep.py', '--model', 'SP_AffineNet4', '--sup', '1', '--dataset', str(i), 
@@ -35,4 +35,4 @@ for j in range(len(models)):
 # runs.sort(key=lambda x: x[5])
 for i in range(len(runs)):
     print(runs[i])
-    # subprocess.run(runs[i])
+    subprocess.run(runs[i])

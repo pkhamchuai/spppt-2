@@ -10,7 +10,7 @@ import torch
 
 from datetime import datetime
 
-import torch
+import torch.nn as nn
 # from torchvision import transforms
 # import torch.nn.functional as F
 # from torch.utils import data
@@ -46,7 +46,7 @@ def train(model_name, model_path, model_params, timestamp):
     # Define loss function based on supervised or unsupervised learning
     criterion = model_params.loss_image
     extra = loss_extra()
-    criterion_points = loss_points()
+    criterion_points = nn.MSELoss() # loss_points()
 
     if model_params.sup:
         criterion_affine = nn.MSELoss()
@@ -159,7 +159,10 @@ def train(model_name, model_path, model_params, timestamp):
                 # TODO: add loss for points1_affine and points2, Euclidean distance
                 # loss_points = criterion_points(points1_affine, points2)
                 # loss += loss_affine
-            loss += criterion_points(points1_transformed, points2)
+            points1_transformed_tensor = torch.tensor(points1_transformed).detach()
+            points2_tensor = torch.tensor(points2).detach()
+            loss += criterion_points(torch.flatten(points1_transformed_tensor, start_dim=1), 
+                                     torch.flatten(points2_tensor, start_dim=1))
 
             loss.backward()
             optimizer.step()
@@ -222,7 +225,10 @@ def train(model_name, model_path, model_params, timestamp):
                     # loss_points = criterion_points(points1_affine, points2)
                     # loss += loss_affine
 
-                loss += criterion_points(points1_transformed, points2)
+                points1_transformed_tensor = torch.tensor(points1_transformed).detach()
+                points2_tensor = torch.tensor(points2).detach()
+                loss += criterion_points(torch.flatten(points1_transformed_tensor, start_dim=1), 
+                                        torch.flatten(points2_tensor, start_dim=1))
                 # Add to validation loss
                 validation_loss += loss.item()
 
