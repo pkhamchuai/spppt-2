@@ -151,14 +151,14 @@ def train(model_name, model_path, model_params, timestamp):
             heatmap1 = outputs[7]
             heatmap2 = outputs[8]
 
-            loss += criterion(transformed_source_affine, target_image)
-            loss += extra(affine_params_predicted)
+            # loss += criterion(transformed_source_affine, target_image)
+            # loss += extra(affine_params_predicted)
 
             if model_params.sup:
                 loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
                 # TODO: add loss for points1_affine and points2, Euclidean distance
                 # loss_points = criterion_points(points1_affine, points2)
-                loss += loss_affine
+                # loss += loss_affine
             loss += criterion_points(points1_transformed, points2)
 
             loss.backward()
@@ -214,13 +214,13 @@ def train(model_name, model_path, model_params, timestamp):
                 heatmap1 = outputs[7]
                 heatmap2 = outputs[8]
 
-                loss += criterion(transformed_source_affine, target_image)
+                # loss += criterion(transformed_source_affine, target_image)
                 # loss += extra(affine_params_predicted)
                 if model_params.sup:
                     loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
                     # TODO: add loss for points1_affine and points2, Euclidean distance
                     # loss_points = criterion_points(points1_affine, points2)
-                    loss += loss_affine
+                    # loss += loss_affine
 
                 loss += criterion_points(points1_transformed, points2)
                 # Add to validation loss

@@ -4,21 +4,22 @@ dataset = [1, 2, 3, 0]
 sups = [1, 1, 1, 0]
 models = ['DHR', 'SP_AffineNet4']
 runs = []
+learning_rate = 5e-5
 
 # generate run commands
 for j in range(len(models)):
-    for i in range(len(dataset)):
-        # print(f'\nTraining on dataset {dataset[i]} with sup {sups[i]}')
-        runs.append(['python', 'train.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
-                        '--num_epochs', '5', '--loss_image', '5', '--learning_rate', '5e-4'])
+    # for i in range(len(dataset)):
+    #     # print(f'\nTraining on dataset {dataset[i]} with sup {sups[i]}')
+    #     runs.append(['python', 'train.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
+    #                     '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])
 
     for i in range(len(dataset)):
         runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
-                        '--num_epochs', '5', '--loss_image', '0', '--learning_rate', '5e-4'])
+                        '--num_epochs', '5', '--loss_image', '0', '--learning_rate', learning_rate])
 
     for i in range(len(dataset)):
         runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
-                        '--num_epochs', '5', '--loss_image', '5', '--learning_rate', '5e-4'])
+                        '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])
 
         
         # subprocess.run(['.venv/bin/python', 'test_Rep.py', '--model', 'SP_AffineNet4', '--sup', '1', '--dataset', str(i), 
@@ -34,4 +35,4 @@ for j in range(len(models)):
 # runs.sort(key=lambda x: x[5])
 for i in range(len(runs)):
     print(runs[i])
-    subprocess.run(runs[i])
+    # subprocess.run(runs[i])
