@@ -417,7 +417,7 @@ def test(model_name, model_, model_params, timestamp):
     #     if file.endswith(".txt"):
     #         os.remove(os.path.join(output_dir, file))
 
-    print_summary(model_name, None, model_params, 
+    print_summary(model_name, model_, model_params, 
                   None, timestamp, True)
     
 

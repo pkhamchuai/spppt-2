@@ -61,7 +61,7 @@ if __name__ == '__main__':
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
     # save the output of print_explanation() and loss_list to a txt file
-    print_summary(args.model, model_path, model_params, None, timestamp, True)
+    # print_summary(args.model, model_path, model_params, None, timestamp, True)
 
     print(f"\nTesting the trained model: {args.model} +++++++++++++++++++++++")
 

@@ -22,7 +22,7 @@ class MyDataset(torch.utils.data.Dataset):
         elif transform is None and self.sup == True:
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.Lambda(lambda x: x + 0.01 * torch.randn_like(x))
+                # transforms.Lambda(lambda x: x + 0.01 * torch.randn_like(x))
             ])
         elif transform is None and self.sup == False: # if unsupervised, apply random transformation too
             self.transform = transforms.Compose([

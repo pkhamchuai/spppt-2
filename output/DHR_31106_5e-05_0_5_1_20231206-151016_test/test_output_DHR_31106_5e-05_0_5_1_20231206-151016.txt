@@ -1,0 +1,20 @@
+DHR
+None
+31106_5e-05_0_5_1
+
+Model name:  dataset3_sup1_image1_heatmaps0_loss_image6
+Model code:  31106_5e-05_0_5_1
+Dataset used:  Synthetic eye hard
+Supervised or unsupervised model:  Supervised
+Image type:  Image used
+Heatmaps used:  Heatmaps not used
+Loss function case:  6
+Loss function for image:  <utils.utils1.intensityBased_mse object at 0x7f529318e7a0>
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7f529318e860>
+Learning rate:  5e-05
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  5
+Batch size:  1
+
+
