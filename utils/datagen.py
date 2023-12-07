@@ -53,6 +53,10 @@ class MyDataset(torch.utils.data.Dataset):
         target_img = (target_img/np.max(target_img)).astype(np.float32)
         source_img = self.transform(source_img)
         target_img = self.transform(target_img)
+
+        keypoints = row['keypoints']
+
+        
         if self.sup:
             affine_params = np.array([[row['M00'], row['M01'], row['M02']], [row['M10'], row['M11'], row['M12']]]).astype(np.float32)
             return source_img, target_img, affine_params 
@@ -65,7 +69,7 @@ def datagen(dataset, is_train, sup):
         # actual eye dataset
         dataset_path = 'Dataset/Dataset-processed'
         if is_train:
-            df = pd.read_csv('Dataset/dataset_eye_actual.csv')
+            df = pd.read_csv('Dataset/dataset_eye_actual_keypoints.csv')
             
             # count number of rows that df['training'] == 1
             print('Training eye dataset')
@@ -73,7 +77,7 @@ def datagen(dataset, is_train, sup):
 
             df = df[df['training'] == 1]
         else:
-            df = pd.read_csv('Dataset/dataset_eye_actual.csv')
+            df = pd.read_csv('Dataset/dataset_eye_actual_keypoints.csv')
 
             # count number of rows that df['training'] == 0
             print('Test eye dataset')
@@ -133,5 +137,5 @@ def datagen(dataset, is_train, sup):
     dataset = MyDataset(dataset_path, df, is_train, sup)
     dataloader = DataLoader(dataset, batch_size=1, shuffle=is_train)
 
-    return dataloader
+    return dataloader#, df, dataset_path
 
