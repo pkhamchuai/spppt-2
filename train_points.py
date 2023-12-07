@@ -19,7 +19,8 @@ import torch.nn as nn
 
 from utils.utils0 import *
 from utils.utils1 import *
-from utils.utils1 import ModelParams, train, test, loss_points, datagen
+from utils.utils1 import ModelParams, train, test, loss_points
+from utils.datagen import datagen
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f'Device: {device}')

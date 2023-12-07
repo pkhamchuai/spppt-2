@@ -6,16 +6,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-from utils.utils0 import datagen
+from utils.datagen import datagen
 from utils.utils1 import *
-from utils.utils1 import ModelParams, print_summary, test
+from utils.utils1 import ModelParams, print_summary
+from utils import test
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f'Device: {device}')
-
-
-
-
 
 def test(model_name, model_, model_params, timestamp):
     # model_name: name of the model

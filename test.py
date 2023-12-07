@@ -23,7 +23,8 @@ print('Seed:', torch.seed())
 
 from utils.utils0 import *
 from utils.utils1 import *
-from utils.utils1 import ModelParams, print_summary, test
+from utils.utils1 import ModelParams, print_summary
+from utils import test
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f'Device: {device}')
