@@ -61,15 +61,7 @@ class SP_AffineNet4(nn.Module):
         # take the elements from points1 and points2 using the matches as indices
         matches1 = np.array(points1[:2, matches[0, :].astype(int)])
         matches2 = np.array(points2[:2, matches[1, :].astype(int)])
-        # matches1_2 = np.array(points1_2[:2, matches[0, :].astype(int)])
-        # print('matches1', matches1)
-        # print('matches2', matches2)
-        # print('matches1_2', matches1_2)
 
-        # try:
-        #     matches1_2 = points1_2[:2, matches[0, :].astype(int)]
-        # except:
-        # print(affine_params.cpu().detach().shape, transformed_source_affine.shape)
         matches1_2 = transform_points_DVF(torch.tensor(matches1), 
                         affine_params.cpu().detach(), transformed_source_affine)
 

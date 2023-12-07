@@ -19,16 +19,20 @@ class MyDataset(torch.utils.data.Dataset):
         self.sup = sup
         if transform is not None:
             self.transform = transform
-        elif transform is None and self.sup == True:
+        elif transform is None and self.is_train == False: 
+            # if test, no random transformation
+            self.transform = transforms.ToTensor()
+        elif transform is None and self.sup == True and self.is_train == True:
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
-                # transforms.Lambda(lambda x: x + 0.01 * torch.randn_like(x))
+                transforms.Lambda(lambda x: x + 0.01 * torch.randn_like(x))
             ])
-        elif transform is None and self.sup == False: # if unsupervised, apply random transformation too
+        elif transform is None and self.sup == False and self.is_train == True: 
+            # if unsupervised, apply random transformation too
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
-                # transforms.Lambda(lambda x: x + 0.01 * torch.randn_like(x)),
-                # transforms.RandomAffine(degrees=10, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=5)
+                transforms.Lambda(lambda x: x + 0.01 * torch.randn_like(x)),
+                transforms.RandomAffine(degrees=10, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=5)
             ])
 
     def __len__(self):
