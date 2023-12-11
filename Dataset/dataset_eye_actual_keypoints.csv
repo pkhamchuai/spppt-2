@@ -1,4 +1,4 @@
-source,Source ROI,target,Target ROI,training,Warped target images,Warped target ROI,Execution time,Directory,keypoints_path
+source,Source ROI,target,Target ROI,training,Warped target images,Warped target ROI,Execution time,Directory,keypoints
 Dataset/Dataset-processed/10-08-2562/3092607-Complete-RE/b/3092607_20190201_b2_R_01.jpg,,Dataset/Dataset-processed/10-08-2562/3092607-Complete-RE/b/3092607_20190426_b1_R_01.jpg,,1,,,,Dataset/Dataset-processed/10-08-2562/3092607-Complete-RE/b,Dataset/Dataset-processed/img_0.csv
 Dataset/Dataset-processed/17-03-2560/3788391-1RL/c2/3788391_20170317_c2-1_before_L_01.jpg,,Dataset/Dataset-processed/17-03-2560/3788391-1RL/c2/3788391_20170317_c3_before_L_01.jpg,,1,,,,Dataset/Dataset-processed/17-03-2560/3788391-1RL/c2,Dataset/Dataset-processed/img_1.csv
 Dataset/Dataset-processed/23-12-2559/1426104/b1/1426104_20161223__Image_R_b2-1.jpg,,Dataset/Dataset-processed/23-12-2559/1426104/b1/1426104_20161223__Image_R_b1.jpg,,1,,,,Dataset/Dataset-processed/23-12-2559/1426104/b1,Dataset/Dataset-processed/img_2.csv

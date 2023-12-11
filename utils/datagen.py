@@ -54,14 +54,27 @@ class MyDataset(torch.utils.data.Dataset):
         source_img = self.transform(source_img)
         target_img = self.transform(target_img)
 
-        keypoints = row['keypoints']
+        keypoints_path = row['keypoints']
+        # import keypoints, which is a csv file
+        keypoints = pd.read_csv(keypoints_path)
+        keypoints = keypoints.to_numpy()
+        keypoints = keypoints.astype(np.float32)
+
+        
+
 
         
         if self.sup:
             affine_params = np.array([[row['M00'], row['M01'], row['M02']], [row['M10'], row['M11'], row['M12']]]).astype(np.float32)
-            return source_img, target_img, affine_params 
+            # if supervised, keypoints have 2 more columns
+            matches1 = keypoints[:, 0:2]
+            matches2 = keypoints[:, 2:4]
+            matches1_2 = keypoints[:, 4:6]
+            return source_img, target_img, affine_params, matches1, matches2, matches1_2
         else:
-            return source_img, target_img
+            matches1 = keypoints[:, 0:2]
+            matches2 = keypoints[:, 2:4]
+            return source_img, target_img, None, matches1, matches2, None
         
 
 def datagen(dataset, is_train, sup):
@@ -104,6 +117,7 @@ def datagen(dataset, is_train, sup):
             # synthetic eye dataset medium
             dataset_path = 'Dataset/synthetic_eye_medium_test'
             df = pd.read_csv('Dataset/synth_eye_medium_test.csv')
+
     elif dataset == 3:
         if is_train:
             # synthetic eye dataset hard
@@ -113,6 +127,7 @@ def datagen(dataset, is_train, sup):
             # synthetic eye dataset hard
             dataset_path = 'Dataset/synthetic_eye_hard_test'
             df = pd.read_csv('Dataset/synth_eye_hard_test.csv')
+
     elif dataset == 4:
         # synthetic shape dataset
         dataset_path = 'Dataset/synthetic_shape_dataset'
@@ -131,6 +146,7 @@ def datagen(dataset, is_train, sup):
     #         dataset = MNIST(dataset_path, train=False, transform=transforms.ToTensor(), download=True)
     #     dataloader = DataLoader(dataset, batch_size=1, shuffle=is_train)
     #     return dataloader
+
     else:
         raise ValueError('Input dataset parameter 0-4')
 

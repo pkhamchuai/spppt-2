@@ -19,7 +19,9 @@ import torch.nn as nn
 
 from utils.utils0 import *
 from utils.utils1 import *
-from utils.utils1 import ModelParams, train, test, loss_points
+from utils.utils1 import ModelParams, loss_points
+from utils.test import test
+from utils.train import train
 from utils.datagen import datagen
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -113,16 +115,18 @@ def train(model_name, model_path, model_params, timestamp):
             loss = 0.0
 
             # Get images and affine parameters
-            if model_params.sup:
-                source_image, target_image, affine_params_true = data
-            else:
-                source_image, target_image = data
-                affine_params_true = None
+            source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
+
             source_image = source_image.to(device)
             target_image = target_image.to(device)
+            # add gradient to the matches
+            points1 = torch.tensor(points1).to(device)
+            points2 = torch.tensor(points2).to(device)
+            points1.requires_grad = True
+            points2.requires_grad = True
 
             # Forward + backward + optimize
-            outputs = model(source_image, target_image)
+            outputs = model(source_image, target_image, points1, points2)
             # for i in range(len(outputs)):
             #         print(i, outputs[i].shape)
             # 0 torch.Size([1, 1, 256, 256])
@@ -135,22 +139,16 @@ def train(model_name, model_path, model_params, timestamp):
             # 7 (256, 256)
             transformed_source_affine = outputs[0] # image
             affine_params_predicted = outputs[1] # affine parameters
-            points1 = np.array(outputs[2])
-            points2 = np.array(outputs[3])
-            points1_transformed = np.array(outputs[4])
+            points1_2_predicted = outputs[2]
 
             # print(f"affine_params_true: {affine_params_true}")
             # print(f"affine_params_predicted: {affine_params_predicted}\n")
 
             try:
-                points1_affine = points1_affine.reshape(
-                    points1_transformed.shape[2], points1_transformed.shape[1])
+                points1_2_predicted = points1_2_predicted.reshape(
+                    points1_2_predicted.shape[2], points1_2_predicted.shape[1])
             except:
                 pass
-            desc1_2 = outputs[5]
-            desc2 = outputs[6]
-            heatmap1 = outputs[7]
-            heatmap2 = outputs[8]
 
             # loss += criterion(transformed_source_affine, target_image)
             # loss += extra(affine_params_predicted)
@@ -160,22 +158,27 @@ def train(model_name, model_path, model_params, timestamp):
                 # TODO: add loss for points1_affine and points2, Euclidean distance
                 # loss_points = criterion_points(points1_affine, points2)
                 # loss += loss_affine
-            points1_transformed_tensor = torch.tensor(points1_transformed).detach()
-            points2_tensor = torch.tensor(points2).detach()
-            loss += criterion_points(torch.flatten(points1_transformed_tensor, start_dim=1), 
-                                     torch.flatten(points2_tensor, start_dim=1))
+            # print(f"points1_2_predicted: {points1_2_predicted.shape}")
+            # print(f"points2: {points2.shape}")
+            points1_2_predicted_tensor = points1_2_predicted.to(device)
+            # points2_tensor = torch.tensor(points2).detach()
+
+            loss += criterion_points(torch.flatten(points1_2_predicted_tensor, start_dim=1), 
+                                     torch.flatten(points2[0].T, start_dim=1))
 
             loss.backward()
             optimizer.step()
             scheduler.step()
+
+            print(points1.shape, points2.shape, points1_2_predicted.T.shape)
 
             # Plot images if i < 5
             if i % 50 == 0:
                 DL_affine_plot(f"epoch{epoch+1}_train", output_dir,
                     f"{i}", "_", source_image[0, 0, :, :].detach().cpu().numpy(), target_image[0, 0, :, :].detach().cpu().numpy(), 
                     transformed_source_affine[0, 0, :, :].detach().cpu().numpy(),
-                    points1, points2, points1_transformed, desc1_2, desc2, affine_params_true=affine_params_true,
-                        affine_params_predict=affine_params_predicted, heatmap1=heatmap1, heatmap2=heatmap2, plot=True)
+                    points1[0].cpu().detach().numpy(), points2[0].cpu().detach().numpy(), points1_2_predicted.cpu().detach().numpy().T, None, None, affine_params_true=affine_params_true,
+                        affine_params_predict=affine_params_predicted, heatmap1=None, heatmap2=None, plot=True)
 
             # Print statistics
             running_loss += loss.item()
@@ -191,12 +194,13 @@ def train(model_name, model_path, model_params, timestamp):
                 loss = 0.0
                 # Get images and affine parameters
                 if model_params.sup:
-                    source_image, target_image, affine_params_true = data
+                    source_image, target_image, affine_params_true, keypoints = data
                 else:
-                    source_image, target_image = data
+                    source_image, target_image, keypoints = data
                     affine_params_true = None
                 source_image = source_image.to(device)
                 target_image = target_image.to(device)
+                print(keypoints.shape)
 
                 # Forward pass
                 outputs = model(source_image, target_image)
@@ -297,7 +301,7 @@ if __name__ == '__main__':
     parser.add_argument('--image', type=int, default=1, help='image used for training')
     parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
+    parser.add_argument('--num_epochs', type=int, default=5, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default=None, help='which model to use')

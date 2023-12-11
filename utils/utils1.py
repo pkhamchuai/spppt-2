@@ -59,6 +59,8 @@ def model_loader(model_name, model_params):
         print('Input a valid model name')
         sys.exit()
 
+def mse(image1, image2):
+    return np.mean(np.square(image1 - image2))
 
 class MSE_SSIM:
     def __init__(self):
@@ -574,7 +576,7 @@ def RANSAC_affine_plot(name, dir_name, image1_name, image1, image2,
     matches2 = points2[:2, matches[1, :].astype(int)]
 
     # MSE and TRE before transformation
-    mse_before = np.mean((matches1 - matches2)**2)
+    mse_before = mse(matches1, matches2)
     tre_before = np.mean(np.sqrt(np.sum((matches1 - matches2)**2, axis=0)))
     
     # create affine transform matrix from points1 to points2
@@ -893,7 +895,7 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
     # print("desc2 shape:", desc2.shape)
     # END: 4j8d9fj3j9fj
     # MSE and TRE before transformation
-    mse_before = np.mean((matches1 - matches2)**2)
+    mse_before = mse(matches1, matches2)
     tre_before = np.mean(np.sqrt(np.sum((matches1 - matches2)**2, axis=0)))
     
     # matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_params[0])
