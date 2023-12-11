@@ -120,8 +120,8 @@ def train(model_name, model_path, model_params, timestamp):
             source_image = source_image.to(device)
             target_image = target_image.to(device)
             # add gradient to the matches
-            points1 = torch.tensor(points1).to(device)
-            points2 = torch.tensor(points2).to(device)
+            points1 = torch.tensor(points1).clone().to(device)
+            points2 = torch.tensor(points2).clone().to(device)
             points1.requires_grad = True
             points2.requires_grad = True
 
@@ -169,8 +169,6 @@ def train(model_name, model_path, model_params, timestamp):
             loss.backward()
             optimizer.step()
             scheduler.step()
-
-            print(points1.shape, points2.shape, points1_2_predicted.T.shape)
 
             # Plot images if i < 5
             if i % 50 == 0:
