@@ -26,10 +26,10 @@ class SP_DHR_Net(nn.Module):
         # summary(self.affineNet, *inputs, show_input=True, show_hierarchical=True, print_summary=True)
 
     def forward(self, source_image, target_image, points):
-        if self.model_params.heatmaps == 0:
-            affine_params = self.affineNet(source_image, target_image)
-        elif self.model_params.heatmaps == 1:
-            print("This part is not yet implemented.")
+        # if self.model_params.points == 1:
+        affine_params = self.affineNet(source_image, target_image)
+        # elif self.model_params.heatmaps == 1:
+        #     print("This part is not yet implemented.")
             # affine_params = self.affineNet(source_image, target_image, heatmap1, heatmap2)
         transformed_source_image = tensor_affine_transform(source_image, affine_params)
         transformed_points = transform_points_DVF(points[0].cpu().detach().T, 

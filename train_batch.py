@@ -3,10 +3,10 @@ import subprocess
 dataset = [2, 3, 0]
 sups = [1, 1, 0]
 # models = ['DHR', 'SP_AffineNet']
-models = ['SP_AffineNet']
+models = ['SP_AffineNet4', 'DHR']
 runs = []
 learning_rate = 1e-4
-loss = [0, 2, 3, 4, 5, 6]
+loss = [[0, 1], [1, 0]]
 
 # generate run commands
 for j in range(len(models)):
@@ -17,8 +17,8 @@ for j in range(len(models)):
 
     for i in range(len(dataset)):
         for k in range(len(loss)):
-            runs.append(['python', 'train.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
-                            '--num_epochs', '5', '--loss_image', str(loss[k]), '--learning_rate', str(learning_rate)])
+            runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
+                            '--num_epochs', '10', '--image', str(loss[k][0]), '--loss_image', '0', '--loss_points', str(loss[k][1])])
 
     # for i in range(len(dataset)):
     #     runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),

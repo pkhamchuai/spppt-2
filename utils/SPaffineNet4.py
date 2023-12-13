@@ -25,10 +25,10 @@ class SP_AffineNet4(nn.Module):
     def forward(self, source_image, target_image, points1):
         # source_image = source_image.to(device)
         # target_image = target_image.to(device)
-        if self.model_params.heatmaps == 0:
-            affine_params, transformed_source_image, transformed_points = self.affineNet(source_image, target_image, points1)
-        elif self.model_params.heatmaps == 1:
-            print("This part is not yet implemented.")
+        # if self.model_params.points == 1:
+        affine_params, transformed_source_image, transformed_points = self.affineNet(source_image, target_image, points1)
+        # elif self.model_params.heatmaps == 1:
+        #     print("This part is not yet implemented.")
             # affine_params = self.affineNet(source_image, target_image, heatmap1, heatmap2)
 
         return transformed_source_image, affine_params, transformed_points

@@ -20,7 +20,7 @@ import torch.nn as nn
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, loss_points
-from test_points import test
+from utils.test_points import test
 from utils.train import train
 from utils.datagen import datagen
 
@@ -49,8 +49,8 @@ def train(model_name, model_path, model_params, timestamp):
     # Define loss function based on supervised or unsupervised learning
     criterion = model_params.loss_image
     extra = loss_extra()
-    # criterion_points = nn.MSELoss() # 
-    criterion_points = loss_points()
+    criterion_points = nn.MSELoss() # 
+    # criterion_points = loss_points()
 
     if model_params.sup:
         criterion_affine = nn.MSELoss()
@@ -108,11 +108,12 @@ def train(model_name, model_path, model_params, timestamp):
         # Set model to training mode
         model.train()
         
+        optimizer.zero_grad()
         running_loss = 0.0
         train_bar = tqdm(train_dataset, desc=f'Training Epoch {epoch+1}/{model_params.num_epochs}')
         for i, data in enumerate(train_bar):
             # Zero the parameter gradients
-            optimizer.zero_grad()
+            
             loss = 0.0
 
             # Get images and affine parameters
@@ -146,27 +147,30 @@ def train(model_name, model_path, model_params, timestamp):
             except:
                 pass
 
-            # loss += criterion(transformed_source_affine, target_image)
-            # loss += extra(affine_params_predicted)
-
-            if model_params.sup and epoch == 0:
-                loss_affine = criterion_affine(affine_params_true.view(1, 2, 3).to(device), affine_params_predicted)
+            if model_params.image:
+                    loss += criterion(transformed_source_affine, target_image)
+                # loss += extra(affine_params_predicted)
+                
+            if model_params.sup:
+                loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
                 # TODO: add loss for points1_affine and points2, Euclidean distance
                 # loss_points = criterion_points(points1_affine, points2)
                 loss += loss_affine
 
-            points1_2_predicted_tensor = points1_2_predicted.to(device)
-            loss += criterion_points(torch.flatten(points1_2_predicted_tensor, start_dim=1), 
-                                     torch.flatten(points2[0].T, start_dim=1))
+            if model_params.points:
+                # print the input's device
+                loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
+                                    torch.flatten(points2[0].T, start_dim=1).cpu().detach())
 
-            loss.backward()
-            optimizer.step()
-            scheduler.step()
+            # loss.backward()
+            # optimizer.step()
+            # scheduler.step()
 
             # Plot images if i < 5
             if i % 50 == 0:
                 DL_affine_plot(f"epoch{epoch+1}_train", output_dir,
-                    f"{i}", "_", source_image[0, 0, :, :].detach().cpu().numpy(), target_image[0, 0, :, :].detach().cpu().numpy(), 
+                    f"{i}", model_params.get_model_code(), 
+                    source_image[0, 0, :, :].detach().cpu().numpy(), target_image[0, 0, :, :].detach().cpu().numpy(), 
                     transformed_source_affine[0, 0, :, :].detach().cpu().numpy(),
                     points1[0].cpu().detach().numpy().T, points2[0].cpu().detach().numpy().T, points1_2_predicted.cpu().detach().numpy(), None, None, affine_params_true=affine_params_true,
                         affine_params_predict=affine_params_predicted, heatmap1=None, heatmap2=None, plot=True)
@@ -176,6 +180,10 @@ def train(model_name, model_path, model_params, timestamp):
             running_loss_list.append([epoch+((i+1)/len(train_dataset)), loss.item()])
             train_bar.set_postfix({'loss': running_loss / (i+1)})
         print(f'Training Epoch {epoch+1}/{model_params.num_epochs} loss: {running_loss / len(train_dataset)}')
+        
+        loss.backward()
+        optimizer.step()
+        scheduler.step()
         
         # Validate model
         validation_loss = 0.0
@@ -214,19 +222,21 @@ def train(model_name, model_path, model_params, timestamp):
                 except:
                     pass
 
-                # loss += criterion(transformed_source_affine, target_image)
+                if model_params.image:
+                    loss += criterion(transformed_source_affine, target_image)
                 # loss += extra(affine_params_predicted)
+
                 if model_params.sup:
                     loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
                     # TODO: add loss for points1_affine and points2, Euclidean distance
                     # loss_points = criterion_points(points1_affine, points2)
-                    # loss += loss_affine
+                    loss += loss_affine
 
-                points1_2_predicted_tensor = points1_2_predicted.to(device)
-                # points2_tensor = torch.tensor(points2).detach()
-
-                loss += criterion_points(torch.flatten(points1_2_predicted_tensor, start_dim=1), 
-                                     torch.flatten(points2[0].T, start_dim=1))
+                if model_params.points:
+                    # print the input's device
+                    
+                    loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
+                                    torch.flatten(points2[0].T, start_dim=1).cpu().detach())
 
                 # Add to validation loss
                 validation_loss += loss.item()
@@ -234,7 +244,7 @@ def train(model_name, model_path, model_params, timestamp):
                 # Plot images if i < 5
                 if i % 50 == 0:
                     DL_affine_plot(f"epoch{epoch+1}_valid", output_dir,
-                        f"{i}", "_", source_image[0, 0, :, :].cpu().numpy(), 
+                        f"{i}", model_params.get_model_code(), source_image[0, 0, :, :].cpu().numpy(), 
                         target_image[0, 0, :, :].cpu().numpy(), 
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
                         points1[0].cpu().detach().numpy().T, points2[0].cpu().detach().numpy().T, 
@@ -258,7 +268,7 @@ def train(model_name, model_path, model_params, timestamp):
         running_train_loss = [x[1] for x in running_loss_list]
 
         # Plot train loss and validation loss against epoch number
-        plt.figure()
+        fig = plt.figure(figsize=(12, 5))
         plt.plot(step, running_train_loss, label='Running Train Loss', alpha=0.3)
         plt.plot(epoch, train_loss, label='Train Loss', linewidth=3)
         plt.plot(epoch, val_loss, label='Validation Loss', linewidth=3)
@@ -266,9 +276,13 @@ def train(model_name, model_path, model_params, timestamp):
         plt.legend()
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
+        plt.grid(True)
         # plt.yscale('log')
         plt.tight_layout()
-        plt.savefig(save_plot_name)
+
+        # Save plot
+        signaturebar_gray(fig, f'{model_params.get_model_code()} - epoch{model_params.num_epochs} - {timestamp}')
+        fig.savefig(save_plot_name)
         # plt.show()
 
     print('\nFinished Training')
@@ -297,8 +311,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Deep Learning for Image Registration')    
     parser.add_argument('--dataset', type=int, default=1, help='dataset number')
     parser.add_argument('--sup', type=int, default=1, help='supervised learning (1) or unsupervised learning (0)')
-    parser.add_argument('--image', type=int, default=1, help='image used for training')
-    parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
+    parser.add_argument('--image', type=int, default=0, help='loss image used for training')
+    parser.add_argument('--points', type=int, default=1, help='use loss points (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
     parser.add_argument('--num_epochs', type=int, default=5, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
@@ -311,7 +325,8 @@ if __name__ == '__main__':
       model_path = None
     else:
       model_path = 'trained_models/' + args.model_path
-    model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, heatmaps=args.heatmaps, 
+    model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
+                               points=args.points, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
                                learning_rate=args.learning_rate, decay_rate=args.decay_rate)
     model_params.print_explanation()

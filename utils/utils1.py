@@ -2,16 +2,17 @@ import os
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import random
 import math
-from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import structural_similarity as ssim_fc
 from utils.SuperPoint import PointTracker
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torchir.metrics import NCC
-from skimage.metrics import structural_similarity as SSIM
+
 import sys
 from tqdm import tqdm
 import csv
@@ -62,6 +63,12 @@ def model_loader(model_name, model_params):
 def mse(image1, image2):
     return np.mean(np.square(image1 - image2))
 
+def tre(points1, points2):
+    return np.mean(np.sqrt(np.sum((points1 - points2)**2, axis=0)))
+
+def ssim(image1, image2):
+    return ssim_fc(image1, image2, data_range=image2.max() - image2.min())
+
 class MSE_SSIM:
     def __init__(self):
         self.mse = nn.MSELoss()
@@ -72,7 +79,7 @@ class MSE_SSIM:
         img1_numpy = img1.detach().cpu().numpy()
         img2_numpy = img2.detach().cpu().numpy()
         return self.mse(img1, img2) + \
-            (1/SSIM(img1_numpy, img2_numpy, data_range=img2_numpy.max() - img2_numpy.min()))
+            (1/ssim(img1_numpy, img2_numpy))
 
 
 class MSE_NCC:
@@ -92,7 +99,7 @@ class MSE_SSIM_NCC:
     def __call__(self, img1, img2):
         img1_numpy = img1.detach().cpu().numpy()
         img2_numpy = img2.detach().cpu().numpy()
-        return self.mse(img1, img2) + (1/SSIM(img1_numpy, img2_numpy, data_range=img2_numpy.max() - img2_numpy.min())) + (1/self.ncc(img1, img2))
+        return self.mse(img1, img2) + (1/ssim(img1_numpy, img2_numpy)) + (1/self.ncc(img1, img2))
 
 
 class GaussianWeightedMSELoss:
@@ -167,7 +174,7 @@ class loss_points:
     
 
 class ModelParams:
-    def __init__(self, dataset=0, sup=0, image=1, heatmaps=0, loss_image=0, 
+    def __init__(self, dataset=0, sup=0, image=1, points=0, loss_image=0, 
                  learning_rate=0.001, decay_rate = 0.96, start_epoch=0, 
                  num_epochs=10, batch_size=1):
         # dataset: dataset used
@@ -182,10 +189,9 @@ class ModelParams:
         # image: image type
         # image=0: image not used
         # image=1: image used
-        # heatmaps: heatmaps used
-        # heatmaps=0: heatmaps not used
-        # heatmaps=1: heatmaps used
-        # heatmaps=2: enhanced heatmaps used
+        # points: points used
+        # points=0: points not used
+        # points=1: points used
         # loss_image: loss function for image
         # loss_image=0: MSE
         # loss_image=1: NCC
@@ -205,7 +211,7 @@ class ModelParams:
         else:
             self.sup = sup
         self.image = image
-        self.heatmaps = heatmaps
+        self.points = points
 
         self.learning_rate = learning_rate
         self.decay_rate = decay_rate
@@ -258,13 +264,13 @@ class ModelParams:
     def get_model_name(self):
         # model name code
         model_name = 'dataset' + str(self.dataset) + '_sup' + str(self.sup) + '_image' + str(self.image) + \
-            '_heatmaps' + str(self.heatmaps) + '_loss_image' + str(self.loss_image_case)
+            '_points' + str(self.points) + '_loss_image' + str(self.loss_image_case)
         return model_name
     
     def get_model_code(self):
         # model code
         model_code = str(self.dataset) + str(self.sup) + str(self.image) + \
-            str(self.heatmaps) + str(self.loss_image_case) + \
+            str(self.points) + str(self.loss_image_case) + \
             '_' + str(self.learning_rate) + '_' + str(self.start_epoch) + '_' + \
                 str(self.num_epochs) + '_' + str(self.batch_size)
         return model_code
@@ -274,7 +280,7 @@ class ModelParams:
             'dataset': self.dataset,
             'sup': self.sup,
             'image': self.image,
-            'heatmaps': self.heatmaps,
+            'points': self.points,
             'loss_image_case': self.loss_image_case,
             'loss_image': self.loss_image,
             'loss_affine': self.loss_affine,
@@ -302,7 +308,7 @@ class ModelParams:
         dataset = int(split_string[0][0])
         sup = int(split_string[0][1])
         image = int(split_string[0][2])
-        heatmaps = int(split_string[0][3])
+        points = int(split_string[0][3])
         loss_image_case = int(split_string[0][4])
         learning_rate = float(split_string[1])
         if len(split_string) == 5:
@@ -314,12 +320,12 @@ class ModelParams:
             num_epochs = int(split_string[2])
             batch_size = int(split_string[3])
         # decay_rate = 0.96
-        return cls(dataset, sup, image, heatmaps, loss_image_case, learning_rate, start_epoch, num_epochs, batch_size)
+        return cls(dataset, sup, image, points, loss_image_case, learning_rate, start_epoch, num_epochs, batch_size)
     
     @classmethod
     def from_dict(cls, model_dict):
         return cls(model_dict['dataset'], model_dict['sup'], model_dict['image'], \
-                   model_dict['heatmaps'], model_dict['loss_image'])
+                   model_dict['points'], model_dict['loss_image'])
     
     def __str__(self):
         return self.model_name
@@ -333,11 +339,10 @@ class ModelParams:
                 'Synthetic eye hard' if self.dataset == 3 else \
                 'Synthetic shape')
         print('Supervised or unsupervised model: ', 'Supervised' if self.sup else 'Unsupervised')
-        print('Image type: ', 'Image not used' if self.image == 0 else \
+        print('Loss image type: ', 'Loss image not used' if self.image == 0 else \
                 'Image used')
-        print('Heatmaps used: ', 'Heatmaps not used' if self.heatmaps == 0 else \
-                'Heatmaps used' if self.heatmaps == 1 else \
-                'Enhanced heatmaps used')
+        print('Points used: ', 'Points not used' if self.points == 0 else \
+                'Points used')
         print('Loss function case: ', self.loss_image_case)
         print('Loss function for image: ', self.loss_image)
         print('Loss function for affine: ', self.loss_affine)
@@ -558,271 +563,271 @@ def load_images_from_folder(folder, img_size=(512, 512)):
             images.append(image)
     return images
 
-def RANSAC_affine_plot(name, dir_name, image1_name, image1, image2, 
-                       points1, points2, desc1, desc2, heatmap1, heatmap2, plot=True):
-    # input both matches from RANSAC and non-RANSAC to affine_transform
-    # because we have to create affine transform matrix from matches_RANSAC
-    # and apply it to matches1 and matches2
-    # display them on the image with different colors
-    print('Affine_plot')
+# def RANSAC_affine_plot(name, dir_name, image1_name, image1, image2, 
+#                        points1, points2, desc1, desc2, heatmap1, heatmap2, plot=True):
+#     # input both matches from RANSAC and non-RANSAC to affine_transform
+#     # because we have to create affine transform matrix from matches_RANSAC
+#     # and apply it to matches1 and matches2
+#     # display them on the image with different colors
+#     print('Affine_plot')
 
-    # Part 1 - RANSAC
-    # match the points between the two images
-    tracker = PointTracker(5, nn_thresh=0.7)
-    matches = tracker.nn_match_two_way(desc1, desc2, nn_thresh=0.7)
+#     # Part 1 - RANSAC
+#     # match the points between the two images
+#     tracker = PointTracker(5, nn_thresh=0.7)
+#     matches = tracker.nn_match_two_way(desc1, desc2, nn_thresh=0.7)
 
-    # take the elements from points1 and points2 using the matches as indices
-    matches1 = points1[:2, matches[0, :].astype(int)]
-    matches2 = points2[:2, matches[1, :].astype(int)]
+#     # take the elements from points1 and points2 using the matches as indices
+#     matches1 = points1[:2, matches[0, :].astype(int)]
+#     matches2 = points2[:2, matches[1, :].astype(int)]
 
-    # MSE and TRE before transformation
-    mse_before = mse(matches1, matches2)
-    tre_before = np.mean(np.sqrt(np.sum((matches1 - matches2)**2, axis=0)))
+#     # MSE and TRE before transformation
+#     mse_before = mse(matches1, matches2)
+#     tre_before = np.mean(np.sqrt(np.sum((matches1 - matches2)**2, axis=0)))
     
-    # create affine transform matrix from points1 to points2
-    # and apply it to points1
-    affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T)
-    print(f'Affine transform matrix from points1 to points2:\n{affine_transform1[0]}')
-    matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
-    matches1_transformed = matches1_transformed[0].T
+#     # create affine transform matrix from points1 to points2
+#     # and apply it to points1
+#     affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T)
+#     print(f'Affine transform matrix from points1 to points2:\n{affine_transform1[0]}')
+#     matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
+#     matches1_transformed = matches1_transformed[0].T
 
-    mse12 = np.mean((matches1_transformed - matches2)**2)
-    tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2)**2, axis=0)))
+#     mse12 = np.mean((matches1_transformed - matches2)**2)
+#     tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2)**2, axis=0)))
 
-    # create affine transform matrix from points2 to points1
-    # and apply it to points2
-    affine_transform2 = cv2.estimateAffinePartial2D(matches2[:2, :].T, matches1[:2, :].T)
-    print(f'Affine transform matrix from points2 to points1:\n{affine_transform2[0]}')
-    matches2_transformed = cv2.transform(matches2.T[None, :, :], affine_transform2[0])
-    matches2_transformed = matches2_transformed[0].T
+#     # create affine transform matrix from points2 to points1
+#     # and apply it to points2
+#     affine_transform2 = cv2.estimateAffinePartial2D(matches2[:2, :].T, matches1[:2, :].T)
+#     print(f'Affine transform matrix from points2 to points1:\n{affine_transform2[0]}')
+#     matches2_transformed = cv2.transform(matches2.T[None, :, :], affine_transform2[0])
+#     matches2_transformed = matches2_transformed[0].T
 
-    mse21 = np.mean((matches2_transformed - matches1)**2)
-    tre21 = np.mean(np.sqrt(np.sum((matches2_transformed - matches1)**2, axis=0)))
+#     mse21 = np.mean((matches2_transformed - matches1)**2)
+#     tre21 = np.mean(np.sqrt(np.sum((matches2_transformed - matches1)**2, axis=0)))
 
-    # transform image 1 and 2 using the affine transform matrix
-    image1_transformed = cv2.warpAffine(image1, affine_transform1[0], (512, 512))
-    image2_transformed = cv2.warpAffine(image2, affine_transform2[0], (512, 512))
+#     # transform image 1 and 2 using the affine transform matrix
+#     image1_transformed = cv2.warpAffine(image1, affine_transform1[0], (512, 512))
+#     image2_transformed = cv2.warpAffine(image2, affine_transform2[0], (512, 512))
 
-    # calculate the MSE between image1_transformed and image2
-    mse12_image = np.mean((image1_transformed - image2)**2)
-    # calculate the MSE between image2_transformed and image1
-    mse21_image = np.mean((image2_transformed - image1)**2)
+#     # calculate the MSE between image1_transformed and image2
+#     mse12_image = np.mean((image1_transformed - image2)**2)
+#     # calculate the MSE between image2_transformed and image1
+#     mse21_image = np.mean((image2_transformed - image1)**2)
 
-    # calculate SSIM between image1_transformed and image2
-    ssim12_image = ssim(image1_transformed, image2)
-    # calculate SSIM between image2_transformed and image1
-    ssim21_image = ssim(image2_transformed, image1)
+#     # calculate SSIM between image1_transformed and image2
+#     ssim12_image = ssim(image1_transformed, image2)
+#     # calculate SSIM between image2_transformed and image1
+#     ssim21_image = ssim(image2_transformed, image1)
 
-    # Part 3 - Plotting
-    if plot:
-        # Create a subplot with 2 rows and 2 columns
-        fig, axes = plt.subplot_mosaic("AAFE;BDCG", figsize=(20, 10))
+#     # Part 3 - Plotting
+#     if plot:
+#         # Create a subplot with 2 rows and 2 columns
+#         fig, axes = plt.subplot_mosaic("AAFE;BDCG", figsize=(20, 10))
 
-        overlaid1 = overlay_points(image1.copy(), matches1, radius=2)
-        overlaid2 = overlay_points(image2.copy(), matches2, radius=2)
-        overlaid1_transformed = overlay_points(image1_transformed.copy(), matches1_transformed, radius=2)
-        overlaid2_transformed = overlay_points(image2_transformed.copy(), matches2_transformed, radius=2)
+#         overlaid1 = overlay_points(image1.copy(), matches1, radius=2)
+#         overlaid2 = overlay_points(image2.copy(), matches2, radius=2)
+#         overlaid1_transformed = overlay_points(image1_transformed.copy(), matches1_transformed, radius=2)
+#         overlaid2_transformed = overlay_points(image2_transformed.copy(), matches2_transformed, radius=2)
         
-        # Row 1: Two images side-by-side with overlaid points and lines
-        # show also MSE and SSIM between the two images
-        axes["A"].imshow(draw_lines(overlaid1, overlaid2, matches1, matches2, matches[2, :]))
-        axes["A"].set_title(f"Pair {image1_name} with matched points. MSE (x100): {100*np.mean((image1 - image2)**2):.4f} SSIM (x10): {10*ssim(image1, image2):.4f}")
-        axes["A"].axis('off')
+#         # Row 1: Two images side-by-side with overlaid points and lines
+#         # show also MSE and SSIM between the two images
+#         axes["A"].imshow(draw_lines(overlaid1, overlaid2, matches1, matches2, matches[2, :]))
+#         axes["A"].set_title(f"Pair {image1_name} with matched points. MSE (x100): {100*np.mean((image1 - image2)**2):.4f} SSIM (x10): {10*ssim(image1, image2):.4f}")
+#         axes["A"].axis('off')
 
-        axes["B"].imshow(overlaid1_transformed, cmap='gray')
-        axes["B"].set_title(f"Image A transformed to B")
-        axes["B"].axis('off')
+#         axes["B"].imshow(overlaid1_transformed, cmap='gray')
+#         axes["B"].set_title(f"Image A transformed to B")
+#         axes["B"].axis('off')
 
-        axes["C"].imshow(overlaid2_transformed, cmap='gray')
-        axes["C"].set_title(f"Image B transformed to A")
-        axes["C"].axis('off')
+#         axes["C"].imshow(overlaid2_transformed, cmap='gray')
+#         axes["C"].set_title(f"Image B transformed to A")
+#         axes["C"].axis('off')
 
-        # New subplot for histograms of 'match_score' array
-        '''axes["D"].hist(match_score, bins=20, color='blue', alpha=0.7)
-        axes["D"].set_title(f"Match Score Histogram, {len(match_score)} matches")
-        axes["D"].set_xlabel("Value")
-        axes["D"].set_ylabel("Frequency")'''
+#         # New subplot for histograms of 'match_score' array
+#         '''axes["D"].hist(match_score, bins=20, color='blue', alpha=0.7)
+#         axes["D"].set_title(f"Match Score Histogram, {len(match_score)} matches")
+#         axes["D"].set_xlabel("Value")
+#         axes["D"].set_ylabel("Frequency")'''
 
-        # New subplot for the transformed points
-        # Blue: from original locations from image 2/1 to the affine-transformed locations
-        # Red: from affine-transformed locations of points from image 2/1 to 
-        # the locations they supposed to be in image 1/2
-        img2 = draw_lines_one_image(overlaid2, matches1_transformed, matches1, line_color=(0, 0, 155))
-        img2 = draw_lines_one_image(img2, matches2, matches1_transformed, line_color=(255, 0, 0))
-        axes["F"].imshow(img2)
-        axes["F"].set_title(f"Image B with points A transformed to B. MSE: {mse12:.4f}")
-        axes["F"].axis('off')
+#         # New subplot for the transformed points
+#         # Blue: from original locations from image 2/1 to the affine-transformed locations
+#         # Red: from affine-transformed locations of points from image 2/1 to 
+#         # the locations they supposed to be in image 1/2
+#         img2 = draw_lines_one_image(overlaid2, matches1_transformed, matches1, line_color=(0, 0, 155))
+#         img2 = draw_lines_one_image(img2, matches2, matches1_transformed, line_color=(255, 0, 0))
+#         axes["F"].imshow(img2)
+#         axes["F"].set_title(f"Image B with points A transformed to B. MSE: {mse12:.4f}")
+#         axes["F"].axis('off')
         
-        img1 = draw_lines_one_image(overlaid1, matches2_transformed, matches2, line_color=(0, 0, 155))
-        img1 = draw_lines_one_image(img1, matches1, matches2_transformed, line_color=(255, 0, 0))
-        axes["E"].imshow(img1)
-        axes["E"].set_title(f"Image A with points B transformed to A. MSE: {mse21:.4f}")
-        axes["E"].axis('off')        
+#         img1 = draw_lines_one_image(overlaid1, matches2_transformed, matches2, line_color=(0, 0, 155))
+#         img1 = draw_lines_one_image(img1, matches1, matches2_transformed, line_color=(255, 0, 0))
+#         axes["E"].imshow(img1)
+#         axes["E"].set_title(f"Image A with points B transformed to A. MSE: {mse21:.4f}")
+#         axes["E"].axis('off')        
 
-        # Display the checkerboard image 1 transformed to 2
-        checkerboard = create_checkerboard(overlaid1_transformed, overlaid2)
-        axes["D"].imshow(checkerboard, cmap='gray')
-        axes["D"].set_title(f"Checkerboard A to B: {mse12_image:.4f}")
-        axes["D"].axis('off')
+#         # Display the checkerboard image 1 transformed to 2
+#         checkerboard = create_checkerboard(overlaid1_transformed, overlaid2)
+#         axes["D"].imshow(checkerboard, cmap='gray')
+#         axes["D"].set_title(f"Checkerboard A to B: {mse12_image:.4f}")
+#         axes["D"].axis('off')
 
-        # Display the checkerboard image 2 transformed to 1
-        checkerboard = create_checkerboard(overlaid2_transformed, overlaid1)
-        axes["G"].imshow(checkerboard, cmap='gray')
-        axes["G"].set_title(f"Checkerboard B to A: {mse21_image:.4f}")
-        axes["G"].axis('off')
+#         # Display the checkerboard image 2 transformed to 1
+#         checkerboard = create_checkerboard(overlaid2_transformed, overlaid1)
+#         axes["G"].imshow(checkerboard, cmap='gray')
+#         axes["G"].set_title(f"Checkerboard B to A: {mse21_image:.4f}")
+#         axes["G"].axis('off')
         
-        plt.tight_layout()  # Adjust the layout to leave space for the histogram
-        # create a folder named as yyyy-mm-dd_hh in output_images folder      
-        plt.savefig(os.path.join(dir_name, f"{image1_name}_normal.png"))
+#         plt.tight_layout()  # Adjust the layout to leave space for the histogram
+#         # create a folder named as yyyy-mm-dd_hh in output_images folder      
+#         plt.savefig(os.path.join(dir_name, f"{image1_name}_normal.png"))
         
-        # save images to output folder
-        '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image1_transformed*255)
-        cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_2.png", image2_transformed*255)'''
-        plt.close()
+#         # save images to output folder
+#         '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image1_transformed*255)
+#         cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_2.png", image2_transformed*255)'''
+#         plt.close()
 
 
-    print('RANSAC_affine_plot')
-    matches_RANSAC = tracker.ransac(matches1.T, matches2.T, matches, max_reproj_error=2)
+#     print('RANSAC_affine_plot')
+#     matches_RANSAC = tracker.ransac(matches1.T, matches2.T, matches, max_reproj_error=2)
             
-    # take elements from matches1 and matches2 where matches_RANSAC is TRUE
-    matches_RANSAC = matches_RANSAC.reshape(-1)
-    matches1_RANSAC = matches1[:, matches_RANSAC]
-    matches2_RANSAC = matches2[:, matches_RANSAC]
+#     # take elements from matches1 and matches2 where matches_RANSAC is TRUE
+#     matches_RANSAC = matches_RANSAC.reshape(-1)
+#     matches1_RANSAC = matches1[:, matches_RANSAC]
+#     matches2_RANSAC = matches2[:, matches_RANSAC]
 
-    '''# take elements from matches1 and matches2 where matches_RANSAC is FALSE
-    matches1_outliers = matches1[:2, ~matches_RANSAC]
-    matches2_outliers = matches2[:2, ~matches_RANSAC]
-    # print(f'outliers: {matches1_outliers.shape}, {matches2_outliers.shape}')'''
+#     '''# take elements from matches1 and matches2 where matches_RANSAC is FALSE
+#     matches1_outliers = matches1[:2, ~matches_RANSAC]
+#     matches2_outliers = matches2[:2, ~matches_RANSAC]
+#     # print(f'outliers: {matches1_outliers.shape}, {matches2_outliers.shape}')'''
 
-    # Part 2 - Affine Transform
-    # create affine transform matrix from points1 to points2 and apply it to points1
-    # also from points2 to points1 and apply it to points2
-    # points1 and points2 are 2D arrays of shape (2, N)
-    # where N is the number of points
-    # the first row is the x coordinate
-    # the second row is the y coordinate
-    # the image size is 512 x 512
+#     # Part 2 - Affine Transform
+#     # create affine transform matrix from points1 to points2 and apply it to points1
+#     # also from points2 to points1 and apply it to points2
+#     # points1 and points2 are 2D arrays of shape (2, N)
+#     # where N is the number of points
+#     # the first row is the x coordinate
+#     # the second row is the y coordinate
+#     # the image size is 512 x 512
 
-    #################################### FIX THIS ####################################
-    # create affine transform matrix using only matches_RANSAC
-    # and apply it to all points, plot all first, then plot RANSAC over it
-    affine_transform1 = cv2.estimateAffinePartial2D(matches1_RANSAC.T, matches2_RANSAC.T)
-    print(f'Affine transform matrix from points1 to points2:\n{affine_transform1[0]}')
-    matches1_all_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0], (512, 512))
-    matches1_all_transformed = matches1_all_transformed[0].T
+#     #################################### FIX THIS ####################################
+#     # create affine transform matrix using only matches_RANSAC
+#     # and apply it to all points, plot all first, then plot RANSAC over it
+#     affine_transform1 = cv2.estimateAffinePartial2D(matches1_RANSAC.T, matches2_RANSAC.T)
+#     print(f'Affine transform matrix from points1 to points2:\n{affine_transform1[0]}')
+#     matches1_all_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0], (512, 512))
+#     matches1_all_transformed = matches1_all_transformed[0].T
 
-    matches1_inliers_transformed = matches1_all_transformed[:, matches_RANSAC]
+#     matches1_inliers_transformed = matches1_all_transformed[:, matches_RANSAC]
 
-    # create affine transform matrix from points2 to points1
-    # and apply it to all points, plot all first, then plot RANSAC over it
-    affine_transform2 = cv2.estimateAffinePartial2D(matches2_RANSAC.T, matches1_RANSAC.T)
-    print(f'Affine transform matrix from points2 to points1:\n{affine_transform2[0]}')
-    matches2_all_transformed = cv2.transform(matches2.T[None, :, :], affine_transform2[0], (512, 512))
-    matches2_all_transformed = matches2_all_transformed[0].T
+#     # create affine transform matrix from points2 to points1
+#     # and apply it to all points, plot all first, then plot RANSAC over it
+#     affine_transform2 = cv2.estimateAffinePartial2D(matches2_RANSAC.T, matches1_RANSAC.T)
+#     print(f'Affine transform matrix from points2 to points1:\n{affine_transform2[0]}')
+#     matches2_all_transformed = cv2.transform(matches2.T[None, :, :], affine_transform2[0], (512, 512))
+#     matches2_all_transformed = matches2_all_transformed[0].T
 
-    matches2_inliers_transformed = matches2_all_transformed[:, matches_RANSAC]
+#     matches2_inliers_transformed = matches2_all_transformed[:, matches_RANSAC]
 
-    #################################### Metrics for points ####################################
+#     #################################### Metrics for points ####################################
         
-    # calculate the MSE between points1_transformed and points2
-    mse12_RANSAC = np.mean((matches1_all_transformed - matches2)**2)
-    tre12_RANSAC = np.mean(np.sqrt(np.sum((matches1_all_transformed - matches2)**2, axis=0)))
+#     # calculate the MSE between points1_transformed and points2
+#     mse12_RANSAC = np.mean((matches1_all_transformed - matches2)**2)
+#     tre12_RANSAC = np.mean(np.sqrt(np.sum((matches1_all_transformed - matches2)**2, axis=0)))
 
-    # calculate the MSE between points2_transformed and points1
-    mse21_RANSAC = np.mean((matches2_all_transformed - matches1)**2)
-    tre21_RANSAC = np.mean(np.sqrt(np.sum((matches2_all_transformed - matches1)**2, axis=0)))
+#     # calculate the MSE between points2_transformed and points1
+#     mse21_RANSAC = np.mean((matches2_all_transformed - matches1)**2)
+#     tre21_RANSAC = np.mean(np.sqrt(np.sum((matches2_all_transformed - matches1)**2, axis=0)))
 
-    #################################### Metrics for images ####################################
-    # transform image 1 and 2 using the affine transform matrix
-    image1_transformed = cv2.warpAffine(image1, affine_transform1[0], (512, 512))
-    image2_transformed = cv2.warpAffine(image2, affine_transform2[0], (512, 512))
+#     #################################### Metrics for images ####################################
+#     # transform image 1 and 2 using the affine transform matrix
+#     image1_transformed = cv2.warpAffine(image1, affine_transform1[0], (512, 512))
+#     image2_transformed = cv2.warpAffine(image2, affine_transform2[0], (512, 512))
 
-    # calculate the MSE between image1_transformed and image2
-    mse12_image_RANSAC = np.mean((image1_transformed - image2)**2)
-    # calculate the MSE between image2_transformed and image1
-    mse21_image_RANSAC = np.mean((image2_transformed - image1)**2)
+#     # calculate the MSE between image1_transformed and image2
+#     mse12_image_RANSAC = np.mean((image1_transformed - image2)**2)
+#     # calculate the MSE between image2_transformed and image1
+#     mse21_image_RANSAC = np.mean((image2_transformed - image1)**2)
 
-    # calculate SSIM between image1_transformed and image2
-    ssim12_image_RANSAC = ssim(image1_transformed, image2)
-    # calculate SSIM between image2_transformed and image1
-    ssim21_image_RANSAC = ssim(image2_transformed, image1)
+#     # calculate SSIM between image1_transformed and image2
+#     ssim12_image_RANSAC = ssim(image1_transformed, image2)
+#     # calculate SSIM between image2_transformed and image1
+#     ssim21_image_RANSAC = ssim(image2_transformed, image1)
 
-    # take the match score of the elements in matches_RANSAC to plot with lines
-    match_score = matches[2, matches_RANSAC]
+#     # take the match score of the elements in matches_RANSAC to plot with lines
+#     match_score = matches[2, matches_RANSAC]
 
-    # Part 3 - Plotting
-    if plot:
-        # Create a subplot with 2 rows and 2 columns
-        fig, axes = plt.subplot_mosaic("AAFE;BDCG", figsize=(20, 10))
+#     # Part 3 - Plotting
+#     if plot:
+#         # Create a subplot with 2 rows and 2 columns
+#         fig, axes = plt.subplot_mosaic("AAFE;BDCG", figsize=(20, 10))
 
-        overlaid1 = overlay_points(image1.copy(), matches1, radius=2)
-        overlaid2 = overlay_points(image2.copy(), matches2, radius=2)
-        overlaid1_transformed = overlay_points(image1_transformed.copy(), matches1_all_transformed, radius=2)
-        overlaid2_transformed = overlay_points(image2_transformed.copy(), matches2_all_transformed, radius=2)
+#         overlaid1 = overlay_points(image1.copy(), matches1, radius=2)
+#         overlaid2 = overlay_points(image2.copy(), matches2, radius=2)
+#         overlaid1_transformed = overlay_points(image1_transformed.copy(), matches1_all_transformed, radius=2)
+#         overlaid2_transformed = overlay_points(image2_transformed.copy(), matches2_all_transformed, radius=2)
         
-        # Row 1: Two images side-by-side with overlaid points and lines
-        # show also MSE and SSIM between the two images
-        axes["A"].imshow(draw_lines(overlaid1, overlaid2, matches1_RANSAC, matches2_RANSAC, match_score))
-        axes["A"].set_title(f"(RANSAC) Pair {image1_name} with matched points. MSE (x100): {100*np.mean((image1 - image2)**2):.4f} SSIM (x10): {10*ssim(image1, image2):.4f}")
-        axes["A"].axis('off')
+#         # Row 1: Two images side-by-side with overlaid points and lines
+#         # show also MSE and SSIM between the two images
+#         axes["A"].imshow(draw_lines(overlaid1, overlaid2, matches1_RANSAC, matches2_RANSAC, match_score))
+#         axes["A"].set_title(f"(RANSAC) Pair {image1_name} with matched points. MSE (x100): {100*np.mean((image1 - image2)**2):.4f} SSIM (x10): {10*ssim(image1, image2):.4f}")
+#         axes["A"].axis('off')
 
-        axes["B"].imshow(overlaid1_transformed, cmap='gray')
-        axes["B"].set_title(f"Image A transformed to B")
-        axes["B"].axis('off')
+#         axes["B"].imshow(overlaid1_transformed, cmap='gray')
+#         axes["B"].set_title(f"Image A transformed to B")
+#         axes["B"].axis('off')
         
-        axes["C"].imshow(overlaid2_transformed, cmap='gray')
-        # axes["C"].imshow(image2_transformed, cmap='gray')
-        axes["C"].set_title(f"Image B transformed to A")
-        axes["C"].axis('off')
+#         axes["C"].imshow(overlaid2_transformed, cmap='gray')
+#         # axes["C"].imshow(image2_transformed, cmap='gray')
+#         axes["C"].set_title(f"Image B transformed to A")
+#         axes["C"].axis('off')
 
-        # New subplot for the transformed points
-        # Blue: from original locations from image 2/1 to the affine-transformed locations
-        # Red: from affine-transformed locations of points from image 2/1 to 
-        # the locations they supposed to be in image 1/2 (Non-RANSAC)
-        # Green: from affine-transformed locations of points from image 2/1 to 
-        # the locations they supposed to be in image 1/2 (Non-RANSAC)
+#         # New subplot for the transformed points
+#         # Blue: from original locations from image 2/1 to the affine-transformed locations
+#         # Red: from affine-transformed locations of points from image 2/1 to 
+#         # the locations they supposed to be in image 1/2 (Non-RANSAC)
+#         # Green: from affine-transformed locations of points from image 2/1 to 
+#         # the locations they supposed to be in image 1/2 (Non-RANSAC)
 
-        # image 2 with lines connecting RANSAC inliers and outliers in different colors
-        img2 = draw_lines_one_image(overlaid2, matches1_all_transformed, matches1, line_color=(0, 0, 155))
-        img2 = draw_lines_one_image(img2, matches2, matches1_all_transformed, line_color=(255, 0, 0))
-        img2 = draw_lines_one_image(img2, matches1_inliers_transformed, matches1_RANSAC, line_color=(0, 255, 0))
-        # img2 = draw_lines_one_image(img2, matches2_RANSAC, matches1_inliers_transformed, line_color=(0, 255, 0))
+#         # image 2 with lines connecting RANSAC inliers and outliers in different colors
+#         img2 = draw_lines_one_image(overlaid2, matches1_all_transformed, matches1, line_color=(0, 0, 155))
+#         img2 = draw_lines_one_image(img2, matches2, matches1_all_transformed, line_color=(255, 0, 0))
+#         img2 = draw_lines_one_image(img2, matches1_inliers_transformed, matches1_RANSAC, line_color=(0, 255, 0))
+#         # img2 = draw_lines_one_image(img2, matches2_RANSAC, matches1_inliers_transformed, line_color=(0, 255, 0))
 
-        axes["F"].imshow(img2)
-        axes["F"].set_title(f"Image B with points A transformed to B. MSE: {mse12_RANSAC:.4f}")
-        axes["F"].axis('off')
+#         axes["F"].imshow(img2)
+#         axes["F"].set_title(f"Image B with points A transformed to B. MSE: {mse12_RANSAC:.4f}")
+#         axes["F"].axis('off')
 
-        img1 = draw_lines_one_image(overlaid1, matches2_all_transformed, matches2, line_color=(0, 0, 155)) # color: blue
-        img1 = draw_lines_one_image(img1, matches1, matches2_all_transformed, line_color=(255, 0, 0))
-        img1 = draw_lines_one_image(img1, matches2_inliers_transformed, matches2_RANSAC, line_color=(0, 255, 0)) # RANSAC inliers
-        # img1 = draw_lines_one_image(img1, matches1_RANSAC, matches2_inliers_transformed, line_color=(0, 255, 0)) # RANSAC inliers
+#         img1 = draw_lines_one_image(overlaid1, matches2_all_transformed, matches2, line_color=(0, 0, 155)) # color: blue
+#         img1 = draw_lines_one_image(img1, matches1, matches2_all_transformed, line_color=(255, 0, 0))
+#         img1 = draw_lines_one_image(img1, matches2_inliers_transformed, matches2_RANSAC, line_color=(0, 255, 0)) # RANSAC inliers
+#         # img1 = draw_lines_one_image(img1, matches1_RANSAC, matches2_inliers_transformed, line_color=(0, 255, 0)) # RANSAC inliers
         
-        axes["E"].imshow(img1)
-        axes["E"].set_title(f"Image A with points B transformed to A. MSE: {mse21_RANSAC:.4f}")
-        axes["E"].axis('off')
+#         axes["E"].imshow(img1)
+#         axes["E"].set_title(f"Image A with points B transformed to A. MSE: {mse21_RANSAC:.4f}")
+#         axes["E"].axis('off')
 
-        # Display the checkerboard image 1 transformed to 2
-        # checkerboard = create_checkerboard(image1_transformed, image2)
-        checkerboard = create_checkerboard(overlaid1_transformed, overlaid2)
-        axes["D"].imshow(checkerboard, cmap='gray')
-        axes["D"].set_title(f"Checkerboard A to B: {mse12_image_RANSAC:.4f}")
-        axes["D"].axis('off')
+#         # Display the checkerboard image 1 transformed to 2
+#         # checkerboard = create_checkerboard(image1_transformed, image2)
+#         checkerboard = create_checkerboard(overlaid1_transformed, overlaid2)
+#         axes["D"].imshow(checkerboard, cmap='gray')
+#         axes["D"].set_title(f"Checkerboard A to B: {mse12_image_RANSAC:.4f}")
+#         axes["D"].axis('off')
 
-        # Display the checkerboard image 2 transformed to 1
-        # checkerboard = create_checkerboard(image2_transformed, image1)
-        checkerboard = create_checkerboard(overlaid2_transformed, overlaid1)
-        axes["G"].imshow(checkerboard, cmap='gray')
-        axes["G"].set_title(f"Checkerboard B to A: {mse21_image_RANSAC:.4f}")
-        axes["G"].axis('off')
+#         # Display the checkerboard image 2 transformed to 1
+#         # checkerboard = create_checkerboard(image2_transformed, image1)
+#         checkerboard = create_checkerboard(overlaid2_transformed, overlaid1)
+#         axes["G"].imshow(checkerboard, cmap='gray')
+#         axes["G"].set_title(f"Checkerboard B to A: {mse21_image_RANSAC:.4f}")
+#         axes["G"].axis('off')
         
-        plt.tight_layout()  # Adjust the layout to leave space for the histogram
-        plt.savefig(os.path.join(dir_name, f"{image1_name}_RANSAC.png"))
-        plt.close()
+#         plt.tight_layout()  # Adjust the layout to leave space for the histogram
+#         plt.savefig(os.path.join(dir_name, f"{image1_name}_RANSAC.png"))
+#         plt.close()
 
-    return matches1_transformed.shape[-1], mse_before, mse12, mse21, tre_before, tre12, tre21, \
-        mse12_image, mse21_image, ssim12_image, ssim21_image, matches1_inliers_transformed.shape[-1], \
-        mse12_RANSAC, mse21_RANSAC, tre12_RANSAC, tre21_RANSAC, mse12_image_RANSAC, mse21_image_RANSAC, \
-            ssim12_image_RANSAC, ssim21_image_RANSAC
+#     return matches1_transformed.shape[-1], mse_before, mse12, mse21, tre_before, tre12, tre21, \
+#         mse12_image, mse21_image, ssim12_image, ssim21_image, matches1_inliers_transformed.shape[-1], \
+#         mse12_RANSAC, mse21_RANSAC, tre12_RANSAC, tre21_RANSAC, mse12_image_RANSAC, mse21_image_RANSAC, \
+#             ssim12_image_RANSAC, ssim21_image_RANSAC
 
 
 def blend_img(edge, image):
@@ -882,53 +887,53 @@ def transform_points_DVF(points, M, image):
 #     return points
 
 
-def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, image1_transformed,
-                       matches1, matches2, matches1_transformed, desc1, desc2, affine_params_true=None, 
+def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, image3,
+                       matches1, matches2, matches3, desc1, desc2, affine_params_true=None, 
                        affine_params_predict=None, heatmap1=None, heatmap2=None, plot=True):
-    
 
-    # BEGIN: 4j8d9fj3j9fj
     # print("matches1 shape:", matches1.shape)
     # print("matches2 shape:", matches2.shape)
-    # print("matches1_transformed shape:", matches1_transformed.shape)
+    # print("matches3 shape:", matches3.shape)
     # print("desc1 shape:", desc1.shape)
     # print("desc2 shape:", desc2.shape)
-    # END: 4j8d9fj3j9fj
-    # MSE and TRE before transformation
+
+    # MSE and TRE before transformation (points)
     mse_before = mse(matches1, matches2)
-    tre_before = np.mean(np.sqrt(np.sum((matches1 - matches2)**2, axis=0)))
+    tre_before = tre(matches1, matches2)
     
-    # matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_params[0])
-    # matches1_transformed = matches1_transformed[0].T
+    # matches3 = cv2.transform(matches1.T[None, :, :], affine_params[0])
+    # matches3 = matches3[0].T
 
-    mse12 = np.mean((matches1_transformed - matches2)**2)
-    tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2)**2, axis=0)))
+    mse12 = mse(matches3, matches2)
+    tre12 = tre(matches3, matches2)
 
-    # calculate the MSE between image1_transformed and image2
-    mse12_image_before = np.mean((image1 - image2)**2)
-    mse12_image = np.mean((image1_transformed - image2)**2)
+    # calculate the MSE between image3 and image2
+    mse12_image_before = mse(image1, image2)
+    mse12_image = mse(image3, image2)
 
-    # calculate SSIM between image1_transformed and image2
-    ssim12_image_before = ssim(image1, image2, data_range=image2.max() - image2.min())
-    ssim12_image = ssim(image1_transformed, image2, data_range=image2.max() - image2.min())
+    # calculate SSIM between image3 and image2
+    ssim12_image_before = ssim(image1, image2)
+    ssim12_image = ssim(image3, image2)
 
     # Part 3 - Plotting
     if plot:
         try:
             # Create a subplot with 2 rows and 2 columns
-            fig, axes = plt.subplot_mosaic("AADE;BCFG", figsize=(20, 10))
+            # fig, axes = plt.subplot_mosaic("AADE;BCFG", figsize=(20, 10))
+            fig, axes = plt.subplot_mosaic("BCFD;AGHE", figsize=(20, 10))
 
             overlaid1 = overlay_points(image1.copy(), matches1, radius=1)
             overlaid2 = overlay_points(image2.copy(), matches2, radius=1)
-            overlaid1to2 = overlay_points(overlaid1.copy(), matches1_transformed, color=(155, 0, 0), radius=1)
-            # overlaid1to2 = overlay_points(overlaid1to2.copy(), matches1, color=(0, 0, 155), radius=1)
-            # true points in black, transformed points in white
-            overlaid12_error = overlay_points(overlaid2.copy(), matches1_transformed, color=(0, 0, 155), radius=1)
+            overlaid3 = overlay_points(image3.copy(), matches3, radius=1)
 
-            # Row 1: Two images side-by-side with overlaid points and lines
-            output_overlaid = overlay_points(image1_transformed.copy(), matches1_transformed, radius=1)
-            axes["F"].imshow(output_overlaid, cmap='gray')
-            axes["F"].set_title(f"Output, {affine_params_predict[0]}")
+            overlaidD = overlay_points(overlaid2.copy(), matches3, color=(155, 0, 0), radius=1)
+            overlaidD = overlay_points(overlaidD.copy(), matches1, color=(0, 0, 155), radius=1)
+
+            overlaidE = overlay_points(overlaid2.copy(), matches3, color=(0, 0, 155), radius=1)
+            overlaidH = overlay_points(overlaid2.copy(), matches1, color=(0, 0, 155), radius=1)
+
+            axes["F"].imshow(overlaid3, cmap='gray')
+            axes["F"].set_title(f"Warped, {affine_params_predict[0]}")
             axes["F"].axis('off')
             axes['F'].grid(True)
 
@@ -951,40 +956,56 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # Blue: from original locations from image 2/1 to the affine-transformed locations
             # Red: from affine-transformed locations of points from image 2/1 to 
             # the locations they supposed to be in image 1/2
+            # Green: from affine-transformed locations of points from image 2/1 to
+            
             try:
-                imgD = draw_lines_one_image(overlaid1to2, matches1_transformed, matches1, line_color=(0, 0, 155))
+                imgH = draw_lines_one_image(overlaidH, matches2, matches1, line_color=(155, 0, 0))
+                axes["H"].imshow(imgH)
+            except:
+                axes["H"].imshow(overlaidH)
+            axes["H"].set_title(f"Before, Error lines. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}")
+            axes["H"].axis('off')
+
+            try:
+                imgD = draw_lines_one_image(overlaidD, matches3, matches1, line_color=(0, 0, 155))
                 axes["D"].imshow(imgD)
             except:
-                axes["D"].imshow(overlaid1to2)
-            # img2 = draw_lines_one_image(img2, matches2, matches1_transformed, line_color=(255, 0, 0))
-            axes["D"].set_title(f"SrcImg, Transformation lines.")
+                axes["D"].imshow(overlaidD)
+            # img2 = draw_lines_one_image(img2, matches2, matches3, line_color=(255, 0, 0))
+            axes["D"].set_title(f"Source -> Warped, Transformation. {mse(matches1, matches3):.4f}, {tre(matches1, matches3):.4f}")
             axes["D"].axis('off')
 
-            # img2 = draw_lines_one_image(overlaid2, matches1_transformed, matches1, line_color=(0, 0, 155))
+            # img2 = draw_lines_one_image(overlaid2, matches3, matches1, line_color=(0, 0, 155))
             try:
-                imgE = draw_lines_one_image(overlaid12_error, matches2, matches1_transformed, line_color=(155, 0, 0))
+                imgE = draw_lines_one_image(overlaidE, matches2, matches3, line_color=(155, 0, 0))
                 axes["E"].imshow(imgE)
             except:
-                axes["E"].imshow(overlaid12_error)
-            axes["E"].set_title(f"TrgImg, Error lines. MSE: {mse12:.4f}, TRE: {tre12:.4f}")
+                axes["E"].imshow(overlaidE)
+            axes["E"].set_title(f"After, Error lines. MSE: {mse12:.4f}, TRE: {tre12:.4f}")
             axes["E"].axis('off')
 
+            # Display the checkerboard image 1 original to 2
+            checkerboard = create_checkerboard(image1, image2)
+            axes["A"].imshow(checkerboard, cmap='gray')
+            axes["A"].set_title(f"Original - Target, MSE: {mse12_image_before:.4f}, SSIM: {ssim12_image_before:.4f}")
+            axes["A"].axis('off')
+
             # Display the checkerboard image 1 transformed to 2
-            checkerboard = create_checkerboard(image1_transformed, image2)
+            checkerboard = create_checkerboard(image3, image2)
             axes["G"].imshow(checkerboard, cmap='gray')
-            axes["G"].set_title(f"Checker, MSE: {mse12_image:.4f}, SSIM: {ssim12_image:.4f}")
+            axes["G"].set_title(f"Warped - Target, MSE: {mse12_image:.4f}, SSIM: {ssim12_image:.4f}")
             axes["G"].axis('off')
 
             # show also MSE and SSIM between the two images
-            imgA = draw_lines(overlaid1, overlaid2, matches1, matches2, match=None)
-            axes["A"].imshow(imgA)
-            axes["A"].set_title(f"Pair {image1_name}. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}, {matches1.shape[1]} matches")
-            axes["A"].axis('off')
+            # imgA = draw_lines(overlaid1, overlaid2, matches1, matches2, match=None)
+            # axes["A"].imshow(imgA)
+            # axes["A"].set_title(f"Pair {image1_name}. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}, {matches1.shape[1]} matches")
+            # axes["A"].axis('off')
 
             # axes G shows edge of image 1 over image 2
             # find the edges of the transformed image
             '''kernel = np.ones((3, 3), np.uint8)
-            edges = cv2.Canny((image1_transformed*255).astype(np.uint8), 15, 200)
+            edges = cv2.Canny((image3*255).astype(np.uint8), 15, 200)
             # edges = cv2.dilate(edges, kernel, iterations=1)
             edge_overlay = blend_img(edges, image2)
             print("E")
@@ -1010,17 +1031,63 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
                         break
                     suffix += 1
 
-            plt.savefig(save_file_name)
+            signaturebar_gray(fig, f"{image2_name} - {name} - {image1_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
+                    rect_kw={"facecolor": "gray", "edgecolor": None},
+                    text_kw={"color": "w"})
+            fig.savefig(save_file_name)
             
             # save images to output folder
-            '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image1_transformed*255)
+            '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image3*255)
             cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_2.png", image2_transformed*255)'''
-            plt.close()
+            plt.close(fig)
             
         except TypeError:
             print("TypeError in plotting")
             pass
 
-    return matches1_transformed, mse_before, mse12, tre_before, tre12, \
+    return matches3, mse_before, mse12, tre_before, tre12, \
         mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
 
+def signaturebar(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
+                 rect_kw={"facecolor": None, "edgecolor": None},
+                 text_kw={"color": "w"}):
+
+    w, h = fig.get_size_inches()
+    height = ((fontsize + 2 * pad) / 72.) / h
+
+    # rect_kw_outer = {"facecolor": None, "edgecolor": "gray", "linewidth": 1}
+    # rect_outer = plt.Rectangle((0, 0), 1, 1, transform=fig.transFigure, clip_on=False, **rect_kw_outer)
+    # fig.axes[0].add_patch(rect_outer)
+
+    # create many rectangles to get the gradient effect with color from "#B163A3" to "#30D5C8"
+    nrect = 100
+    rect_kw_inner = {"facecolor": None, "edgecolor": None}
+    for i in range(nrect):
+        rect_kw_inner["facecolor"] = mcolors.to_hex(np.array(mcolors.to_rgb("#30D5C8")) * (nrect - i) / nrect + np.array(
+            mcolors.to_rgb("#B163A3")) * i / nrect)
+        rect_inner = plt.Rectangle((0, 0), (nrect-i)/nrect, height, transform=fig.transFigure, clip_on=False, **rect_kw_inner)
+        fig.axes[0].add_patch(rect_inner)
+    
+    # rect_inner = plt.Rectangle((0, 0), 1/2, height, transform=fig.transFigure, clip_on=False,
+    #                            **{"facecolor": "gray", "edgecolor": None})
+    # fig.axes[0].add_patch(rect_inner)
+
+    # text_kw["weight"] = "bold"  # Add this line to make the text bold
+    fig.text(xpos / 72. / h, ypos / 72. / h, text, fontsize=fontsize, **text_kw)
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom + height)
+    
+def signaturebar_gray(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
+                 rect_kw={"facecolor": "gray", "edgecolor": None},
+                 text_kw={"color": "w"}):
+    w, h = fig.get_size_inches()
+    height = ((fontsize + 2 * pad) / 72.) / h
+
+    # rect_kw_outer = {"facecolor": None, "edgecolor": "gray", "linewidth": 1}  # Define outer rectangle parameters
+    # rect_outer = plt.Rectangle((0, 0), 1, 1, transform=fig.transFigure, clip_on=False, **rect_kw_outer)  # Add outer rectangle
+    # fig.axes[0].add_patch(rect_outer)
+
+    rect_inner = plt.Rectangle((0, 0), 1, height, transform=fig.transFigure, clip_on=False, **rect_kw)  # Add inner rectangle
+    fig.axes[0].add_patch(rect_inner)
+    
+    fig.text(xpos / 72. / h, ypos / 72. / h, text, fontsize=fontsize, **text_kw)
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom + height)

@@ -1,0 +1,30 @@
+SP_AffineNet4
+trained_models/SP_AffineNet4_11100_0.0001_0_10_1_20231214-011447.pth
+11100_0.0001_0_10_1
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_10_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7f0c0c489a80>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  10
+Batch size:  1
+
+
+[1, 0.5364627252519131, 0.5056131651997566]
+[2, 0.4949736633896828, 0.4935059255361557]
+[3, 0.5189495608210564, 0.4344964975118637]
+[4, 0.4661561554670334, 0.3275766132771969]
+[5, 0.3527157098054886, 0.23663244098424913]
+[6, 0.24932860381901265, 0.16127343632280827]
+[7, 0.16299493305385113, 0.09447715930640697]
+[8, 0.08938074178993702, 0.06193686492741108]
+[9, 0.0622401327919215, 0.05952302072197199]
+[10, 0.0618821685668081, 0.05975665665231645]
