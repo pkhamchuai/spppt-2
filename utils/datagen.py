@@ -60,10 +60,6 @@ class MyDataset(torch.utils.data.Dataset):
         keypoints = keypoints.to_numpy()
         keypoints = keypoints.astype(np.float32)
 
-        
-
-
-        
         if self.sup:
             affine_params = np.array([[row['M00'], row['M01'], row['M02']], [row['M10'], row['M11'], row['M12']]]).astype(np.float32)
             # if supervised, keypoints have 2 more columns

@@ -14,17 +14,17 @@ image_size = 256
 class SP_AffineNet(nn.Module):
     def __init__(self, model_params):
         super(SP_AffineNet, self).__init__()
-        self.superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
-                          conf_thresh=0.015, nn_thresh=0.7, cuda=True)
+        # self.superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
+        #                   conf_thresh=0.015, nn_thresh=0.7, cuda=True)
         self.affineNet = AffineNet()
-        self.nn_thresh = 0.7
+        # self.nn_thresh = 0.7
         self.model_params = model_params
         print("\nRunning new version (not run SP on source image)")
 
         inputs = torch.rand((1, 1, image_size, image_size)), torch.rand((1, 1, image_size, image_size))
         summary(self.affineNet, *inputs, show_input=True, show_hierarchical=True, print_summary=True)
 
-    def forward(self, source_image, target_image, matches1, matches2):
+    def forward(self, source_image, target_image, matches1):
         # source_image = source_image.to(device)
         # target_image = target_image.to(device)
 
@@ -115,9 +115,9 @@ class AffineNet(nn.Module):
         # print(x.shape, y.shape)
         t = torch.cat((x, y), dim=1)
         # print(t.shape)
-        t = self.fc1(t.flatten())
+        t = self.ReLU(self.fc1(t.flatten()))
         # print(t.shape)
-        t = self.fc4(self.fc3(self.fc2(t)))
+        t = self.fc4(self.ReLU(self.fc3(self.ReLU(self.fc2(t)))))
         t = t.view(-1, 2, 3)
         # print(t.shape)
         return t

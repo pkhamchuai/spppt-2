@@ -421,7 +421,7 @@ bright_colors = [
 ]
 
 # Function to draw lines connecting points from image 1 to image 2 with random bright colors
-def draw_lines(image1, image2, points1, points2, match=None, line_thickness=1, opacity=0.5):
+def draw_lines(image1, image2, points1, points2, match=None, line_thickness=1, opacity=0.2):
     # Convert grayscale images to 3-channel with repeated intensity value
     if len(image1.shape) == 2:
         image1 = cv2.cvtColor(image1, cv2.COLOR_GRAY2BGR)
