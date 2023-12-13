@@ -18,7 +18,7 @@ for j in range(len(models)):
     for i in range(len(dataset)):
         for k in range(len(loss)):
             runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
-                            '--num_epochs', '10', '--image', str(loss[k][0]), '--loss_image', '0', '--loss_points', str(loss[k][1])])
+                            '--num_epochs', '10', '--image', str(loss[k][0]), '--loss_image', '0', '--points', str(loss[k][1])])
 
     # for i in range(len(dataset)):
     #     runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
