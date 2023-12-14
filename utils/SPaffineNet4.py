@@ -15,7 +15,6 @@ class SP_AffineNet4(nn.Module):
     def __init__(self, model_params):
         super(SP_AffineNet4, self).__init__()
         self.affineNet = AffineNet()
-
         self.model_params = model_params
         print("\nRunning new version (not run SP on source image)")
 
@@ -32,10 +31,27 @@ class SP_AffineNet4(nn.Module):
             # affine_params = self.affineNet(source_image, target_image, heatmap1, heatmap2)
 
         return transformed_source_image, affine_params, transformed_points
+    
+class AffineTransform(nn.Module):
+    def __init__(self):
+        super(AffineTransform, self).__init__()
+
+    def forward(self, points, matrix):
+        points = points.T
+        # Add a row of ones to the input points for the affine transformation
+        ones = torch.ones(1, points.size(1), dtype=points.dtype, device=points.device)
+        points_homogeneous = torch.cat([points, ones], dim=0)
+
+        # Apply the affine transformation
+        transformed_points = torch.mm(matrix, points_homogeneous)
+
+        return transformed_points[:2, :]
 
 class AffineNet(nn.Module):
     def __init__(self):
         super(AffineNet, self).__init__()
+        self.affine_layer = AffineTransform()
+
         self.conv1f = 64
         self.conv2f = 128
         self.conv3f = 256
@@ -99,10 +115,15 @@ class AffineNet(nn.Module):
         # using F.affine_grid and F.grid_sample
         transformed_source_image_affine = tensor_affine_transform(source_image, t)
         # transformed_source_image_affine = transformed_source_image_affine.requires_grad_(True)
+
         transformed_points = transform_points_DVF(points[0].cpu().detach().T, 
                         t.cpu().detach(), transformed_source_image_affine.cpu().detach())
+        transformed_points = transformed_points.requires_grad_(True)
+        
+        # points = points.requires_grad_(True)
+        # transformed_points = self.affine_layer(points[0], t[0])
         # transformed_points = transformed_points.requires_grad_(True)
 
-        return t,  transformed_source_image_affine, transformed_points
+        return t,  transformed_source_image_affine, transformed_points.T
 
     

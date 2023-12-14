@@ -1,12 +1,12 @@
 import subprocess
 
-dataset = [2, 3, 0]
+dataset = [1, 2, 0]
 sups = [1, 1, 0]
 # models = ['DHR', 'SP_AffineNet']
 models = ['SP_AffineNet4', 'DHR']
 runs = []
 learning_rate = 1e-4
-loss = [[0, 1]]
+loss = [[1, 1]]
 
 # generate run commands
 for j in range(len(models)):

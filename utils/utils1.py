@@ -862,13 +862,20 @@ def transform_points_DVF(points, M, image):
     displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
     DVF = transform_to_displacement_field(
         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
-        M.clone().view(1, 2, 3))
-    if isinstance(DVF, torch.Tensor):
-        DVF = DVF.numpy()
-    # loop through each point and apply the transformation
-    for i in range(points.shape[1]):
-        points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
-    return points
+        M.view(1, 2, 3))
+
+    # Reshape tensor points to have dimensions [2, N]
+    points = points.t().long()
+
+    # Use torch.gather to select values from A using indices from points
+    result = DVF[:, points[:, 0], points[:, 1]]
+
+    # Reshape result to have dimensions [2, N]
+    result = result.t()
+    # subtract the result from the original points
+    points = points.float()
+    result = torch.subtract(points, result)
+    return result
 
 # def transform_points_DVF(points, affine_params, image_size):
 #     # transform points using displacement field

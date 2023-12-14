@@ -139,7 +139,7 @@ def train(model_name, model_path, model_params, timestamp):
             # 7 (256, 256)
             transformed_source_affine = outputs[0] # image
             affine_params_predicted = outputs[1] # affine parameters
-            points1_2_predicted = outputs[2]
+            points1_2_predicted = outputs[2].T
 
             try:
                 points1_2_predicted = points1_2_predicted.reshape(
@@ -157,22 +157,28 @@ def train(model_name, model_path, model_params, timestamp):
                 # loss_points = criterion_points(points1_affine, points2)
                 # loss += loss_affine
 
+            # print shape of points1_2_predicted, points2, points1_2_true
+            # print(points1_2_predicted.shape, points2.shape, points1.shape)
             if model_params.points:
                 # print the input's device
                 loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                                    torch.flatten(points2[0].T, start_dim=1).cpu().detach())
+                                    torch.flatten(points2[0], start_dim=1).cpu().detach())
 
             # loss.backward()
             # optimizer.step()
             # scheduler.step()
-
+                
+            # print shape of points1_2_predicted, points2, points1
+            # print(points1_2_predicted.shape, points2.shape, points1.shape)
             # Plot images if i < 5
             if i % 50 == 0:
                 DL_affine_plot(f"epoch{epoch+1}_train", output_dir,
                     f"{i}", model_params.get_model_code(), 
                     source_image[0, 0, :, :].detach().cpu().numpy(), target_image[0, 0, :, :].detach().cpu().numpy(), 
                     transformed_source_affine[0, 0, :, :].detach().cpu().numpy(),
-                    points1[0].cpu().detach().numpy().T, points2[0].cpu().detach().numpy().T, points1_2_predicted.cpu().detach().numpy(), None, None, affine_params_true=affine_params_true,
+                    points1[0].cpu().detach().numpy().T, 
+                    points2[0].cpu().detach().numpy().T, 
+                    points1_2_predicted.cpu().detach().numpy().T, None, None, affine_params_true=affine_params_true,
                         affine_params_predict=affine_params_predicted, heatmap1=None, heatmap2=None, plot=True)
 
             # Print statistics
@@ -214,7 +220,7 @@ def train(model_name, model_path, model_params, timestamp):
                 # 7 (256, 256)
                 transformed_source_affine = outputs[0] # image
                 affine_params_predicted = outputs[1] # affine parameters
-                points1_2_predicted = outputs[2]
+                points1_2_predicted = outputs[2].T
 
                 try:
                     points1_2_predicted = points1_2_predicted.reshape(
@@ -236,7 +242,7 @@ def train(model_name, model_path, model_params, timestamp):
                     # print the input's device
                     
                     loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                                    torch.flatten(points2[0].T, start_dim=1).cpu().detach())
+                                    torch.flatten(points2[0], start_dim=1).cpu().detach())
 
                 # Add to validation loss
                 validation_loss += loss.item()
@@ -247,8 +253,9 @@ def train(model_name, model_path, model_params, timestamp):
                         f"{i}", model_params.get_model_code(), source_image[0, 0, :, :].cpu().numpy(), 
                         target_image[0, 0, :, :].cpu().numpy(), 
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                        points1[0].cpu().detach().numpy().T, points2[0].cpu().detach().numpy().T, 
-                        points1_2_predicted.cpu().detach().numpy(), None, None, 
+                        points1[0].cpu().detach().numpy().T, 
+                        points2[0].cpu().detach().numpy().T, 
+                        points1_2_predicted.cpu().detach().numpy().T, None, None, 
                         affine_params_true=affine_params_true,
                         affine_params_predict=affine_params_predicted, 
                         heatmap1=None, heatmap2=None, plot=True)
