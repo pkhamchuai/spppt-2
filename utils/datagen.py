@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 # import MNIST dataset
-from torchvision.datasets import MNIST
+# from torchvision.datasets import MNIST
 from torchvision import transforms
 import cv2
 import numpy as np
@@ -12,7 +12,7 @@ import numpy as np
 img_size = 256
 
 class MyDataset(torch.utils.data.Dataset):
-    def __init__(self, dataset_path, df, is_train, sup, im_size=img_size, transform=None):
+    def __init__(self, dataset_path, df, is_train, sup, transform=None):
         self.dataset_path = dataset_path
         self.df = df
         self.is_train = is_train
@@ -60,17 +60,17 @@ class MyDataset(torch.utils.data.Dataset):
         keypoints = keypoints.to_numpy()
         keypoints = keypoints.astype(np.float32)
 
-        if self.sup:
+        if self.sup == True:
             affine_params = np.array([[row['M00'], row['M01'], row['M02']], [row['M10'], row['M11'], row['M12']]]).astype(np.float32)
             # if supervised, keypoints have 2 more columns
-            matches1 = keypoints[:, 0:2]
-            matches2 = keypoints[:, 2:4]
-            matches1_2 = keypoints[:, 4:6]
+            matches1 = np.array(keypoints[:, 0:2]).astype(np.float32)
+            matches2 = np.array(keypoints[:, 2:4]).astype(np.float32)
+            matches1_2 = np.array(keypoints[:, 4:6]).astype(np.float32)
             return source_img, target_img, affine_params, matches1, matches2, matches1_2
-        else:
-            matches1 = keypoints[:, 0:2]
-            matches2 = keypoints[:, 2:4]
-            return source_img, target_img, None, matches1, matches2, None
+        elif self.sup == False:
+            matches1 = np.array(keypoints[:, 0:2]).astype(np.float32)
+            matches2 = np.array(keypoints[:, 2:4]).astype(np.float32)
+            return source_img, target_img, np.array([]), matches1, matches2, np.array([])
         
 
 def datagen(dataset, is_train, sup):
@@ -79,19 +79,15 @@ def datagen(dataset, is_train, sup):
         dataset_path = 'Dataset/Dataset-processed'
         if is_train:
             df = pd.read_csv('Dataset/dataset_eye_actual_keypoints.csv')
-            
             # count number of rows that df['training'] == 1
             print('Training eye dataset')
             print('Number of training data: ', len(df[df['training'] == 1]))
-
             df = df[df['training'] == 1]
         else:
             df = pd.read_csv('Dataset/dataset_eye_actual_keypoints.csv')
-
             # count number of rows that df['training'] == 0
             print('Test eye dataset')
             print('Number of testing data: ', len(df[df['training'] == 0]))
-
             df = df[df['training'] == 0]
 
     elif dataset == 1:

@@ -98,8 +98,10 @@ class AffineNet(nn.Module):
         # transform the source image using the affine parameters
         # using F.affine_grid and F.grid_sample
         transformed_source_image_affine = tensor_affine_transform(source_image, t)
+        # transformed_source_image_affine = transformed_source_image_affine.requires_grad_(True)
         transformed_points = transform_points_DVF(points[0].cpu().detach().T, 
                         t.cpu().detach(), transformed_source_image_affine.cpu().detach())
+        # transformed_points = transformed_points.requires_grad_(True)
 
         return t,  transformed_source_image_affine, transformed_points
 

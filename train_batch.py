@@ -6,7 +6,7 @@ sups = [1, 1, 0]
 models = ['SP_AffineNet4', 'DHR']
 runs = []
 learning_rate = 1e-4
-loss = [[0, 1], [1, 0]]
+loss = [[0, 1]]
 
 # generate run commands
 for j in range(len(models)):
