@@ -113,17 +113,20 @@ def train(model_name, model_path, model_params, timestamp):
         train_bar = tqdm(train_dataset, desc=f'Training Epoch {epoch+1}/{model_params.num_epochs}')
         for i, data in enumerate(train_bar):
             # Zero the parameter gradients
+            optimizer.zero_grad()
             
             loss = 0.0
 
             # Get images and affine parameters
-            source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
+            source_image, target_image, affine_params_true, \
+                points1, points2, points1_2_true = data
 
             source_image = source_image.requires_grad_(True).to(device)
             target_image = target_image.requires_grad_(True).to(device)
             # add gradient to the matches
             points1 = points1.requires_grad_(True).to(device)
             points2 = points2.requires_grad_(True).to(device)
+            points1_2_true = points1_2_true.requires_grad_(True).to(device)
 
             # Forward + backward + optimize
             outputs = model(source_image, target_image, points1)
@@ -155,17 +158,17 @@ def train(model_name, model_path, model_params, timestamp):
                 loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
                 # TODO: add loss for points1_affine and points2, Euclidean distance
                 # loss_points = criterion_points(points1_affine, points2)
-                # loss += loss_affine
+                loss += loss_affine
 
             # print shape of points1_2_predicted, points2, points1_2_true
             # print(points1_2_predicted.shape, points2.shape, points1.shape)
             if model_params.points:
                 # print the input's device
                 loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                                    torch.flatten(points2[0], start_dim=1).cpu().detach())
+                                    torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
 
-            # loss.backward()
-            # optimizer.step()
+            loss.backward()
+            optimizer.step()
             # scheduler.step()
                 
             # print shape of points1_2_predicted, points2, points1
@@ -187,8 +190,8 @@ def train(model_name, model_path, model_params, timestamp):
             train_bar.set_postfix({'loss': running_loss / (i+1)})
         print(f'Training Epoch {epoch+1}/{model_params.num_epochs} loss: {running_loss / len(train_dataset)}')
         
-        loss.backward()
-        optimizer.step()
+        # loss.backward()
+        # optimizer.step()
         scheduler.step()
         
         # Validate model
@@ -198,13 +201,15 @@ def train(model_name, model_path, model_params, timestamp):
             for i, data in enumerate(test_dataset, 0):
                 loss = 0.0
                 # Get images and affine parameters
-                source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
+                source_image, target_image, affine_params_true, \
+                    points1, points2, points1_2_true = data
 
                 source_image = source_image.requires_grad_(True).to(device)
                 target_image = target_image.requires_grad_(True).to(device)
                 # add gradient to the matches
                 points1 = points1.requires_grad_(True).to(device)
                 points2 = points2.requires_grad_(True).to(device)
+                points1_2_true = points1_2_true.requires_grad_(True).to(device)
 
                 # Forward + backward + optimize
                 outputs = model(source_image, target_image, points1)
@@ -240,9 +245,8 @@ def train(model_name, model_path, model_params, timestamp):
 
                 if model_params.points:
                     # print the input's device
-                    
                     loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                                    torch.flatten(points2[0], start_dim=1).cpu().detach())
+                                    torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
 
                 # Add to validation loss
                 validation_loss += loss.item()

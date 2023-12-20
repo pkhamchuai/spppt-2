@@ -138,8 +138,8 @@ def train(model_name, model_path, model_params, timestamp):
                 loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
                 # TODO: add loss for points1_affine and points2, Euclidean distance
                 # loss_points = criterion_points(points1_affine, points2)
-
                 loss += loss_affine
+                
             loss.backward()
             optimizer.step()
             scheduler.step()

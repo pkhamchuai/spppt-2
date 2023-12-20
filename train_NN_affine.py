@@ -3,6 +3,8 @@ from utils.utils1 import *
 from utils.utils1 import ModelParams, model_loader, print_summary#, test_repeat
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import numpy as np
+from datetime import datetime
 
 import torch
 import torch.nn as nn
@@ -45,7 +47,7 @@ class AffineTransformationNetwork(nn.Module):
 
 # Example: Create an instance of the neural network with 2 hidden layers and 64 neurons in each hidden layer
 input_size = 8  # Affine matrix (2x3) + Point (2)
-num_hidden_layers = 3
+num_hidden_layers = 2
 num_perceptrons = 64
 hidden_sizes = num_hidden_layers*[num_perceptrons]
 output_size = 2  # Transformed point (2)
@@ -70,7 +72,7 @@ for i, (source_img, target_img, affine_params, \
         matches1, matches2, matches1_2) in enumerate(train_bar):
     for j in range(matches1.shape[1]):
         train_dataset_new.append((torch.cat((affine_params.view(-1), matches1[0][j])), matches2[0][j]))
-        if j > 5:
+        if j > 3:
             break   
 
 test_dataset_new = []
@@ -82,7 +84,7 @@ for i, (source_img, target_img, affine_params, \
         matches1, matches2, matches1_2) in enumerate(test_bar):
     for j in range(matches1.shape[1]):
         test_dataset_new.append((torch.cat((affine_params.view(-1), matches1[0][j])), matches2[0][j]))
-        if j > 2:
+        if j > 1:
             break   
 
 # Create empty list to store epoch number, train loss and validation loss
@@ -92,7 +94,7 @@ val_loss_list = []
 print('Seed:', torch.seed())
 
 # Training loop
-epochs = 1000
+epochs = 2000
 for epoch in range(epochs):
     model.train()
     
@@ -167,7 +169,8 @@ for epoch in range(epochs):
     #     print('Model saved')
 
 # save model to file train_model/affine_transformation_network.pt
-torch.save(model.state_dict(), f'trained_models/affine_NN_{num_hidden_layers}_{num_perceptrons}.pth')
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+torch.save(model.state_dict(), f'trained_models/affine_NN_{num_hidden_layers}_{num_perceptrons}_{epochs:04d}_{timestamp}.pth')
 
  # Plot train loss and validation loss against epoch number
 fig = plt.figure(figsize=(10, 5))
@@ -183,7 +186,7 @@ plt.tight_layout()
 
 # Save plot
 # signaturebar_gray(fig, f'{model_params.get_model_code()} - epoch{model_params.num_epochs} - {timestamp}')
-fig.savefig(f'output/affine_NN_{num_hidden_layers}_{num_perceptrons}.png', dpi=300)
+fig.savefig(f'output/affine_NN_{num_hidden_layers}_{num_perceptrons}_{epochs:04d}_{timestamp}.png', dpi=300)
 
 model.eval()
 
@@ -206,16 +209,14 @@ for i, (input, matches1_2) in enumerate(test_bar):
     # Compute the loss
     loss = criterion(predicted_points, matches1_2)
 
-    test_loss_list += loss.item()
+    test_loss_list.append(loss.item())
 
-    test_bar.set_postfix({'loss': running_loss / (i+1)})
-    print(f'True: {matches1_2[0]}, Predicted: {predicted_points[0]}')
+    test_bar.set_postfix({'loss': loss.item() / (i+1)})
+    print(f'True: {matches1_2.detach().cpu().numpy()}, Predicted: {predicted_points.detach().cpu().numpy()}')
     if i > 10:
         break
 
 # mean and std of the test loss
 mean_test_loss = np.mean(test_loss_list)
 std_test_loss = np.std(test_loss_list)
-
-print(f'Mean test loss: {mean_test_loss}')
-print(f'Std test loss: {std_test_loss}')
+print(f'Mean test loss: {mean_test_loss}, Std test loss: {std_test_loss}')

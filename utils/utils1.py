@@ -107,9 +107,16 @@ class GaussianWeightedMSELoss:
         self.center = center
         self.sigma = sigma
         
+    # def gaussian_weight(self, shape):
+    #     x, y = torch.meshgrid(torch.arange(shape[-2]), torch.arange(shape[-1]))
+    #     return torch.exp(-((x - self.center[0])**2 + (y - self.center[1])**2) / (2 * self.sigma**2))
+    
     def gaussian_weight(self, shape):
         x, y = torch.meshgrid(torch.arange(shape[-2]), torch.arange(shape[-1]))
-        return torch.exp(-((x - self.center[0])**2 + (y - self.center[1])**2) / (2 * self.sigma**2))
+        gaussian = torch.exp(-((x - self.center[0])**2 + (y - self.center[1])**2) / (2 * self.sigma**2))
+        constant = torch.ones_like(gaussian)
+        inverted_gaussian = constant - gaussian
+        return inverted_gaussian
     
     def __call__(self, image1, image2):
         weight = 1 * self.gaussian_weight(image1.shape)
@@ -243,7 +250,7 @@ class ModelParams:
             self.loss_image = MSE_SSIM_NCC()
         elif loss_image == 5:
             self.loss_image_case = 5
-            self.loss_image = GaussianWeightedMSELoss(center=(128, 128), sigma=100000)
+            self.loss_image = GaussianWeightedMSELoss(center=(128, 128), sigma=60)
         elif loss_image == 6:
             self.loss_image_case = 6
             self.loss_image = intensityBased_mse()
