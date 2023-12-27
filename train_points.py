@@ -33,6 +33,7 @@ if int(cv2.__version__[0]) < 3: # pragma: no cover
 
 image_size = 256
 
+
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
 # Define training function
@@ -120,13 +121,15 @@ def train(model_name, model_path, model_params, timestamp):
             # Get images and affine parameters
             source_image, target_image, affine_params_true, \
                 points1, points2, points1_2_true = data
+            # print(source_image.shape, target_image.shape, affine_params_true.shape,
+            #     points1.shape, points2.shape, points1_2_true.shape)
 
             source_image = source_image.requires_grad_(True).to(device)
             target_image = target_image.requires_grad_(True).to(device)
             # add gradient to the matches
-            points1 = points1.requires_grad_(True).to(device)
-            points2 = points2.requires_grad_(True).to(device)
-            points1_2_true = points1_2_true.requires_grad_(True).to(device)
+            points1.requires_grad_(True).to(device)
+            points2.requires_grad_(True).to(device)
+            points1_2_true.requires_grad_(True).to(device)
 
             # Forward + backward + optimize
             outputs = model(source_image, target_image, points1)
@@ -142,7 +145,9 @@ def train(model_name, model_path, model_params, timestamp):
             # 7 (256, 256)
             transformed_source_affine = outputs[0] # image
             affine_params_predicted = outputs[1] # affine parameters
+            affine_params_predicted.requires_grad_(True).to(device)
             points1_2_predicted = outputs[2].T
+            points1_2_predicted.requires_grad_(True).to(device)
 
             try:
                 points1_2_predicted = points1_2_predicted.reshape(
@@ -158,14 +163,16 @@ def train(model_name, model_path, model_params, timestamp):
                 loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
                 # TODO: add loss for points1_affine and points2, Euclidean distance
                 # loss_points = criterion_points(points1_affine, points2)
-                loss += loss_affine
+                # loss += loss_affine
 
             # print shape of points1_2_predicted, points2, points1_2_true
             # print(points1_2_predicted.shape, points2.shape, points1.shape)
             if model_params.points:
                 # print the input's device
-                loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                                    torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
+                # loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
+                #                     torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
+                loss_ = torch.subtract(points1_2_predicted.cpu().detach(), points1_2_true[0].cpu().detach())
+                loss += torch.sum(torch.square(loss_))
 
             loss.backward()
             optimizer.step()
