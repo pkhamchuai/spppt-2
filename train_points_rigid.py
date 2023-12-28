@@ -21,11 +21,17 @@ from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, loss_points
 from utils.test_points import test
-from utils.train import train
+# from utils.train import train
 from utils.datagen import datagen
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f'Device: {device}')
+
+# specify seed for reproducibility to  8195666142088668451
+torch.manual_seed(8195666142088668451)
+torch.cuda.manual_seed(8195666142088668451)
+torch.cuda.manual_seed_all(8195666142088668451)
+
 
 # Stub to warn about opencv version.
 if int(cv2.__version__[0]) < 3: # pragma: no cover
@@ -106,7 +112,8 @@ def train(model_name, model_path, model_params, timestamp):
     epoch_loss_list = []
     running_loss_list = []
     
-    print('Seed:', torch.seed())
+    # print the fixed seed
+    print(f'Fixed seed: {torch.initial_seed()}')
     
     # Create output directory
     output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}"
@@ -123,7 +130,7 @@ def train(model_name, model_path, model_params, timestamp):
         train_bar = tqdm(train_dataset, desc=f'Training Epoch {epoch+1}/{model_params.num_epochs}')
         for i, data in enumerate(train_bar):
             # Zero the parameter gradients
-            optimizer.zero_grad()
+            # optimizer.zero_grad()
             
             loss = 0.0
 
@@ -142,8 +149,8 @@ def train(model_name, model_path, model_params, timestamp):
 
             # Forward + backward + optimize
             outputs = model(source_image, target_image, points1)
-            # for i in range(len(outputs)):
-            #         print(i, outputs[i].shape)
+            # for j in range(len(outputs)):
+            #         print(j, outputs[j].shape)
             # 0 torch.Size([1, 1, 256, 256])
             # 1 torch.Size([1, 2, 3])
             # 2 (2, 0)
@@ -152,8 +159,8 @@ def train(model_name, model_path, model_params, timestamp):
             # 5 (256, 115)
             # 6 (256, 256)
             # 7 (256, 256)
-            transformed_source_affine = outputs[1] # image
-            affine_params_predicted = outputs[0] # affine parameters
+            affine_params_predicted = outputs[1] # affine parameters
+            transformed_source_affine = outputs[0] # image
             # translate_params_predicted = outputs[1] # translation parameters
             affine_params_predicted.requires_grad_(True).to(device)
             points1_2_predicted = outputs[2].T
@@ -185,22 +192,36 @@ def train(model_name, model_path, model_params, timestamp):
                 # loss_ = torch.subtract(points1_2_predicted.cpu().detach(), points1_2_true[0].cpu().detach())
                 # loss += torch.sum(torch.square(loss_))
 
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            # scheduler.step()
+            scheduler.step()
                 
             # print shape of points1_2_predicted, points2, points1
             # print(points1_2_predicted.shape, points2.shape, points1.shape)
             # Plot images if i < 5
-            # if i % 50 == 0:
-            #     DL_affine_plot(f"epoch{epoch+1}_train", output_dir,
-            #         f"{i}", model_params.get_model_code(), 
-            #         source_image[0, 0, :, :].detach().cpu().numpy(), target_image[0, 0, :, :].detach().cpu().numpy(), 
-            #         transformed_source_affine[0, :, :].detach().cpu().numpy(),
-            #         points1[0].cpu().detach().numpy().T, 
-            #         points2[0].cpu().detach().numpy().T, 
-            #         points1_2_predicted.cpu().detach().numpy().T, None, None, affine_params_true=affine_params_true,
-            #             affine_params_predict=affine_params_predicted, heatmap1=None, heatmap2=None, plot=True)
+            if i % 50 == 0:
+                # print(source_image.shape, target_image.shape, transformed_source_affine.shape,
+                #     points1.shape, points2.shape, points1_2_predicted.shape)
+                DL_affine_plot(f"epoch{epoch+1}_train", output_dir,
+                    #         f"{i}", model_params.get_model_code(), 
+                    #         source_image[0, 0, :, :].detach().cpu().numpy(), target_image[0, 0, :, :].detach().cpu().numpy(), 
+                    #         transformed_source_affine[0, :, :].detach().cpu().numpy(),
+                    #         points1[0].cpu().detach().numpy().T, 
+                    #         points2[0].cpu().detach().numpy().T, 
+                    #         points1_2_predicted.cpu().detach().numpy().T, None, None, affine_params_true=affine_params_true,
+                    #             affine_params_predict=affine_params_predicted, heatmap1=None, heatmap2=None, plot=True)
+                    # DL_affine_plot(f"epoch{epoch+1}_valid", output_dir,
+                    f"{i}", model_params.get_model_code(), 
+                    source_image[0, 0, :, :].detach().cpu().numpy(), 
+                    target_image[0, 0, :, :].detach().cpu().numpy(), 
+                    transformed_source_affine[0, 0, :, :].detach().cpu().numpy(),
+                    points1[0].cpu().detach().numpy().T, 
+                    points2[0].cpu().detach().numpy().T, 
+                    points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                    affine_params_true=affine_params_true,
+                    affine_params_predict=affine_params_predicted, 
+                    heatmap1=None, heatmap2=None, plot=True)
 
             # Print statistics
             running_loss += loss.item()
@@ -210,7 +231,7 @@ def train(model_name, model_path, model_params, timestamp):
         
         # loss.backward()
         # optimizer.step()
-        scheduler.step()
+        # scheduler.step()
         
         # Validate model
         validation_loss = 0.0
@@ -251,15 +272,15 @@ def train(model_name, model_path, model_params, timestamp):
                 except:
                     pass
 
-                if model_params.image:
-                    loss += criterion(transformed_source_affine, target_image)
+                # if model_params.image:
+                #     loss += criterion(transformed_source_affine, target_image)
                 # loss += extra(affine_params_predicted)
 
-                if model_params.sup:
-                    loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
-                    # TODO: add loss for points1_affine and points2, Euclidean distance
-                    # loss_points = criterion_points(points1_affine, points2)
-                    loss += loss_affine
+                # if model_params.sup:
+                #     loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
+                #     # TODO: add loss for points1_affine and points2, Euclidean distance
+                #     # loss_points = criterion_points(points1_affine, points2)
+                #     loss += loss_affine
 
                 if model_params.points:
                     # print the input's device
@@ -344,7 +365,7 @@ if __name__ == '__main__':
     parser.add_argument('--points', type=int, default=1, help='use loss points (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
     parser.add_argument('--num_epochs', type=int, default=5, help='number of epochs')
-    parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
+    parser.add_argument('--learning_rate', type=float, default=1e-2, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default='SP_Rigid', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')

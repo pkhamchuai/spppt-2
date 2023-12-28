@@ -32,26 +32,10 @@ class SP_Rigid(nn.Module):
 
         return transformed_source_image, affine_params, transformed_points
     
-class AffineTransform(nn.Module):
-    def __init__(self):
-        super(AffineTransform, self).__init__()
-
-    def forward(self, points, matrix):
-        points = points.T
-        # Add a row of ones to the input points for the affine transformation
-        ones = torch.ones(1, points.size(1), dtype=points.dtype, device=points.device)
-        points_homogeneous = torch.cat([points, ones], dim=0)
-
-        # Apply the affine transformation
-        transformed_points = torch.mm(matrix, points_homogeneous)
-
-        return transformed_points[:2, :]
 
 class AffineNet(nn.Module):
     def __init__(self):
         super(AffineNet, self).__init__()
-        self.affine_layer = AffineTransform()
-
         self.conv1f = 64
         self.conv2f = 128
         self.conv3f = 256
@@ -132,16 +116,16 @@ class AffineNet(nn.Module):
         transformed_points = transformed_points.requires_grad_(True)
         
         # points = points.requires_grad_(True)
-        # transformed_points = self.affine_layer(points[0], t[0])
         # transformed_points = transformed_points.requires_grad_(True)
 
+        # print(transformed_source_image_affine.shape)
         return M,  transformed_source_image_affine, transformed_points.T
     
 def transform_points_rigid(points, t):
     # input points and subtract t[0] from x and t[1] from y
     points = points.T
-    points_x = torch.sub(points[:, 0], 256*t[0])
-    points_y = torch.sub(points[:, 1], 256*t[1])
+    points_x = torch.add(points[:, 0], 256*t[0]) # either add or subtract
+    points_y = torch.add(points[:, 1], 256*t[1])
     # print(points_x.shape, points_y.shape)
     results = torch.stack((points_x, points_y), dim=1)
     # print(results.shape)
