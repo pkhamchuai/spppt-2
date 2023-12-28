@@ -1108,7 +1108,7 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
                         break
                     suffix += 1
 
-            signaturebar_gray(fig, f"{image2_name} - {name} - {image1_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
+            fig = signaturebar_gray(fig, f"{image2_name} - {name} - {image1_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
                     rect_kw={"facecolor": "gray", "edgecolor": None},
                     text_kw={"color": "w"})
             fig.savefig(save_file_name)
@@ -1152,6 +1152,7 @@ def signaturebar(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
     # text_kw["weight"] = "bold"  # Add this line to make the text bold
     fig.text(xpos / 72. / h, ypos / 72. / h, text, fontsize=fontsize, **text_kw)
     fig.subplots_adjust(bottom=fig.subplotpars.bottom + height)
+    return fig
     
 def signaturebar_gray(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
                  rect_kw={"facecolor": "gray", "edgecolor": None},
@@ -1168,3 +1169,4 @@ def signaturebar_gray(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
     
     fig.text(xpos / 72. / h, ypos / 72. / h, text, fontsize=fontsize, **text_kw)
     fig.subplots_adjust(bottom=fig.subplotpars.bottom + height)
+    return fig
