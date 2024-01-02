@@ -363,9 +363,14 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
     torch.save(model.state_dict(), model_name_to_save)
     print(f'Model saved in: {model_name_to_save}')
 
+    # print extra parameters
+    try:
+        extra_print = f'sigma: {kwargs["sigma"]}, multiplier: {kwargs["multiplier"]}, offset: {kwargs["offset"]}'
+    except:
+        extra_print = f'sigma: {kwargs["sigma"]}, offset: {kwargs["offset"]}'
     # save the output of print_explanation() and loss_list to a txt file
     print_summary(model_name, model_name_to_save, 
-                  model_params, epoch_loss_list, timestamp, False)
+                  model_params, epoch_loss_list, timestamp, False, extra=extra_print)
 
     # Return epoch_loss_list
     return model, epoch_loss_list

@@ -108,8 +108,9 @@ def test(model_name, model_, model_params, timestamp):
                 f"{i}", "_", source_image[0, 0, :, :].cpu().numpy(), 
                 target_image[0, 0, :, :].cpu().numpy(), 
                 transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                points1[0].cpu().detach().numpy().T, points2[0].cpu().detach().numpy().T, 
-                points1_2_predicted.cpu().detach().numpy(), None, None, 
+                points1[0].cpu().detach().numpy().T, 
+                points2[0].cpu().detach().numpy().T, 
+                points1_2_predicted.cpu().detach().numpy().T, None, None, 
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_params_predicted, 
                 heatmap1=None, heatmap2=None, plot=plot_)

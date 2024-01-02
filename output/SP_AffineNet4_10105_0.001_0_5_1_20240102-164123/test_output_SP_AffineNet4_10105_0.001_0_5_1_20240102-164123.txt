@@ -1,0 +1,25 @@
+SP_AffineNet4
+trained_models/SP_AffineNet4_10105_0.001_0_5_1_20240102-164123.pth
+10105_0.001_0_5_1
+
+Model name:  dataset1_sup0_image1_points0_loss_image5
+Model code:  10105_0.001_0_5_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Unsupervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  5
+Loss function for image:  <utils.utils1.GaussianWeightedMSELoss object at 0x7f28ee177250>
+Loss function for affine:  None
+Learning rate:  0.001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  5
+Batch size:  1
+
+
+[1, 0.23120787647552787, 0.21230854135006666]
+[2, 0.23356478618457913, 0.21230854135006666]
+[3, 0.23058238985016943, 0.21230854135006666]
+[4, 0.2297566368151456, 0.21230854135006666]
+[5, 0.2297723840083927, 0.21230854135006666]

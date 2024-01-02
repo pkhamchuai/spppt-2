@@ -372,7 +372,7 @@ class ModelParams:
     
 
 def print_summary(model_name, model_path, model_params, 
-                  loss_list, timestamp, test=False):
+                  loss_list, timestamp, test=False, extra=None):
     print("Training output:")
     if loss_list is not None:
         for i in range(len(loss_list)):
@@ -387,6 +387,9 @@ def print_summary(model_name, model_path, model_params,
     save_txt_name = f"{output_dir}/test_output_{model_name}_{model_params.get_model_code()}_{timestamp}.txt"
 
     with open(save_txt_name, 'w') as f:
+        if extra is not None:
+            f.write(str(extra))
+            f.write('\n')
         f.write(str(model_name))
         f.write('\n')
         f.write(str(model_path))
