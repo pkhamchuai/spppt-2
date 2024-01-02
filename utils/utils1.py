@@ -57,6 +57,9 @@ def model_loader(model_name, model_params):
         elif model_name == 'SP_Rigid':
             from utils.SP_Rigid import SP_Rigid
             model = SP_Rigid(model_params).to(device)
+        elif model_name == 'SP_Rigid_Scale':
+            from utils.SP_Rigid_Scale import SP_Rigid_Scale
+            model = SP_Rigid_Scale(model_params).to(device)
         return model
     
     else:
@@ -865,33 +868,33 @@ def blend_img(edge, image):
     # out = np.float32(out)
     return out
 
-def transform_points_DVF(points, M, image): # subtract version (translation only)
-    # transform points using displacement field
-    # DVF.shape = (2, H, W)
-    # points.shape = (2, N)
-    # displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
-    # DVF = transform_to_displacement_field(
-    #     displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
-    #     M.view(1, 2, 3))
+# def transform_points_DVF(points, M, image): # subtract version (translation only)
+#     # transform points using displacement field
+#     # DVF.shape = (2, H, W)
+#     # points.shape = (2, N)
+#     displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
+#     DVF = transform_to_displacement_field(
+#         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
+#         M.view(1, 2, 3))
 
-    print("M:", M)
-    # use torch.gather to take the last column of M
-    translate = M.gather(1, torch.tensor([[[0,  0, 1],
-         [0,  0, 1]]]))
-    print("translate:", translate)
-    print("points:", points.shape)
-    # Reshape tensor points to have dimensions [2, N]
-    points = points.t().long()
+#     print("M:", M)
+#     # use torch.gather to take the last column of M
+#     translate = M.gather(1, torch.tensor([[[0,  0, 1],
+#          [0,  0, 1]]]))
+#     print("translate:", translate)
+#     print("points:", points.shape)
+#     # Reshape tensor points to have dimensions [2, N]
+#     points = points.t().long()
 
-    # Use torch.gather to select values from A using indices from points
-    # result = DVF[:, points[:, 0], points[:, 1]]
+#     # Use torch.gather to select values from A using indices from points
+#     result = DVF[:, points[:, 0], points[:, 1]]
 
-    # Reshape result to have dimensions [2, N]
-    result = result.t()
-    # subtract the result from the original points
-    points = points.float()
-    result = torch.subtract(points, result)
-    return result
+#     # Reshape result to have dimensions [2, N]
+#     # result = result.t()
+#     # subtract the result from the original points
+#     points = points.float()
+#     result = torch.subtract(points, result)
+#     return result
 
 # def transform_points_DVF(points, M, image): # subtract version (all)
 #     # transform points using displacement field
@@ -932,20 +935,20 @@ def transform_points_DVF(points, M, image): # subtract version (translation only
 #         points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
 #     return torch.tensor(points.T)
 
-# def transform_points_DVF(points, M, image): # original version
-#     # transform points using displacement field
-#     # DVF.shape = (2, H, W)
-#     # points.shape = (2, N)
-#     displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
-#     DVF = transform_to_displacement_field(
-#         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
-#         M.clone().view(1, 2, 3))
-#     if isinstance(DVF, torch.Tensor):
-#         DVF = DVF.numpy()
-#     # loop through each point and apply the transformation
-#     for i in range(points.shape[1]):
-#         points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
-#     return points
+def transform_points_DVF(points, M, image): # original version
+    # transform points using displacement field
+    # DVF.shape = (2, H, W)
+    # points.shape = (2, N)
+    displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
+    DVF = transform_to_displacement_field(
+        displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
+        M.clone().view(1, 2, 3))
+    if isinstance(DVF, torch.Tensor):
+        DVF = DVF.numpy()
+    # loop through each point and apply the transformation
+    for i in range(points.shape[1]):
+        points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+    return points
 
 # def transform_points_DVF(points, affine_params, image_size):
 #     # transform points using displacement field
