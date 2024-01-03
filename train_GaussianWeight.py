@@ -103,6 +103,7 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
     # Define loss function based on supervised or unsupervised learning
     # criterion = model_params.loss_image
     # criterion = nn.MSELoss()
+    print(**kwargs)
     criterion = GaussianWeightedMSELoss(**kwargs)
     extra = loss_extra()
     criterion_points = nn.MSELoss() # 
@@ -183,8 +184,8 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
             # print(source_image.shape, target_image.shape, affine_params_true.shape,
             #     points1.shape, points2.shape, points1_2_true.shape)
 
-            source_image = source_image.requires_grad_(True).to(device)
-            target_image = target_image.requires_grad_(True).to(device)
+            source_image = source_image.to(device)
+            target_image = target_image.to(device)
             # add gradient to the matches
             # points1.requires_grad_(True).to(device)
             # points2.requires_grad_(True).to(device)

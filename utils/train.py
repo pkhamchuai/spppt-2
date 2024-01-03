@@ -163,6 +163,7 @@ def train(model_name, model_path, model_params, timestamp):
         model.eval()
         with torch.no_grad():
             for i, data in enumerate(test_dataset, 0):
+                loss = 0.0
                 # Get images and affine parameters
                 if model_params.sup:
                     source_image, target_image, affine_params_true = data
@@ -192,7 +193,7 @@ def train(model_name, model_path, model_params, timestamp):
                 heatmap1 = outputs[7]
                 heatmap2 = outputs[8]
 
-                loss = criterion(transformed_source_affine, target_image)
+                loss += criterion(transformed_source_affine, target_image)
                 # loss += extra(affine_params_predicted)
                 if model_params.sup:
                     loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
