@@ -182,11 +182,7 @@ def train(model_name, model_path, model_params, timestamp):
                 # loss_points = criterion_points(points1_affine, points2)
                 # loss += loss_affine
 
-            # print shape of points1_2_predicted, points2, points1_2_true
-            # print(points1_2_predicted.shape, points2.shape, points1.shape)
             if model_params.points:
-                # print the input's device
-                # print(points1_2_predicted.device, points1_2_true[0].device)
                 loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1), 
                                     torch.flatten(points1_2_true[0], start_dim=1).to(device))
                 # loss_ = torch.subtract(points1_2_predicted.cpu().detach(), points1_2_true[0].cpu().detach())
@@ -201,8 +197,13 @@ def train(model_name, model_path, model_params, timestamp):
             # print(points1_2_predicted.shape, points2.shape, points1.shape)
             # Plot images if i < 5
             if i % 50 == 0:
-                # print(source_image.shape, target_image.shape, transformed_source_affine.shape,
-                #     points1.shape, points2.shape, points1_2_predicted.shape)
+                if points1_2_predicted.shape[-1] != 2:
+                    points1_2_predicted = points1_2_predicted.T
+                if points1.shape[-1] != 2:
+                    points1 = points1.T
+                if points2.shape[-1] != 2:
+                    points2 = points2.T
+
                 DL_affine_plot(f"epoch{epoch+1}_train", output_dir,
                     #         f"{i}", model_params.get_model_code(), 
                     #         source_image[0, 0, :, :].detach().cpu().numpy(), target_image[0, 0, :, :].detach().cpu().numpy(), 
@@ -216,9 +217,9 @@ def train(model_name, model_path, model_params, timestamp):
                     source_image[0, 0, :, :].detach().cpu().numpy(), 
                     target_image[0, 0, :, :].detach().cpu().numpy(), 
                     transformed_source_affine[0, 0, :, :].detach().cpu().numpy(),
-                    points1[0].cpu().detach().numpy().T, 
-                    points2[0].cpu().detach().numpy().T, 
-                    points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                    points1[0].cpu().detach().numpy(), 
+                    points2[0].cpu().detach().numpy(), 
+                    points1_2_predicted.cpu().detach().numpy(), None, None, 
                     affine_params_true=affine_params_true,
                     affine_params_predict=affine_params_predicted, 
                     heatmap1=None, heatmap2=None, plot=True)
@@ -308,7 +309,7 @@ def train(model_name, model_path, model_params, timestamp):
         print(f'Validation Epoch {epoch+1}/{model_params.num_epochs} loss: {validation_loss}')
 
         # Append epoch number, train loss and validation loss to epoch_loss_list
-        epoch_loss_list.append([epoch+1, running_loss / len(train_dataset), validation_loss])
+        epoch_loss_list.append([epoch, running_loss / len(train_dataset), validation_loss])
 
         # Extract epoch number, train loss and validation loss from epoch_loss_list
         epoch = [x[0] for x in epoch_loss_list]
@@ -365,9 +366,10 @@ if __name__ == '__main__':
     parser.add_argument('--points', type=int, default=1, help='use loss points (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
     parser.add_argument('--num_epochs', type=int, default=5, help='number of epochs')
-    parser.add_argument('--learning_rate', type=float, default=1e-2, help='learning rate')
+    parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default='SP_Rigid', help='which model to use')
+    parser.add_argument('--model', type=str, default='DHR_Rigid', help='which model to use')
+    # parser.add_argument('--model', type=str, default='SP_Rigid', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     args = parser.parse_args()
 

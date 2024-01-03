@@ -104,13 +104,20 @@ def test(model_name, model_, model_params, timestamp):
             else:
                 plot_ = False
 
+            if points1_2_predicted.shape[-1] != 2:
+                points1_2_predicted = points1_2_predicted.T
+            if points1.shape[-1] != 2:
+                points1 = points1.T
+            if points2.shape[-1] != 2:
+                points2 = points2.T
+
             results = DL_affine_plot(f"{i+1}", output_dir,
                 f"{i}", "_", source_image[0, 0, :, :].cpu().numpy(), 
                 target_image[0, 0, :, :].cpu().numpy(), 
                 transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                points1[0].cpu().detach().numpy().T, 
-                points2[0].cpu().detach().numpy().T, 
-                points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                points1[0].cpu().detach().numpy(), 
+                points2[0].cpu().detach().numpy(), 
+                points1_2_predicted.cpu().detach().numpy(), None, None, 
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_params_predicted, 
                 heatmap1=None, heatmap2=None, plot=plot_)

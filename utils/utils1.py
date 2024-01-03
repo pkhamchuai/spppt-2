@@ -54,6 +54,10 @@ def model_loader(model_name, model_params):
             print('Loading DHR model (networks/affine_network_simple.py)')
             from utils.SP_DHR import SP_DHR_Net
             model = SP_DHR_Net(model_params).to(device)
+        elif model_name == 'DHR_Rigid':
+            print('Loading DHR_Rigid model (utils/SP_DHR_Rigid.py)')
+            from utils.SP_DHR_Rigid import SP_DHR_Net
+            model = SP_DHR_Net(model_params).to(device)
         elif model_name == 'SP_Rigid':
             from utils.SP_Rigid import SP_Rigid
             model = SP_Rigid(model_params).to(device)

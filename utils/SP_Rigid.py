@@ -73,8 +73,6 @@ class AffineNet(nn.Module):
         # self.img = torch.nn.Parameter(torch.zeros(1, 1, image_size, image_size).to(device), requires_grad=True)
 
     def forward(self, source_image, target_image, points):
-
-        # print(source_image.size(), target_image.size(), points.size())
         # x = self.conv1(source_image)
         x = self.Act1(self.ReLU(self.conv1s(self.Act1(self.ReLU(self.conv1(source_image))))))
         y = self.Act1(self.ReLU(self.conv1s(self.Act1(self.ReLU(self.conv1(target_image))))))
@@ -89,11 +87,8 @@ class AffineNet(nn.Module):
         y = self.aPooling(self.Act4(self.ReLU(self.conv4(y))))
 
         t = torch.cat((x, y), dim=1)
-        # print(t.shape)
         t = self.fc1(t.flatten()).to(device)
-        # print(t.shape)
         # t = t.view(2, 1)
-        # print(t.shape)
 
         # create a tensor of 2x2 identity matrices
         identity = torch.eye(2).to(device)
