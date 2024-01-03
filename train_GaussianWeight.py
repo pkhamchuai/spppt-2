@@ -418,6 +418,7 @@ if __name__ == '__main__':
 
     for offset_ in offset:
         print(f'offset: {offset_}')
+        print(f'sigma: {sigma}')
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         model, loss_list =  train(args.model, model_path, model_params, timestamp, sigma=sigma, offset=offset_)
 
