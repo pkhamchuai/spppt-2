@@ -113,19 +113,19 @@ class GaussianWeightedMSELoss:
         self.center = center
         self.sigma = sigma
         
-    # def gaussian_weight(self, shape):
-    #     x, y = torch.meshgrid(torch.arange(shape[-2]), torch.arange(shape[-1]))
-    #     return torch.exp(-((x - self.center[0])**2 + (y - self.center[1])**2) / (2 * self.sigma**2))
-    
     def gaussian_weight(self, shape):
         x, y = torch.meshgrid(torch.arange(shape[-2]), torch.arange(shape[-1]))
-        gaussian = torch.exp(-((x - self.center[0])**2 + (y - self.center[1])**2) / (2 * self.sigma**2))
-        constant = torch.ones_like(gaussian)
-        inverted_gaussian = constant - gaussian
-        return inverted_gaussian
+        return torch.exp(-((x - self.center[0])**2 + (y - self.center[1])**2) / (2 * self.sigma**2))
+    
+    # def gaussian_weight(self, shape):
+    #     x, y = torch.meshgrid(torch.arange(shape[-2]), torch.arange(shape[-1]))
+    #     gaussian = torch.exp(-((x - self.center[0])**2 + (y - self.center[1])**2) / (2 * self.sigma**2))
+    #     constant = torch.ones_like(gaussian)
+    #     inverted_gaussian = constant - gaussian
+    #     return inverted_gaussian
     
     def __call__(self, image1, image2):
-        weight = 1 * self.gaussian_weight(image1.shape)
+        weight = self.gaussian_weight(image1.shape)
         weight = weight.to(device)
         mse = (image1 - image2)**2
         weighted_mse = mse * weight.expand_as(mse)
@@ -415,8 +415,8 @@ def overlay_points(image, points, color=(0, 255, 0), radius=5):
     if len(image.shape) == 2:
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     # if image is normalized, convert it to 0-255
-    if image.max() <= 2:
-        image = ((image - image.min()) / (image.max() - image.min()) * 255).astype(np.uint8)
+    # if image.max() <= 2:
+    #     image = ((image - image.min()) / (image.max() - image.min()) * 255).astype(np.uint8)
     
     try:
         for point in points.T:
@@ -921,24 +921,7 @@ def blend_img(edge, image):
 #     result = torch.subtract(points, result)
 #     return result
 
-# def transform_points_DVF(points_, M, image): # original version
-#     # transform points using displacement field
-#     # DVF.shape = (2, H, W)
-#     # points.shape = (2, N)
-#     displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
-#     DVF = transform_to_displacement_field(
-#         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
-#         M.clone().view(1, 2, 3))
-#     if isinstance(DVF, torch.Tensor):
-#         DVF = DVF.detach().numpy()
-#     # loop through each point and apply the transformation
-#     points = points_.detach().numpy().copy()
-#     print("points shape:", points.shape)
-#     for i in range(points.shape[1]):
-#         points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
-#     return torch.tensor(points.T)
-
-def transform_points_DVF(points, M, image): # original version
+def transform_points_DVF(points_, M, image): # original version
     # transform points using displacement field
     # DVF.shape = (2, H, W)
     # points.shape = (2, N)
@@ -947,11 +930,28 @@ def transform_points_DVF(points, M, image): # original version
         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
         M.clone().view(1, 2, 3))
     if isinstance(DVF, torch.Tensor):
-        DVF = DVF.numpy()
+        DVF = DVF.detach().numpy()
     # loop through each point and apply the transformation
+    points = points_.detach().numpy()#.copy()
+    # print("points shape:", points.shape)
     for i in range(points.shape[1]):
         points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
-    return points
+    return torch.tensor(points)
+
+# def transform_points_DVF(points, M, image): # original version
+#     # transform points using displacement field
+#     # DVF.shape = (2, H, W)
+#     # points.shape = (2, N)
+#     displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
+#     DVF = transform_to_displacement_field(
+#         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
+#         M.clone().view(1, 2, 3))
+#     if isinstance(DVF, torch.Tensor):
+#         DVF = DVF.numpy()
+#     # loop through each point and apply the transformation
+#     for i in range(points.shape[1]):
+#         points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+#     return points
 
 # def transform_points_DVF(points, affine_params, image_size):
 #     # transform points using displacement field

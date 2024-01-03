@@ -19,7 +19,7 @@ from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, loss_points
 from utils.test_points import test
-from utils.train import train
+# from utils.train import train
 from utils.datagen import datagen
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -32,29 +32,36 @@ if int(cv2.__version__[0]) < 3: # pragma: no cover
 image_size = 256
 
 
-class GaussianWeightedMSELoss:
-    def __init__(self, center=(128, 128), sigma=80, multiplier=1, offset=0.1):
-        self.center = center
+class GaussianWeightedMSELoss(nn.Module):
+    def __init__(self, sigma=80, offset=0.1):
+        super(GaussianWeightedMSELoss, self).__init__()
         self.sigma = sigma
-        self.multiplier = multiplier
         self.offset = offset
-        
-    def gaussian_weight(self, shape):
-        x, y = torch.meshgrid(torch.arange(shape[-2]), torch.arange(shape[-1]))
-        return torch.exp(-((x - self.center[0])**2 + (y - self.center[1])**2) / (2 * self.sigma**2))
-    
-    def __call__(self, image1, image2):
-        weight = self.multiplier*self.gaussian_weight(image1.shape) + self.offset
-        weight = weight.to(device)
-        # print(f'sigma: {self.sigma}, multiplier: {self.multiplier}, offset: {self.offset}')
-        # print(f'weight max: {weight.max():.4f}, weight min: {weight.min():.4f}')
-        weight = weight/torch.mean(weight)
-        # print(f'weight sum: {torch.sum(weight):.4f}')
-        mse = (image1 - image2)**2
-        weighted_mse = mse * weight.expand_as(mse)
-        weighted_mse_mean = torch.mean(weighted_mse)
-        # print(f'weight MSE max: {weighted_mse.max():.4f}, weight MSE min: {weighted_mse.min():.4f}')
 
+    def forward(self, input, target):
+        # Calculate the squared difference between input and target
+        squared_diff = (input - target) ** 2
+
+        # Create a Gaussian weight map
+        height, width = squared_diff.size(2), squared_diff.size(3)
+        center_x, center_y = width // 2, height // 2
+        y, x = torch.meshgrid(torch.arange(0, height), torch.arange(0, width))
+        gaussian_weight = torch.exp(-((x - center_x) ** 2 + (y - center_y) ** 2) / (2 * self.sigma ** 2))
+
+        # Add the offset to the weights
+        gaussian_weight += self.offset
+
+        # Normalize the weight map
+        gaussian_weight /= torch.sum(gaussian_weight)
+
+        # Apply the Gaussian weights to the squared difference
+        gaussian_weight = gaussian_weight.unsqueeze(0).unsqueeze(0)
+        gaussian_weight = gaussian_weight.to(device)
+        weighted_squared_diff = squared_diff * gaussian_weight
+
+        # Calculate the mean of the weighted squared difference
+        loss = torch.mean(weighted_squared_diff)
+        
         # different between mse and weighted_mse
         # print(f'MSE diff: {torch.mean(mse - weighted_mse):.4f}')
 
@@ -78,7 +85,7 @@ class GaussianWeightedMSELoss:
         # fig.colorbar(axes[0].get_images()[0], cax=cbar_ax)
         # plt.show()
         
-        return weighted_mse_mean
+        return loss
 
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
@@ -95,6 +102,7 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
 
     # Define loss function based on supervised or unsupervised learning
     # criterion = model_params.loss_image
+    # criterion = nn.MSELoss()
     criterion = GaussianWeightedMSELoss(**kwargs)
     extra = loss_extra()
     criterion_points = nn.MSELoss() # 
@@ -145,6 +153,10 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
     running_loss_list = []
     
     print('Seed:', torch.seed())
+    # specify seed for reproducibility to  8195666142088668451
+    # torch.manual_seed(8195666142088668451)
+    # torch.cuda.manual_seed(8195666142088668451)
+    # torch.cuda.manual_seed_all(8195666142088668451)
     
     # Create output directory
     output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}"
@@ -156,7 +168,7 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
         # Set model to training mode
         model.train()
         
-        optimizer.zero_grad()
+        # optimizer.zero_grad()
         running_loss = 0.0
         train_bar = tqdm(train_dataset, desc=f'Training Epoch {epoch+1}/{model_params.num_epochs}')
         for i, data in enumerate(train_bar):
@@ -174,9 +186,9 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
             source_image = source_image.requires_grad_(True).to(device)
             target_image = target_image.requires_grad_(True).to(device)
             # add gradient to the matches
-            points1.requires_grad_(True).to(device)
-            points2.requires_grad_(True).to(device)
-            points1_2_true.requires_grad_(True).to(device)
+            # points1.requires_grad_(True).to(device)
+            # points2.requires_grad_(True).to(device)
+            # points1_2_true.requires_grad_(True).to(device)
 
             # Forward + backward + optimize
             outputs = model(source_image, target_image, points1)
@@ -203,6 +215,8 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
                 pass
 
             if model_params.image:
+                # print(transformed_source_affine.shape, target_image.shape)
+                # print(f'loss_image: {criterion(transformed_source_affine, target_image)}')
                 loss += criterion(transformed_source_affine, target_image)
                 # loss += extra(affine_params_predicted)
                 
@@ -221,13 +235,11 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
                 loss_ = torch.subtract(points1_2_predicted.cpu().detach(), points1_2_true[0].cpu().detach())
                 loss += torch.sum(torch.square(loss_))
 
+            # optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            # scheduler.step()
+            scheduler.step()
                 
-            # print shape of points1_2_predicted, points2, points1
-            # print(points1_2_predicted.shape, points2.shape, points1.shape)
-            # Plot images if i < 5
             if i % 50 == 0:
                 DL_affine_plot(f"epoch{epoch+1}_train", output_dir,
                     f"{i}", model_params.get_model_code(), 
@@ -246,7 +258,7 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
         
         # loss.backward()
         # optimizer.step()
-        scheduler.step()
+        # scheduler.step()
         
         # Validate model
         validation_loss = 0.0
@@ -323,7 +335,7 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
         print(f'Validation Epoch {epoch+1}/{model_params.num_epochs} loss: {validation_loss}')
 
         # Append epoch number, train loss and validation loss to epoch_loss_list
-        epoch_loss_list.append([epoch+1, running_loss / len(train_dataset), validation_loss])
+        epoch_loss_list.append([epoch, running_loss / len(train_dataset), validation_loss])
 
         # Extract epoch number, train loss and validation loss from epoch_loss_list
         epoch = [x[0] for x in epoch_loss_list]
@@ -380,7 +392,7 @@ if __name__ == '__main__':
     # get the arguments
     parser = argparse.ArgumentParser(description='Deep Learning for Image Registration')    
     parser.add_argument('--dataset', type=int, default=1, help='dataset number')
-    parser.add_argument('--sup', type=int, default=0, help='supervised learning (1) or unsupervised learning (0)')
+    parser.add_argument('--sup', type=int, default=1, help='supervised learning (1) or unsupervised learning (0)')
     parser.add_argument('--image', type=int, default=1, help='loss image used for training')
     parser.add_argument('--points', type=int, default=0, help='use loss points (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=5, help='loss function for image registration')
@@ -391,7 +403,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     args = parser.parse_args()
 
-    sigma = 40
+    sigma = 80
     offset = np.linspace(0, 1.0, 11) + 0.01
 
     if args.model_path is None:
