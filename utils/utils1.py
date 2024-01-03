@@ -415,8 +415,8 @@ def overlay_points(image, points, color=(0, 255, 0), radius=5):
     if len(image.shape) == 2:
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     # if image is normalized, convert it to 0-255
-    # if image.max() <= 2:
-    #     image = ((image - image.min()) / (image.max() - image.min()) * 255).astype(np.uint8)
+    if image.max() <= 2:
+        image = ((image - image.min()) / (image.max() - image.min()) * 255).astype(np.uint8)
     
     try:
         for point in points.T:
