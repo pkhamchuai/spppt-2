@@ -1,0 +1,39 @@
+SP_AffineNet4
+SP_AffineNet4(
+  (affineNet): AffineNet(
+    (affine_layer): AffineTransform()
+    (conv1): Conv2d(1, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (conv2): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (conv3): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (conv4): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (conv1s): Conv2d(64, 64, kernel_size=(2, 2), stride=(2, 2))
+    (conv2s): Conv2d(128, 128, kernel_size=(2, 2), stride=(2, 2))
+    (conv3s): Conv2d(256, 256, kernel_size=(2, 2), stride=(2, 2))
+    (fc1): Linear(in_features=1024, out_features=6, bias=True)
+    (dropout): Dropout(p=0.7, inplace=False)
+    (aPooling): AdaptiveAvgPool2d(output_size=(1, 1))
+    (ReLU): LeakyReLU(negative_slope=0.01)
+    (Act1): GroupNorm(32, 64, eps=1e-05, affine=True)
+    (Act2): GroupNorm(64, 128, eps=1e-05, affine=True)
+    (Act3): GroupNorm(128, 256, eps=1e-05, affine=True)
+    (Act4): GroupNorm(256, 512, eps=1e-05, affine=True)
+  )
+)
+11105_0.001_0_5_1
+
+Model name:  dataset1_sup1_image1_points0_loss_image5
+Model code:  11105_0.001_0_5_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  5
+Loss function for image:  <utils.utils1.GaussianWeightedMSELoss object at 0x7fce223d6b00>
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7fce223d6c50>
+Learning rate:  0.001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  5
+Batch size:  1
+
+

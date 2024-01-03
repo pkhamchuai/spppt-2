@@ -35,5 +35,5 @@ class SP_DHR_Net(nn.Module):
         transformed_points = transform_points_DVF(points[0].cpu().detach().T, 
             affine_params.cpu().detach(), transformed_source_image.cpu().detach())
 
-        return transformed_source_image, affine_params, transformed_points
+        return transformed_source_image, affine_params, transformed_points.T
     

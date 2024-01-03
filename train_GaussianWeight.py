@@ -103,7 +103,6 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
     # Define loss function based on supervised or unsupervised learning
     # criterion = model_params.loss_image
     # criterion = nn.MSELoss()
-    print(**kwargs)
     criterion = GaussianWeightedMSELoss(**kwargs)
     extra = loss_extra()
     criterion_points = nn.MSELoss() # 
