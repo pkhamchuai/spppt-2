@@ -1020,7 +1020,7 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             overlaidH = overlay_points(overlaid2.copy(), matches1, color=(0, 0, 155), radius=1)
 
             axes["F"].imshow(overlaid3, cmap='gray')
-            axes["F"].set_title(f"Warped, {affine_params_predict[0]}")
+            axes["F"].set_title(f"Warped, {affine_params_predict}")
             axes["F"].axis('off')
             axes['F'].grid(True)
 

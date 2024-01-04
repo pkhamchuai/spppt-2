@@ -110,14 +110,15 @@ def test(model_name, model_, model_params, timestamp):
                 points1 = points1.T
             if points2.shape[-1] != 2:
                 points2 = points2.T
+            # print(points1_2_predicted.shape, points2.shape, points1.shape)
 
             results = DL_affine_plot(f"{i+1}", output_dir,
                 f"{i}", "_", source_image[0, 0, :, :].cpu().numpy(), 
                 target_image[0, 0, :, :].cpu().numpy(), 
                 transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                points1[0].cpu().detach().numpy(), 
-                points2[0].cpu().detach().numpy(), 
-                points1_2_predicted.cpu().detach().numpy(), None, None, 
+                points1[0].cpu().detach().numpy().T, 
+                points2[0].cpu().detach().numpy().T, 
+                points1_2_predicted.cpu().detach().numpy().T, None, None, 
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_params_predicted, 
                 heatmap1=None, heatmap2=None, plot=plot_)
@@ -171,7 +172,7 @@ if __name__ == '__main__':
     parser.add_argument('--image', type=int, default=1, help='image used for training')
     parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
+    parser.add_argument('--num_epochs', type=int, default=2, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default=None, help='which model to use')
@@ -179,7 +180,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     model_path = 'trained_models/' + args.model_path
-    model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, heatmaps=args.heatmaps, 
+    model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
                                learning_rate=args.learning_rate, decay_rate=args.decay_rate)
     model_params.print_explanation()

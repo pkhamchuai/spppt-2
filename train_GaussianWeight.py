@@ -18,7 +18,7 @@ import torch.nn as nn
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, loss_points
-from utils.test_points import test
+from test_points import test
 # from utils.train import train
 from utils.datagen import datagen
 
@@ -403,8 +403,8 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     args = parser.parse_args()
 
-    sigma = 80
-    offset = np.linspace(0, 1.0, 11) + 0.01
+    sigma = range(10, 100, 10)
+    offset = np.linspace(10) + 0.01
 
     if args.model_path is None:
       model_path = None
@@ -416,8 +416,9 @@ if __name__ == '__main__':
                                learning_rate=args.learning_rate, decay_rate=args.decay_rate)
     model_params.print_explanation()
 
-    for offset_ in offset:
-        print(f'offset: {offset_}')
+    for sigma_ in sigma:
+        print(f'offset: {offset}')
+        sigma_ += 0.01
         print(f'sigma: {sigma}')
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         model, loss_list =  train(args.model, model_path, model_params, timestamp, sigma=sigma, offset=offset_)

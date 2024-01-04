@@ -20,7 +20,7 @@ import torch.nn as nn
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, loss_points
-from utils.test_points import test
+from test_points import test
 from utils.train import train
 from utils.datagen import datagen
 

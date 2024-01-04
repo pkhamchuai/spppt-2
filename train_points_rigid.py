@@ -20,7 +20,7 @@ import torch.nn as nn
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, loss_points
-from utils.test_points import test
+from test_points import test
 # from utils.train import train
 from utils.datagen import datagen
 
@@ -160,6 +160,7 @@ def train(model_name, model_path, model_params, timestamp):
             # 6 (256, 256)
             # 7 (256, 256)
             affine_params_predicted = outputs[1] # affine parameters
+            # print(affine_params_predicted.shape)
             transformed_source_affine = outputs[0] # image
             # translate_params_predicted = outputs[1] # translation parameters
             affine_params_predicted.requires_grad_(True).to(device)
@@ -203,6 +204,7 @@ def train(model_name, model_path, model_params, timestamp):
                     points1 = points1.T
                 if points2.shape[-1] != 2:
                     points2 = points2.T
+                # print(points1_2_predicted.shape, points2.shape, points1.shape)
 
                 DL_affine_plot(f"epoch{epoch+1}_train", output_dir,
                     #         f"{i}", model_params.get_model_code(), 
@@ -293,6 +295,12 @@ def train(model_name, model_path, model_params, timestamp):
 
                 # Plot images if i < 5
                 if i % 25 == 0:
+                    if points1_2_predicted.shape[-1] != 2:
+                        points1_2_predicted = points1_2_predicted.T
+                    if points1.shape[-1] != 2:
+                        points1 = points1.T
+                    if points2.shape[-1] != 2:
+                        points2 = points2.T
                     DL_affine_plot(f"epoch{epoch+1}_valid", output_dir,
                         f"{i}", model_params.get_model_code(), source_image[0, 0, :, :].cpu().numpy(), 
                         target_image[0, 0, :, :].cpu().numpy(), 
@@ -365,7 +373,7 @@ if __name__ == '__main__':
     parser.add_argument('--image', type=int, default=0, help='loss image used for training')
     parser.add_argument('--points', type=int, default=1, help='use loss points (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=5, help='number of epochs')
+    parser.add_argument('--num_epochs', type=int, default=2, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default='DHR_Rigid', help='which model to use')
