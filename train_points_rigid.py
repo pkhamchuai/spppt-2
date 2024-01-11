@@ -28,9 +28,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f'Device: {device}')
 
 # specify seed for reproducibility to  8195666142088668451
-torch.manual_seed(8195666142088668451)
-torch.cuda.manual_seed(8195666142088668451)
-torch.cuda.manual_seed_all(8195666142088668451)
+# torch.manual_seed(8195666142088668451)
+# torch.cuda.manual_seed(8195666142088668451)
+# torch.cuda.manual_seed_all(8195666142088668451)
 
 
 # Stub to warn about opencv version.
@@ -373,7 +373,7 @@ if __name__ == '__main__':
     parser.add_argument('--image', type=int, default=0, help='loss image used for training')
     parser.add_argument('--points', type=int, default=1, help='use loss points (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=2, help='number of epochs')
+    parser.add_argument('--num_epochs', type=int, default=5, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default='DHR_Rigid', help='which model to use')

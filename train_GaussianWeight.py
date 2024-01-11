@@ -52,7 +52,7 @@ class GaussianWeightedMSELoss(nn.Module):
         gaussian_weight += self.offset
 
         # Normalize the weight map
-        gaussian_weight /= torch.sum(gaussian_weight)
+        gaussian_weight /= torch.mean(gaussian_weight)
 
         # Apply the Gaussian weights to the squared difference
         gaussian_weight = gaussian_weight.unsqueeze(0).unsqueeze(0)
@@ -154,9 +154,9 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
     
     print('Seed:', torch.seed())
     # specify seed for reproducibility to  8195666142088668451
-    # torch.manual_seed(8195666142088668451)
-    # torch.cuda.manual_seed(8195666142088668451)
-    # torch.cuda.manual_seed_all(8195666142088668451)
+    torch.manual_seed(8195666142088668451)
+    torch.cuda.manual_seed(8195666142088668451)
+    torch.cuda.manual_seed_all(8195666142088668451)
     
     # Create output directory
     output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}"
@@ -220,20 +220,20 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
                 loss += criterion(transformed_source_affine, target_image)
                 # loss += extra(affine_params_predicted)
                 
-            if model_params.sup:
-                loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
-                # TODO: add loss for points1_affine and points2, Euclidean distance
-                # loss_points = criterion_points(points1_affine, points2)
-                # loss += loss_affine
+            # if model_params.sup:
+            #     loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
+            #     # TODO: add loss for points1_affine and points2, Euclidean distance
+            #     # loss_points = criterion_points(points1_affine, points2)
+            #     # loss += loss_affine
 
-            # print shape of points1_2_predicted, points2, points1_2_true
-            # print(points1_2_predicted.shape, points2.shape, points1.shape)
-            if model_params.points:
-                # print the input's device
-                # loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                #                     torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
-                loss_ = torch.subtract(points1_2_predicted.cpu().detach(), points1_2_true[0].cpu().detach())
-                loss += torch.sum(torch.square(loss_))
+            # # print shape of points1_2_predicted, points2, points1_2_true
+            # # print(points1_2_predicted.shape, points2.shape, points1.shape)
+            # if model_params.points:
+            #     # print the input's device
+            #     # loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
+            #     #                     torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
+            #     loss_ = torch.subtract(points1_2_predicted.cpu().detach(), points1_2_true[0].cpu().detach())
+            #     loss += torch.sum(torch.square(loss_))
 
             # optimizer.zero_grad()
             loss.backward()
@@ -303,16 +303,16 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
                     loss += criterion(transformed_source_affine, target_image)
                 # loss += extra(affine_params_predicted)
 
-                if model_params.sup:
-                    loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
+                # if model_params.sup:
+                #     loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
                     # TODO: add loss for points1_affine and points2, Euclidean distance
                     # loss_points = criterion_points(points1_affine, points2)
-                    loss += loss_affine
+                    # loss += loss_affine
 
-                if model_params.points:
-                    # print the input's device
-                    loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                                    torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
+                # if model_params.points:
+                #     # print the input's device
+                #     loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
+                #                     torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
 
                 # Add to validation loss
                 validation_loss += loss.item()
@@ -377,9 +377,9 @@ def train(model_name, model_path, model_params, timestamp, **kwargs):
 
     # print extra parameters
     try:
-        extra_print = f'sigma: {kwargs["sigma"]}, multiplier: {kwargs["multiplier"]}, offset: {kwargs["offset"]}'
+        extra_print = f'sigma: {kwargs["sigma"]}, multiplier: {kwargs["multiplier"]}, offset: {kwargs["offset"]}, seed: {torch.seed()}'
     except:
-        extra_print = f'sigma: {kwargs["sigma"]}, offset: {kwargs["offset"]}'
+        extra_print = f'sigma: {kwargs["sigma"]}, offset: {kwargs["offset"]}, seed: {torch.seed()}'
     # save the output of print_explanation() and loss_list to a txt file
     print_summary(model_name, model_name_to_save, 
                   model_params, epoch_loss_list, timestamp, False, extra=extra_print)
@@ -399,12 +399,12 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=5, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default='SP_AffineNet4', help='which model to use')
+    parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     args = parser.parse_args()
 
-    sigma = range(10, 100, 10)
-    offset = np.linspace(10) + 0.01
+    sigma = range(0, 130, 10)
+    offset = 10
 
     if args.model_path is None:
       model_path = None
@@ -421,7 +421,7 @@ if __name__ == '__main__':
         sigma_ += 0.01
         print(f'sigma: {sigma}')
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        model, loss_list =  train(args.model, model_path, model_params, timestamp, sigma=sigma, offset=offset_)
+        model, loss_list =  train(args.model, model_path, model_params, timestamp, sigma=sigma_, offset=offset)
 
         print("\nTesting the trained model +++++++++++++++++++++++")
         test(args.model, model, model_params, timestamp)

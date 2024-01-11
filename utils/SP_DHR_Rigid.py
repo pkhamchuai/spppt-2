@@ -132,8 +132,8 @@ def load_network(device, path=None):
 def transform_points_rigid(points, t):
     # input points and subtract t[0] from x and t[1] from y
     points = points.T
-    points_x = torch.add(points[:, 0], 256*t[0]) # either add or subtract
-    points_y = torch.add(points[:, 1], 256*t[1])
+    points_x = torch.subtract(points[:, 0], 256*t[0]) # either add or subtract
+    points_y = torch.subtract(points[:, 1], 256*t[1])
     # print(points_x.shape, points_y.shape)
     results = torch.stack((points_x, points_y), dim=1)
     # print(results.shape)
