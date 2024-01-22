@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+
 from utils.utils0 import *
 from utils.utils1 import *
 
@@ -47,6 +48,8 @@ def train(model_name, model_path, model_params, timestamp):
             print(f'Using model {model_name}')
             model = model_path
         elif isinstance(model_path, str):
+            if model_name == 'DHR':
+                torch.manual_seed(9793047918980052389)
             model = model_loader(model_name, model_params)
             buffer = io.BytesIO()
             torch.save(model.state_dict(), buffer)

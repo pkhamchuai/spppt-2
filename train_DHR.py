@@ -39,7 +39,9 @@ image_size = 256
 
 from networks import affine_network_simple as an
 from utils.SuperPoint import SuperPointFrontend
-from utils.utils1 import transform_points_DVF, train, test
+from utils.utils1 import transform_points_DVF
+from utils.train import train
+from utils.test import test
 
 if __name__ == '__main__':
     # get the arguments
