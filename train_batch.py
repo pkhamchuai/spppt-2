@@ -23,4 +23,4 @@ for j in sups:
 for i in range(len(runs)):
     for j in range(3):
         print(runs[i])
-        # subprocess.run(runs[i])
+        subprocess.run(runs[i])
