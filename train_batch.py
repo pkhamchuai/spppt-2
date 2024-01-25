@@ -1,6 +1,6 @@
 import subprocess
 
-dataset = [0, 1, 2, 3]
+dataset = [1, 2, 3, 0]
 models = ['DHR']
 # models = ['SP_AffineNet4', 'DHR']
 sups = [1, 0]
@@ -11,16 +11,17 @@ runs = []
 # sigma = range(30, 100, 10)
 
 # generate run commands
-for j in sups:
-    for i in dataset:
-        if i == 0 and j == 1:
+for sup in sups:
+    for data in dataset:
+        if data == 0 and sup == 1:
             pass
         else:
-            runs.append(['python', 'train.py', '--dataset', str(dataset[i]), '--model', 'DHR', 
-                         '--supervised', str(j)])
+            runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
+                         '--model', 'DHR', 
+                         '--image', str(1), '--points', str(0), '--sup', str(sup)])
     
 
 for i in range(len(runs)):
-    for j in range(3):
+    for j in range(1):
         print(runs[i])
         subprocess.run(runs[i])

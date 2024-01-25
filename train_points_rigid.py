@@ -113,7 +113,7 @@ def train(model_name, model_path, model_params, timestamp):
     running_loss_list = []
     
     # print the fixed seed
-    print(f'Fixed seed: {torch.initial_seed()}')
+    # print(f'Fixed seed: {torch.initial_seed()}')
     
     # Create output directory
     output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}"
@@ -125,12 +125,12 @@ def train(model_name, model_path, model_params, timestamp):
         # Set model to training mode
         model.train()
         
-        optimizer.zero_grad()
+        # optimizer.zero_grad()
         running_loss = 0.0
         train_bar = tqdm(train_dataset, desc=f'Training Epoch {epoch+1}/{model_params.num_epochs}')
         for i, data in enumerate(train_bar):
             # Zero the parameter gradients
-            # optimizer.zero_grad()
+            optimizer.zero_grad()
             
             loss = 0.0
 
@@ -173,15 +173,15 @@ def train(model_name, model_path, model_params, timestamp):
             except:
                 pass
 
-            # if model_params.image:
-            #     loss += criterion(transformed_source_affine, target_image)
+            if model_params.image:
+                loss += criterion(transformed_source_affine, target_image)
                 # loss += extra(affine_params_predicted)
                 
-            # if model_params.sup:
-            #     loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
+            if model_params.sup:
+                loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
                 # TODO: add loss for points1_affine and points2, Euclidean distance
                 # loss_points = criterion_points(points1_affine, points2)
-                # loss += loss_affine
+                loss += loss_affine
 
             if model_params.points:
                 loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1), 
@@ -189,7 +189,7 @@ def train(model_name, model_path, model_params, timestamp):
                 # loss_ = torch.subtract(points1_2_predicted.cpu().detach(), points1_2_true[0].cpu().detach())
                 # loss += torch.sum(torch.square(loss_))
 
-            optimizer.zero_grad()
+            # optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             scheduler.step()
@@ -219,9 +219,9 @@ def train(model_name, model_path, model_params, timestamp):
                     source_image[0, 0, :, :].detach().cpu().numpy(), 
                     target_image[0, 0, :, :].detach().cpu().numpy(), 
                     transformed_source_affine[0, 0, :, :].detach().cpu().numpy(),
-                    points1[0].cpu().detach().numpy(), 
-                    points2[0].cpu().detach().numpy(), 
-                    points1_2_predicted.cpu().detach().numpy(), None, None, 
+                    points1[0].cpu().detach().numpy().T, 
+                    points2[0].cpu().detach().numpy().T, 
+                    points1_2_predicted.cpu().detach().numpy().T, None, None, 
                     affine_params_true=affine_params_true,
                     affine_params_predict=affine_params_predicted, 
                     heatmap1=None, heatmap2=None, plot=True)
@@ -275,15 +275,15 @@ def train(model_name, model_path, model_params, timestamp):
                 except:
                     pass
 
-                # if model_params.image:
-                #     loss += criterion(transformed_source_affine, target_image)
+                if model_params.image:
+                    loss += criterion(transformed_source_affine, target_image)
                 # loss += extra(affine_params_predicted)
 
-                # if model_params.sup:
-                #     loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
+                if model_params.sup:
+                    loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
                 #     # TODO: add loss for points1_affine and points2, Euclidean distance
                 #     # loss_points = criterion_points(points1_affine, points2)
-                #     loss += loss_affine
+                    loss += loss_affine
 
                 if model_params.points:
                     # print the input's device
@@ -302,7 +302,8 @@ def train(model_name, model_path, model_params, timestamp):
                     if points2.shape[-1] != 2:
                         points2 = points2.T
                     DL_affine_plot(f"epoch{epoch+1}_valid", output_dir,
-                        f"{i}", model_params.get_model_code(), source_image[0, 0, :, :].cpu().numpy(), 
+                        f"{i}", model_params.get_model_code(), 
+                        source_image[0, 0, :, :].cpu().numpy(), 
                         target_image[0, 0, :, :].cpu().numpy(), 
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
                         points1[0].cpu().detach().numpy().T, 
@@ -373,8 +374,8 @@ if __name__ == '__main__':
     parser.add_argument('--image', type=int, default=0, help='loss image used for training')
     parser.add_argument('--points', type=int, default=1, help='use loss points (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=5, help='number of epochs')
-    parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
+    parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
+    parser.add_argument('--learning_rate', type=float, default=1e-2, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default='DHR_Rigid', help='which model to use')
     # parser.add_argument('--model', type=str, default='SP_Rigid', help='which model to use')

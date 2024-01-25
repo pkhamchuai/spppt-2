@@ -52,7 +52,7 @@ if __name__ == '__main__':
       model_path = None
     else:
       model_path = 'trained_models/' + args.model_path
-    model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, heatmaps=args.heatmaps, 
+    model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, points=args.points,
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
                                learning_rate=args.learning_rate, decay_rate=args.decay_rate)
     model_params.print_explanation()
