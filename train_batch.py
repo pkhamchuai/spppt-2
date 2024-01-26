@@ -22,6 +22,6 @@ for sup in sups:
     
 
 for i in range(len(runs)):
-    for j in range(1):
+    for j in range(2):
         print(runs[i])
         subprocess.run(runs[i])
