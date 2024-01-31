@@ -16,12 +16,15 @@ for sup in sups:
         if data == 0 and sup == 1:
             pass
         else:
-            runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
-                         '--model', 'DHR', 
+            # runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
+            #              '--model', 'DHR', 
+            #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
+            runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
+                         '--model', 'DHR', '--num_epochs', str(100), 
                          '--image', str(1), '--points', str(0), '--sup', str(sup)])
     
 
 for i in range(len(runs)):
-    for j in range(2):
+    for j in range(3):
         print(runs[i])
         subprocess.run(runs[i])

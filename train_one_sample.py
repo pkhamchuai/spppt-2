@@ -63,7 +63,7 @@ def train(model_name, model_path, model_params, timestamp):
 
     # Define loss function based on supervised or unsupervised learning
     criterion = model_params.loss_image
-    extra = loss_extra()
+    # extra = loss_extra()
     # criterion_points = nn.MSELoss() # 
     # criterion_points = loss_points()
     criterion_points = TRE_loss()
@@ -127,8 +127,9 @@ def train(model_name, model_path, model_params, timestamp):
         
         # optimizer.zero_grad()
         running_loss = 0.0
-        train_bar = tqdm(train_dataset, desc=f'Training Epoch {epoch+1}/{model_params.num_epochs}')
-        for i, data in enumerate(train_bar):
+        # train_bar = tqdm(train_dataset, desc=f'Training Epoch {epoch+1}/{model_params.num_epochs}')
+        # for i, data in enumerate(train_bar):
+        for i in range(1):
             # Zero the parameter gradients
             optimizer.zero_grad()
             
@@ -136,7 +137,7 @@ def train(model_name, model_path, model_params, timestamp):
 
             # Get images and affine parameters
             source_image, target_image, affine_params_true, \
-                points1, points2, points1_2_true = data
+                points1, points2, points1_2_true = list(train_dataset)[i]
             # print(source_image.shape, target_image.shape, affine_params_true.shape,
             #     points1.shape, points2.shape, points1_2_true.shape)
 
@@ -229,7 +230,7 @@ def train(model_name, model_path, model_params, timestamp):
             # Print statistics
             running_loss += loss.item()
             running_loss_list.append([epoch+((i+1)/len(train_dataset)), loss.item()])
-            train_bar.set_postfix({'loss': running_loss / (i+1)})
+            # train_bar.set_postfix({'loss': running_loss / (i+1)})
         print(f'Training Epoch {epoch+1}/{model_params.num_epochs} loss: {running_loss / len(train_dataset)}')
         
         # loss.backward()
@@ -294,7 +295,7 @@ def train(model_name, model_path, model_params, timestamp):
                 validation_loss += loss.item()
 
                 # Plot images if i < 5
-                if i % 25 == 0:
+                if i % 25 == 0 and epoch % 10 == 0:
                     if points1_2_predicted.shape[-1] != 2:
                         points1_2_predicted = points1_2_predicted.T
                     if points1.shape[-1] != 2:
