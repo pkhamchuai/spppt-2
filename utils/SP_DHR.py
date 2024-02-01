@@ -32,6 +32,7 @@ class SP_DHR_Net(nn.Module):
         #     print("This part is not yet implemented.")
             # affine_params = self.affineNet(source_image, target_image, heatmap1, heatmap2)
         transformed_source_image = tensor_affine_transform(source_image, affine_params)
+        # transformed_points = points.clone()
         transformed_points = transform_points_DVF(points[0].cpu().detach().T, 
             affine_params.cpu().detach(), transformed_source_image.cpu().detach())
 

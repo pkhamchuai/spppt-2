@@ -137,7 +137,7 @@ def train(model_name, model_path, model_params, timestamp):
 
             # Get images and affine parameters
             source_image, target_image, affine_params_true, \
-                points1, points2, points1_2_true = list(train_dataset)[i]
+                points1, points2, points1_2_true = list(test_dataset)[i]
             # print(source_image.shape, target_image.shape, affine_params_true.shape,
             #     points1.shape, points2.shape, points1_2_true.shape)
 

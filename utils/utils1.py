@@ -936,7 +936,8 @@ def transform_points_DVF(points_, M, image): # original version
     if isinstance(DVF, torch.Tensor):
         DVF = DVF.detach().numpy()
     # loop through each point and apply the transformation
-    points = points_.detach().numpy()#.copy()
+    points = points_.clone()
+    points = points.detach().numpy()#.copy()
     # print("points shape:", points.shape)
     for i in range(points.shape[1]):
         points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
