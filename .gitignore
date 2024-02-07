@@ -5,3 +5,5 @@
 trained_models/*.pth
 trained_models/*.pth.filepart
 output/*/*.png
+output/this/*/*
+output/vermeer/*/*

@@ -132,7 +132,7 @@ def test(model_name, model_, model_params, timestamp):
                     points1_2_predicted.cpu().detach().numpy().T, None, None, 
                     affine_params_true=affine_params_true,
                     affine_params_predict=affine_params_predicted, 
-                    heatmap1=None, heatmap2=None, plot=True)
+                    heatmap1=None, heatmap2=None, plot=plot_)
 
                 # calculate metrics
                 # matches1_transformed = results[0]
