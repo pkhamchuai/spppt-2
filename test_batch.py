@@ -18,7 +18,7 @@ for file in files:
         model_path.append(file)
 
 runs = []
-learning_rate = 5e-5
+learning_rate = 1e-3
 
 # generate run commands
 for model in range(len(models)):

@@ -95,7 +95,7 @@ def test(model_name, model_, model_params, timestamp):
             # if TRE grows larger than the last iteration, stop the loop
             TRE_last = 1e10
             MSE_last = 1e10
-            for j in range(10):
+            for j in range(30):
                 # Forward + backward + optimize
                 outputs = model(source_image, target_image, points1)
                 # for i in range(len(outputs)):
@@ -123,8 +123,8 @@ def test(model_name, model_, model_params, timestamp):
                     points2 = points2.T
                 # print(points1_2_predicted.shape, points2.shape, points1.shape)
 
-                results = DL_affine_plot(f"{i+1}", output_dir,
-                    f"{i}", "_", source_image[0, 0, :, :].cpu().numpy(), 
+                results = DL_affine_plot(f"rep{j:02d}", output_dir,
+                    f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
                     target_image[0, 0, :, :].cpu().numpy(), 
                     transformed_source_affine[0, 0, :, :].cpu().numpy(),
                     points1[0].cpu().detach().numpy().T, 
@@ -132,7 +132,7 @@ def test(model_name, model_, model_params, timestamp):
                     points1_2_predicted.cpu().detach().numpy().T, None, None, 
                     affine_params_true=affine_params_true,
                     affine_params_predict=affine_params_predicted, 
-                    heatmap1=None, heatmap2=None, plot=plot_)
+                    heatmap1=None, heatmap2=None, plot=True)
 
                 # calculate metrics
                 # matches1_transformed = results[0]
@@ -145,14 +145,27 @@ def test(model_name, model_, model_params, timestamp):
                 ssim12_image_before = results[7]
                 ssim12_image = results[8]
 
-                TRE_last = tre12
-                MSE_last = mse12
-                source_image = transformed_source_affine # update the source image
-
                 # check if the mse and affine parameters are not change anymore
                 # print(np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()),
                 #       np.linalg.norm(affine_params_predicted[0].cpu().numpy() - identity))
-                if tre12 > TRE_last or mse12 > MSE_last:
+                if tre12 < TRE_last and mse12 < MSE_last:
+                    points1 = points1_2_predicted.unsqueeze(0).clone()
+                    source_image = transformed_source_affine.clone() # update the source image
+                    TRE_last = tre12
+                    MSE_last = mse12
+                else:
+                    # _ = DL_affine_plot(f"rep{j:02d}", output_dir,
+                    #     f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
+                    #     target_image[0, 0, :, :].cpu().numpy(), 
+                    #     transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                    #     points1[0].cpu().detach().numpy().T, 
+                    #     points2[0].cpu().detach().numpy().T, 
+                    #     points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                    #     affine_params_true=affine_params_true,
+                    #     affine_params_predict=affine_params_predicted, 
+                    #     heatmap1=None, heatmap2=None, plot=True)
+                    tre12 = TRE_last
+                    mse12 = MSE_last
                     break
 
             # append metrics to metrics list
@@ -193,8 +206,8 @@ if __name__ == '__main__':
     parser.add_argument('--image', type=int, default=1, help='image used for training')
     parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=2, help='number of epochs')
-    parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
+    parser.add_argument('--num_epochs', type=int, default=1, help='number of epochs')
+    parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default=None, help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
