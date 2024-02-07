@@ -181,11 +181,9 @@ def test(model_name, model_, model_params, timestamp):
     #     if file.endswith(".txt"):
     #         os.remove(os.path.join(output_dir, file))
 
-    extra_text = f"Test model {model_name} with {model_params.dataset} dataset, \
-        supervised {model_params.sup}, image {model_params.image}, loss_image {model_params.loss_image}, \
-        num_epochs {model_params.num_epochs}, learning_rate {model_params.learning_rate}, decay_rate {model_params.decay_rate}."
+    # extra_text = f"Test model {model_name} at {model_} with dataset {model_params.dataset}. "
     print_summary(model_name, model_, model_params, 
-                  None, timestamp, test=True, extra=extra_text)
+                  None, timestamp, test=True)
 
 if __name__ == '__main__':
     # get the arguments
