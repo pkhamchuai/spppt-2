@@ -1,0 +1,21 @@
+Test model DHR with 1 dataset,         supervised 1, image 1, loss_image MSELoss(),         num_epochs 2, learning_rate 0.0001, decay_rate 0.96.
+DHR
+trained_models/DHR_21100_0.01_0_10_1_20240126-194030.pth
+11100_0.0001_0_2_1
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7f07924c6da0>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+

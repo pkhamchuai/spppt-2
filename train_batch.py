@@ -19,9 +19,12 @@ for sup in sups:
             # runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
             #              '--model', 'DHR', 
             #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
+            # runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
+            #              '--model', 'DHR', '--num_epochs', str(100), 
+            #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
             runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
-                         '--model', 'DHR', '--num_epochs', str(100), 
-                         '--image', str(1), '--points', str(0), '--sup', str(sup)])
+                            '--model', 'DHR', '--num_epochs', str(100), 
+                            '--image', str(1), '--points', str(0), '--sup', str(sup)])
     
 
 for i in range(len(runs)):

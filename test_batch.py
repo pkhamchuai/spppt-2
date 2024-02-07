@@ -1,23 +1,36 @@
 import subprocess
+import os
 
 dataset = [1, 2, 3, 0]
 sups = [1, 1, 1, 0]
-models = ['DHR', 'SP_AffineNet4']
-model_path = ['DHR_31106_0.0001_0_5_1_20231129-144719.pth', 'SP_AffineNet4_31106_0.0001_0_5_1_20231129-145150.pth']
+models = ['DHR']
+
+# grab the model path in the folder 'trained_models'
+# take only files with 'DHR_*'
+model_path = []
+# list all files in the folder
+files = os.listdir('trained_models')
+# iterate through the files
+for file in files:
+    # if the file starts with 'DHR_', but ont 'DHR_Rigid'
+    if file.startswith('DHR_') and not file.startswith('DHR_Rigid'):
+        # append the file to model_path
+        model_path.append(file)
+
 runs = []
 learning_rate = 5e-5
 
 # generate run commands
-for j in range(len(models)):
+for model in range(len(models)):
     # for i in range(len(dataset)):
     #     # print(f'\nTraining on dataset {dataset[i]} with sup {sups[i]}')
     #     runs.append(['python', 'train.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
     #                     '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])
 
-    for i in range(len(dataset)):
-        runs.append(['python', 'test.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
-                        '--num_epochs', '5', '--loss_image', '6', '--learning_rate', str(learning_rate),
-                        '--model_path', str(model_path[j])
+    for path in range(len(model_path)):
+        for dataset_ in range(len(dataset)):
+            runs.append(['python', 'test_points.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+                        '--model_path', str(model_path[path])
                         ])
 
     # for i in range(len(dataset)):
