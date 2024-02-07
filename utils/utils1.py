@@ -940,7 +940,19 @@ def transform_points_DVF(points_, M, image): # original version
     points = points.detach().numpy()#.copy()
     # print("points shape:", points.shape)
     for i in range(points.shape[1]):
-        points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+        try:
+            points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+        except IndexError:
+            # change int(points[1, i]), int(points[0, i]) to 256 if it is 257
+            if int(points[1, i]) > 255:
+                points[1, i] = 255
+            elif int(points[1, i]) < 0:
+                points[1, i] = 0
+            if int(points[0, i]) > 255:
+                points[0, i] = 255
+            elif int(points[0, i]) < 0:
+                points[0, i] = 0
+            points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
     return torch.tensor(points)
 
 # def transform_points_DVF(points, M, image): # original version

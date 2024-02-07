@@ -169,7 +169,7 @@ def test(model_name, model_, model_params, timestamp):
                     break
 
             # append metrics to metrics list
-            metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, points2.shape[1]])
+            metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, points1_2_predicted.shape[1]])
 
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
