@@ -25,12 +25,10 @@ class SP_DHR_Net(nn.Module):
         # inputs = torch.rand((1, 1, image_size, image_size)), torch.rand((1, 1, image_size, image_size))
         # summary(self.affineNet, *inputs, show_input=True, show_hierarchical=True, print_summary=True)
 
-    def forward(self, source_image, target_image, points, divider=1):
+    def forward(self, source_image, target_image, points):
         # if self.model_params.points == 1:
         affine_params = self.affineNet(source_image, target_image)
         
-        identity = torch.tensor([[1, 0, 0], [0, 1, 0]]).to(device)
-        affine_params = (affine_params + (divider)*identity)/(divider+1)
         # elif self.model_params.heatmaps == 1:
         #     print("This part is not yet implemented.")
             # affine_params = self.affineNet(source_image, target_image, heatmap1, heatmap2)

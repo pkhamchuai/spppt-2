@@ -93,14 +93,15 @@ def test(model_name, model_, model_params, timestamp):
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
-            TRE_last = 1e10
-            MSE_last = 1e10
-
+            # TRE_last = 1e10
+            # MSE_last = 1e10
+            # collect the metrics for every repeat j iteration
+            metrics_ij = []
             mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = 0, 0, 0, 0
 
             for j in range(30):
                 # Forward + backward + optimize
-                outputs = model(source_image, target_image, points1, divider=j)
+                outputs = model(source_image, target_image, points1, divider=j/10)
                 # for i in range(len(outputs)):
                 #     print(i, outputs[i].shape)
                 transformed_source_affine = outputs[0]
@@ -113,7 +114,7 @@ def test(model_name, model_, model_params, timestamp):
                 except:
                     pass
 
-                if i < 100:
+                if i < 50:
                     plot_ = True
                 else:
                     plot_ = False
@@ -148,38 +149,24 @@ def test(model_name, model_, model_params, timestamp):
                 ssim12_image_before = results[7]
                 ssim12_image = results[8]
 
+                metrics_ij.append([mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image])
+
                 if j == 0:
                     mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
 
-                # check if the mse and affine parameters are not change anymore
-                # print(np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()),
-                #       np.linalg.norm(affine_params_predicted[0].cpu().numpy() - identity))
-                if tre12 < TRE_last and mse12 < MSE_last:
-                    points1 = points1_2_predicted.unsqueeze(0).clone()
-                    source_image = transformed_source_affine.clone() # update the source image
-                    TRE_last = tre12
-                    MSE_last = mse12
-                else:
-                    # _ = DL_affine_plot(f"rep{j:02d}", output_dir,
-                    #     f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
-                    #     target_image[0, 0, :, :].cpu().numpy(), 
-                    #     transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    #     points1[0].cpu().detach().numpy().T, 
-                    #     points2[0].cpu().detach().numpy().T, 
-                    #     points1_2_predicted.cpu().detach().numpy().T, None, None, 
-                    #     affine_params_true=affine_params_true,
-                    #     affine_params_predict=affine_params_predicted, 
-                    #     heatmap1=None, heatmap2=None, plot=True)
-                    tre12 = TRE_last
-                    mse12 = MSE_last
-                    break
+            # choose the best metrics
+            metrics_ij = np.array(metrics_ij)
+            # index of min of mse12
+            min_mse12_index = np.argmin(metrics_ij[:, 1])
+            # append the best metrics to metrics
+            mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image = metrics_ij[min_mse12_index]
 
             # append metrics to metrics list
-            metrics.append([i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, ssim12_image_before_first, ssim12_image, points1.shape[1]])
+            metrics.append([i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, ssim12_image_before_first, ssim12_image, points1_2_predicted.shape[1], min_mse12_index])
 
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", "ssim12_image_before", "ssim12_image", "num_points"])
+        writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", "ssim12_image_before", "ssim12_image", "num_points", "best_repeat"])
         for i in range(len(metrics)):
             writer.writerow(metrics[i])
         # write the average and std of the metrics

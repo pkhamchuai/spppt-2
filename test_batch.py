@@ -3,7 +3,7 @@ import os
 
 dataset = [1, 2, 3, 0]
 sups = [1, 1, 1, 0]
-models = ['DHR']
+models = ['DHR_Rep']
 
 # grab the model path in the folder 'trained_models'
 # take only files with 'DHR_*'
@@ -30,14 +30,14 @@ for model in range(len(models)):
     for path in range(len(model_path)):
         for dataset_ in range(len(dataset)):
             if dataset_ == 3:
-                runs.append(['python', 'test_points.py', '--model', str(models[model]), '--sup', str(0), '--dataset', str(dataset[dataset_]),
+                runs.append(['python', 'test_rep.py', '--model', str(models[model]), '--sup', str(0), '--dataset', str(dataset[dataset_]),
                         '--model_path', str(model_path[path])
                         ])
             else:
-                # runs.append(['python', 'test_points.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
-                #             '--model_path', str(model_path[path])
-                #             ])
-                pass
+                runs.append(['python', 'test_rep.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+                            '--model_path', str(model_path[path])
+                            ])
+                # pass
     # for i in range(len(dataset)):
     #     runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
     #                     '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])
