@@ -29,10 +29,15 @@ for model in range(len(models)):
 
     for path in range(len(model_path)):
         for dataset_ in range(len(dataset)):
-            runs.append(['python', 'test_points.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+            if dataset_ == 3:
+                runs.append(['python', 'test_points.py', '--model', str(models[model]), '--sup', str(0), '--dataset', str(dataset[dataset_]),
                         '--model_path', str(model_path[path])
                         ])
-
+            else:
+                # runs.append(['python', 'test_points.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+                #             '--model_path', str(model_path[path])
+                #             ])
+                pass
     # for i in range(len(dataset)):
     #     runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
     #                     '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])

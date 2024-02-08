@@ -97,7 +97,7 @@ def test(model_name, model_, model_params, timestamp):
             MSE_last = 1e10
             for j in range(30):
                 # Forward + backward + optimize
-                outputs = model(source_image, target_image, points1)
+                outputs = model(source_image, target_image, points1, divider=j)
                 # for i in range(len(outputs)):
                 #     print(i, outputs[i].shape)
                 transformed_source_affine = outputs[0]
