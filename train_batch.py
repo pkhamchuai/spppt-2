@@ -23,7 +23,7 @@ for sup in sups:
             #              '--model', 'DHR', '--num_epochs', str(100), 
             #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
             runs.append(['python', 'train.py', '--dataset', str(data), 
-                            '--model', 'DHR', '--num_epochs', str(20), 
+                            '--model', 'DHR', '--num_epochs', str(10), 
                             '--image', str(1), '--points', str(0), '--sup', str(sup)])
     
 

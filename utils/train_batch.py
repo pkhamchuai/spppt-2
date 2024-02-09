@@ -78,6 +78,8 @@ def train(model_name, model_path, model_params, timestamp):
     running_loss_list = []
     
     print('Seed:', torch.seed())
+    batch_size = 10
+
     
     # Create output directory
     output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}"
@@ -90,11 +92,12 @@ def train(model_name, model_path, model_params, timestamp):
         model.train()
         
         running_loss = 0.0
+        loss = 0.0
         train_bar = tqdm(train_dataset, desc=f'Training Epoch {epoch+1}/{model_params.num_epochs}')
         for i, data in enumerate(train_bar):
-            # Zero the parameter gradients
-            optimizer.zero_grad()
-            loss = 0.0
+            if i % batch_size == 0:
+                # Zero the parameter gradients
+                optimizer.zero_grad()
 
             # Get images and affine parameters
             source_image, target_image, affine_params_true, \
@@ -144,20 +147,19 @@ def train(model_name, model_path, model_params, timestamp):
             #     # loss_ = torch.subtract(points1_2_predicted.cpu().detach(), points1_2_true[0].cpu().detach())
             #     # loss += torch.sum(torch.square(loss_))
                 
-            loss.backward()
-            optimizer.step()
-            scheduler.step()
+            if i % batch_size == 0:
+                loss.backward()
+                optimizer.step()
+                scheduler.step()
 
-            # Plot images if i < 5
-            if i % 50 == 0:
                 if points1_2_predicted.shape[-1] != 2:
                     points1_2_predicted = points1_2_predicted.T
                 if points1.shape[-1] != 2:
                     points1 = points1.T
                 if points2.shape[-1] != 2:
                     points2 = points2.T
-                DL_affine_plot(f"epoch{epoch+1}_train", output_dir,
-                    f"{i}", "_", source_image[0, 0, :, :].detach().cpu().numpy(), 
+                DL_affine_plot(f"{i+1}", output_dir, f"epoch{epoch+1}_train", f"{i}", 
+                    source_image[0, 0, :, :].detach().cpu().numpy(), 
                     target_image[0, 0, :, :].detach().cpu().numpy(), 
                     transformed_source_affine[0, 0, :, :].detach().cpu().numpy(),
                     points1[0].cpu().detach().numpy(), 
@@ -167,10 +169,12 @@ def train(model_name, model_path, model_params, timestamp):
                     affine_params_predict=affine_params_predicted, 
                     heatmap1=None, heatmap2=None, plot=True)
 
-            # Print statistics
-            running_loss += loss.item()
-            running_loss_list.append([epoch+((i+1)/len(train_dataset)), loss.item()])
-            train_bar.set_postfix({'loss': running_loss / (i+1)})
+                # Print statistics
+                running_loss += loss.item()
+                running_loss_list.append([epoch+((i+1)/len(train_dataset)), loss.item()])
+                train_bar.set_postfix({'loss': running_loss / (i+1)})
+                loss = 0.0
+
         print(f'Training Epoch {epoch+1}/{model_params.num_epochs} loss: {running_loss / len(train_dataset)}')
         
         # Validate model
@@ -179,6 +183,7 @@ def train(model_name, model_path, model_params, timestamp):
         with torch.no_grad():
             for i, data in enumerate(test_dataset, 0):
                 loss = 0.0
+                
                 # Get images and affine parameters
                 source_image, target_image, affine_params_true, \
                     points1, points2, points1_2_true = data
@@ -224,16 +229,15 @@ def train(model_name, model_path, model_params, timestamp):
                 # Add to validation loss
                 validation_loss += loss.item()
 
-                # Plot images if i < 5
-                if i % 50 == 0:
+                if i % batch_size == 0:
                     if points1_2_predicted.shape[-1] != 2:
                         points1_2_predicted = points1_2_predicted.T
                     if points1.shape[-1] != 2:
                         points1 = points1.T
                     if points2.shape[-1] != 2:
                         points2 = points2.T
-                    DL_affine_plot(f"epoch{epoch+1}_valid", output_dir,
-                        f"{i}", "_", source_image[0, 0, :, :].cpu().numpy(), 
+                    DL_affine_plot(f"{i+1}", output_dir, f"epoch{epoch+1}_valid", f"{i}", 
+                        source_image[0, 0, :, :].cpu().numpy(), 
                         target_image[0, 0, :, :].cpu().numpy(), 
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
                         points1[0].cpu().detach().numpy(), 
