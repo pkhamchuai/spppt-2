@@ -73,7 +73,7 @@ class MyDataset(torch.utils.data.Dataset):
             return source_img, target_img, np.array([]), matches1, matches2, np.array([])
         
 
-def datagen(dataset, is_train, sup):
+def datagen(dataset, is_train, sup, batch_size=1):
     if dataset == 0:
         # actual eye dataset
         dataset_path = 'Dataset/Dataset-processed'
@@ -143,7 +143,7 @@ def datagen(dataset, is_train, sup):
         raise ValueError('Input dataset parameter 0-4')
 
     dataset = MyDataset(dataset_path, df, is_train, sup)
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=is_train)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=is_train)
 
     return dataloader#, df, dataset_path
 

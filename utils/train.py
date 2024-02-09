@@ -20,7 +20,7 @@ from utils.utils1 import *
 def train(model_name, model_path, model_params, timestamp):
 
     model_params.print_explanation()
-    train_dataset = datagen(model_params.dataset, True, model_params.sup)
+    train_dataset = datagen(model_params.dataset, True, model_params.sup, batch_size=10)
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
     # Get sample batch
@@ -92,6 +92,7 @@ def train(model_name, model_path, model_params, timestamp):
         running_loss = 0.0
         train_bar = tqdm(train_dataset, desc=f'Training Epoch {epoch+1}/{model_params.num_epochs}')
         for i, data in enumerate(train_bar):
+            print(i, data)
             # Zero the parameter gradients
             optimizer.zero_grad()
             loss = 0.0

@@ -1,6 +1,6 @@
 import subprocess
 
-dataset = [1, 2, 3, 0]
+dataset = [3]
 models = ['DHR']
 # models = ['SP_AffineNet4', 'DHR']
 sups = [1, 0]
@@ -22,12 +22,12 @@ for sup in sups:
             # runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
             #              '--model', 'DHR', '--num_epochs', str(100), 
             #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
-            runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
-                            '--model', 'DHR', '--num_epochs', str(100), 
+            runs.append(['python', 'train.py', '--dataset', str(data), 
+                            '--model', 'DHR', '--num_epochs', str(20), 
                             '--image', str(1), '--points', str(0), '--sup', str(sup)])
     
 
 for i in range(len(runs)):
-    for j in range(3):
+    for j in range(1):
         print(runs[i])
         subprocess.run(runs[i])
