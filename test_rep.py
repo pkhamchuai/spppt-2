@@ -101,7 +101,7 @@ def test(model_name, model_, model_params, timestamp):
 
             for j in range(30):
                 # Forward + backward + optimize
-                outputs = model(source_image, target_image, points1, divider=j/10)
+                outputs = model(source_image, target_image, points1, divider=j/2)
                 # for i in range(len(outputs)):
                 #     print(i, outputs[i].shape)
                 transformed_source_affine = outputs[0]
@@ -148,6 +148,9 @@ def test(model_name, model_, model_params, timestamp):
                 mse12_image = results[6]
                 ssim12_image_before = results[7]
                 ssim12_image = results[8]
+
+                points1 = points1_2_predicted.unsqueeze(0).clone()
+                source_image = transformed_source_affine.clone() # update the source image    
 
                 metrics_ij.append([mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image])
 
