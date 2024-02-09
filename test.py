@@ -1,70 +1,59 @@
-# import sys
-import argparse
-import numpy as np
+import subprocess
 import os
-import cv2
-import torch
-import matplotlib.pyplot as plt
-# from skimage.metrics import structural_similarity as ssim
-# from skimage.measure import ransac
-# from skimage.transform import FundamentalMatrixTransform, AffineTransform
 
-from datetime import datetime
+dataset = [1, 2, 3, 0]
+sups = [1, 1, 1, 0]
+models = ['DHR_Rep']
 
-import torch
-# from torchvision import transforms
-# import torch.nn.functional as F
-# from torch.utils import data
-# from torchsummary import summary
-# from pytorch_model_summary import summary
+# grab the model path in the folder 'trained_models'
+# take only files with 'DHR_*'
+model_path = []
+# list all files in the folder
+files = os.listdir('trained_models')
+# iterate through the files
+for file in files:
+    # if the file starts with 'DHR_', but ont 'DHR_Rigid'
+    if file.startswith('DHR_') and not file.startswith('DHR_Rigid'):
+        # append the file to model_path
+        model_path.append(file)
 
-torch.manual_seed(9793047918980052389)
-print('Seed:', torch.seed())
+runs = []
+learning_rate = 1e-3
 
-from utils.utils0 import *
-from utils.utils1 import *
-from utils.utils1 import ModelParams, print_summary
-from utils import test
+# generate run commands
+for model in range(len(models)):
+    # for i in range(len(dataset)):
+    #     # print(f'\nTraining on dataset {dataset[i]} with sup {sups[i]}')
+    #     runs.append(['python', 'train.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
+    #                     '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f'Device: {device}')
+    for path in range(len(model_path)):
+        for dataset_ in range(len(dataset)):
+            if dataset_ == 3:
+                runs.append(['python', 'test_rep.py', '--model', str(models[model]), '--sup', str(0), '--dataset', str(dataset[dataset_]),
+                        '--model_path', str(model_path[path])
+                        ])
+            else:
+                runs.append(['python', 'test_rep.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+                            '--model_path', str(model_path[path])
+                            ])
+                # pass
+    # for i in range(len(dataset)):
+    #     runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
+    #                     '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])
 
-# Stub to warn about opencv version.
-if int(cv2.__version__[0]) < 3: # pragma: no cover
-  print('Warning: OpenCV 3 is not installed')
+        
+        # subprocess.run(['.venv/bin/python', 'test_Rep.py', '--model', 'SP_AffineNet4', '--sup', '1', '--dataset', str(i), 
+        #                 '--model_path', 'SP_AffineNet4_31103_0.0001_10_15_1_20231114-125116.pth'])
 
-image_size = 256
+        # .venv/bin/python test_Rep.py --model DHR --model_path DHR_11100_0.001_0_20_1_20231030-165803.pth
+        # subprocess.run(['.venv/bin/python', 'test_Rep.py', '--model', 'DHR', '--dataset', str(i),
+        #                 '--model_path', 'DHR_11100_0.001_0_10_1_20231031-151024.pth'])
 
-# from utils.SuperPoint import SuperPointFrontend
-# from utils.utils1 import transform_points_DVF
+# sort runs by element 1, then 11, then 7
+# runs.sort(key=lambda x: x[3])
 
-if __name__ == '__main__':
-    # get the arguments
-    parser = argparse.ArgumentParser(description='Deep Learning for Image Registration')    
-    parser.add_argument('--dataset', type=int, default=1, help='dataset number')
-    parser.add_argument('--sup', type=int, default=1, help='supervised learning (1) or unsupervised learning (0)')
-    parser.add_argument('--image', type=int, default=1, help='image used for training')
-    parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
-    parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
-    parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
-    parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default=None, help='which model to use')
-    parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
-    args = parser.parse_args()
-
-    model_path = 'trained_models/' + args.model_path
-    model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, heatmaps=args.heatmaps, 
-                               loss_image=args.loss_image, num_epochs=args.num_epochs, 
-                               learning_rate=args.learning_rate, decay_rate=args.decay_rate)
-    model_params.print_explanation()
-
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-
-    # save the output of print_explanation() and loss_list to a txt file
-    # print_summary(args.model, model_path, model_params, None, timestamp, True)
-
-    print(f"\nTesting the trained model: {args.model} +++++++++++++++++++++++")
-
-    test(args.model, model_path, model_params, timestamp)
-    print("Test model finished +++++++++++++++++++++++++++++")
+# runs.sort(key=lambda x: x[5])
+for i in range(len(runs)):
+    print(runs[i])
+    subprocess.run(runs[i])

@@ -85,63 +85,57 @@ def test(model_name, model_, model_params, timestamp):
             points1 = points1.requires_grad_(True).to(device)
             points2 = points2.requires_grad_(True).to(device)
 
-            mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = 0, 0, 0, 0
+            # Forward + backward + optimize
+            outputs = model(source_image, target_image, points1)
+            # for i in range(len(outputs)):
+            #     print(i, outputs[i].shape)
+            transformed_source_affine = outputs[0]
+            affine_params_predicted = outputs[1]
+            points1_2_predicted = outputs[2]
 
-            for j in range(30):
-                # Forward + backward + optimize
-                outputs = model(source_image, target_image, points1)
-                # for i in range(len(outputs)):
-                #     print(i, outputs[i].shape)
-                transformed_source_affine = outputs[0]
-                affine_params_predicted = outputs[1]
-                points1_2_predicted = outputs[2]
+            try:
+                points1_2_predicted = points1_2_predicted.reshape(
+                points1_2_predicted.shape[2], points1_2_predicted.shape[1])
+            except:
+                pass
 
-                try:
-                    points1_2_predicted = points1_2_predicted.reshape(
-                    points1_2_predicted.shape[2], points1_2_predicted.shape[1])
-                except:
-                    pass
+            if i < 100:
+                plot_ = True
+            else:
+                plot_ = False
 
-                if i < 100:
-                    plot_ = True
-                else:
-                    plot_ = False
+            if points1_2_predicted.shape[-1] != 2:
+                points1_2_predicted = points1_2_predicted.T
+            if points1.shape[-1] != 2:
+                points1 = points1.T
+            if points2.shape[-1] != 2:
+                points2 = points2.T
+            # print(points1_2_predicted.shape, points2.shape, points1.shape)
 
-                if points1_2_predicted.shape[-1] != 2:
-                    points1_2_predicted = points1_2_predicted.T
-                if points1.shape[-1] != 2:
-                    points1 = points1.T
-                if points2.shape[-1] != 2:
-                    points2 = points2.T
-                # print(points1_2_predicted.shape, points2.shape, points1.shape)
+            results = DL_affine_plot(f"test", output_dir,
+                f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
+                target_image[0, 0, :, :].cpu().numpy(), 
+                transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                points1[0].cpu().detach().numpy().T, 
+                points2[0].cpu().detach().numpy().T, 
+                points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                affine_params_true=affine_params_true,
+                affine_params_predict=affine_params_predicted, 
+                heatmap1=None, heatmap2=None, plot=plot_)
 
-                results = DL_affine_plot(f"rep{j:02d}", output_dir,
-                    f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
-                    target_image[0, 0, :, :].cpu().numpy(), 
-                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    points1[0].cpu().detach().numpy().T, 
-                    points2[0].cpu().detach().numpy().T, 
-                    points1_2_predicted.cpu().detach().numpy().T, None, None, 
-                    affine_params_true=affine_params_true,
-                    affine_params_predict=affine_params_predicted, 
-                    heatmap1=None, heatmap2=None, plot=plot_)
-
-                # calculate metrics
-                # matches1_transformed = results[0]
-                mse_before = results[1]
-                mse12 = results[2]
-                tre_before = results[3]
-                tre12 = results[4]
-                mse12_image_before = results[5]
-                mse12_image = results[6]
-                ssim12_image_before = results[7]
-                ssim12_image = results[8]
-
-                if j == 0:
-                    mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
+            # calculate metrics
+            # matches1_transformed = results[0]
+            mse_before = results[1]
+            mse12 = results[2]
+            tre_before = results[3]
+            tre12 = results[4]
+            mse12_image_before = results[5]
+            mse12_image = results[6]
+            ssim12_image_before = results[7]
+            ssim12_image = results[8]
 
             # append metrics to metrics list
-            metrics.append([i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, ssim12_image_before_first, ssim12_image, points1_2_predicted.shape[1]])
+            metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, points1_2_predicted.shape[1]])
 
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
