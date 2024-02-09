@@ -85,11 +85,22 @@ def test(model_name, model_, model_params, timestamp):
             points1 = points1.requires_grad_(True).to(device)
             points2 = points2.requires_grad_(True).to(device)
 
+            # TODO: how to repeat the test?
+            # 1. until the affine parameters are not change anymore
+            # 2. until the mse is not change anymore
+            # 3. until the mse is not change anymore and the affine parameters are not change anymore
+
+            # use for loop with a large number of iterations 
+            # check TRE of points1 and points2
+            # if TRE grows larger than the last iteration, stop the loop
+            TRE_last = 1e10
+            MSE_last = 1e10
+
             mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = 0, 0, 0, 0
 
             for j in range(30):
                 # Forward + backward + optimize
-                outputs = model(source_image, target_image, points1)
+                outputs = model(source_image, target_image, points1, divider=j)
                 # for i in range(len(outputs)):
                 #     print(i, outputs[i].shape)
                 transformed_source_affine = outputs[0]
@@ -139,6 +150,29 @@ def test(model_name, model_, model_params, timestamp):
 
                 if j == 0:
                     mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
+
+                # check if the mse and affine parameters are not change anymore
+                # print(np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()),
+                #       np.linalg.norm(affine_params_predicted[0].cpu().numpy() - identity))
+                if tre12 < TRE_last and mse12 < MSE_last:
+                    points1 = points1_2_predicted.unsqueeze(0).clone()
+                    source_image = transformed_source_affine.clone() # update the source image
+                    TRE_last = tre12
+                    MSE_last = mse12
+                else:
+                    # _ = DL_affine_plot(f"rep{j:02d}", output_dir,
+                    #     f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
+                    #     target_image[0, 0, :, :].cpu().numpy(), 
+                    #     transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                    #     points1[0].cpu().detach().numpy().T, 
+                    #     points2[0].cpu().detach().numpy().T, 
+                    #     points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                    #     affine_params_true=affine_params_true,
+                    #     affine_params_predict=affine_params_predicted, 
+                    #     heatmap1=None, heatmap2=None, plot=True)
+                    tre12 = TRE_last
+                    mse12 = MSE_last
+                    break
 
             # append metrics to metrics list
             metrics.append([i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, ssim12_image_before_first, ssim12_image, points1_2_predicted.shape[1]])

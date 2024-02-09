@@ -87,8 +87,8 @@ def test(model_name, model_, model_params, timestamp):
             else:
                 plot_ = False
 
-            results = DL_affine_plot(f"{i+1}", output_dir,
-                f"{i}", "_", source_image[0, 0, :, :].cpu().numpy(), target_image[0, 0, :, :].cpu().numpy(), \
+            results = DL_affine_plot(f"{i}", output_dir,
+                f"{i+1}", "_", source_image[0, 0, :, :].cpu().numpy(), target_image[0, 0, :, :].cpu().numpy(), \
                 transformed_source_affine[0, 0, :, :].cpu().numpy(), \
                 points1, points2, points1_transformed, desc1_2, desc2, affine_params_true=affine_params_true,
                 affine_params_predict=affine_params_predicted, heatmap1=heatmap1, heatmap2=heatmap2, plot=plot_)

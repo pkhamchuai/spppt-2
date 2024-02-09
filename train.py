@@ -18,8 +18,10 @@ import torch
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams
-from utils.train_batch import train
-from utils.test import test
+# from utils.train_batch import train
+from utils.train import train
+# from utils.test import test
+from test_points import test
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f'Device: {device}')

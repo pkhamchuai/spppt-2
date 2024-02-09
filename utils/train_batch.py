@@ -78,7 +78,7 @@ def train(model_name, model_path, model_params, timestamp):
     running_loss_list = []
     
     print('Seed:', torch.seed())
-    batch_size = 10
+    batch_size = 5
 
     
     # Create output directory
