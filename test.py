@@ -1,20 +1,21 @@
 import subprocess
 import os
 
-dataset = [1, 2, 3, 0]
-sups = [1, 1, 1, 0]
+dataset = [3]
+sups = [0]
 models = ['DHR_Rep']
 
 # grab the model path in the folder 'trained_models'
 # take only files with 'DHR_*'
 model_path = []
 # list all files in the folder
-files = os.listdir('trained_models')
+files = os.listdir('trained_models/keep/')
 # iterate through the files
 for file in files:
     # if the file starts with 'DHR_', but ont 'DHR_Rigid'
     if file.startswith('DHR_') and not file.startswith('DHR_Rigid'):
         # append the file to model_path
+        print(file)
         model_path.append(file)
 
 runs = []
@@ -29,13 +30,14 @@ for model in range(len(models)):
 
     for path in range(len(model_path)):
         for dataset_ in range(len(dataset)):
-            if dataset_ == 3:
-                runs.append(['python', 'test_rep.py', '--model', str(models[model]), '--sup', str(0), '--dataset', str(dataset[dataset_]),
-                        '--model_path', str(model_path[path])
-                        ])
-            else:
-                runs.append(['python', 'test_rep.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
-                            '--model_path', str(model_path[path])
+            runs.append(['python', 'test_points.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+                            '--model_path', str(os.path.join('keep', model_path[path]))
+                            ])
+            runs.append(['python', 'test_rep1.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+                            '--model_path', str(os.path.join('keep', model_path[path]))
+                            ])
+            runs.append(['python', 'test_rep2.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+                            '--model_path', str(os.path.join('keep', model_path[path]))
                             ])
                 # pass
     # for i in range(len(dataset)):
