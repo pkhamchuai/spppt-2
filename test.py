@@ -3,7 +3,7 @@ import os
 
 dataset = [3]
 sups = [0]
-models = ['DHR_Rep']
+models = ['DHR']
 
 # grab the model path in the folder 'trained_models'
 # take only files with 'DHR_*'
