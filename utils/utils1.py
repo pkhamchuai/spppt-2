@@ -30,23 +30,23 @@ def model_loader(model_name, model_params):
             torch.manual_seed(9793047918980052389)
             from utils.SPaffineNet import SP_AffineNet
             model = SP_AffineNet(model_params).to(device)
-        elif model_name == 'SP_AffineNet1':
-            torch.manual_seed(9793047918980052389)
-            from utils.SPaffineNet1 import SP_AffineNet1
-            model = SP_AffineNet1(model_params).to(device)
-        elif model_name == 'SP_AffineNet1alt':
-            torch.manual_seed(9793047918980052389)
-            from utils.SPaffineNet1alt import SP_AffineNet1alt
-            model = SP_AffineNet1alt(model_params).to(device)
-        elif model_name == 'SP_AffineNet2':
-            from utils.SPaffineNet2 import SP_AffineNet2
-            model = SP_AffineNet2(model_params).to(device)
-        elif model_name == 'SP_AffineNet2alt':
-            from utils.SPaffineNet2alt import SP_AffineNet2alt
-            model = SP_AffineNet2alt(model_params).to(device)
-        elif model_name == 'SP_AffineNet3':
-            from utils.SPaffineNet3 import SP_AffineNet3
-            model = SP_AffineNet3(model_params).to(device)
+        # elif model_name == 'SP_AffineNet1':
+        #     torch.manual_seed(9793047918980052389)
+        #     from utils.SPaffineNet1 import SP_AffineNet1
+        #     model = SP_AffineNet1(model_params).to(device)
+        # elif model_name == 'SP_AffineNet1alt':
+        #     torch.manual_seed(9793047918980052389)
+        #     from utils.SPaffineNet1alt import SP_AffineNet1alt
+        #     model = SP_AffineNet1alt(model_params).to(device)
+        # elif model_name == 'SP_AffineNet2':
+        #     from utils.SPaffineNet2 import SP_AffineNet2
+        #     model = SP_AffineNet2(model_params).to(device)
+        # elif model_name == 'SP_AffineNet2alt':
+        #     from utils.SPaffineNet2alt import SP_AffineNet2alt
+        #     model = SP_AffineNet2alt(model_params).to(device)
+        # elif model_name == 'SP_AffineNet3':
+        #     from utils.SPaffineNet3 import SP_AffineNet3
+        #     model = SP_AffineNet3(model_params).to(device)
         elif model_name == 'SP_AffineNet4':
             from utils.SPaffineNet4 import SP_AffineNet4
             model = SP_AffineNet4(model_params).to(device)
@@ -54,10 +54,10 @@ def model_loader(model_name, model_params):
             print('Loading DHR model (networks/affine_network_simple.py)')
             from utils.SP_DHR import SP_DHR_Net
             model = SP_DHR_Net(model_params).to(device)
-        elif model_name == 'DHR_Rep':
-            print('Loading DHR_Rep model (utils/SP_DHR_Rep.py)')
-            from utils.SP_DHR_Rep import SP_DHR_Net
-            model = SP_DHR_Net(model_params).to(device)
+        # elif model_name == 'DHR_Rep':
+        #     print('Loading DHR_Rep model (utils/SP_DHR_Rep.py)')
+        #     from utils.SP_DHR_Rep import SP_DHR_Net
+        #     model = SP_DHR_Net(model_params).to(device)
         elif model_name == 'DHR_Rigid':
             print('Loading DHR_Rigid model (utils/SP_DHR_Rigid.py)')
             from utils.SP_DHR_Rigid import SP_DHR_Net
@@ -68,6 +68,12 @@ def model_loader(model_name, model_params):
         elif model_name == 'SP_Rigid_Scale':
             from utils.SP_Rigid_Scale import SP_Rigid_Scale
             model = SP_Rigid_Scale(model_params).to(device)
+        elif model_name == 'AIRNet':
+            from utils.SP_AIRNet import SP_AIRNet
+            model = SP_AIRNet().to(device)
+        elif model_name == 'RigidIRNet':
+            from utils.SP_RigidIRNet import SP_RigidIRNet
+            model = SP_RigidIRNet().to(device)
         return model
     
     else:
