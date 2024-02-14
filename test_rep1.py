@@ -100,7 +100,7 @@ def test(model_name, model_, model_params, timestamp):
 
             for j in range(30):
                 # Forward + backward + optimize
-                outputs = model(source_image, target_image, points1, divider=j)
+                outputs = model(source_image, target_image, points1)
                 # for i in range(len(outputs)):
                 #     print(i, outputs[i].shape)
                 transformed_source_affine = outputs[0]
@@ -176,7 +176,7 @@ def test(model_name, model_, model_params, timestamp):
 
             # append metrics to metrics list
             metrics.append([i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
-                            ssim12_image_before_first, ssim12_image, points1_2_predicted.shape[1]])
+                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape)])
 
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)

@@ -130,7 +130,7 @@ def train(model_name, model_path, model_params, timestamp):
         train_bar = tqdm(train_dataset, desc=f'Training Epoch {epoch+1}/{model_params.num_epochs}')
         for i, data in enumerate(train_bar):
             # Zero the parameter gradients
-            optimizer.zero_grad()
+            # optimizer.zero_grad()
             
             loss = 0.0
 
@@ -184,12 +184,12 @@ def train(model_name, model_path, model_params, timestamp):
                 loss += loss_affine
 
             if model_params.points:
-                loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1), 
+                loss_ += criterion_points(torch.flatten(points1_2_predicted, start_dim=1), 
                                     torch.flatten(points1_2_true[0], start_dim=1).to(device))
                 # loss_ = torch.subtract(points1_2_predicted.cpu().detach(), points1_2_true[0].cpu().detach())
-                # loss += torch.sum(torch.square(loss_))
+                loss += torch.sum(torch.square(loss_))
 
-            # optimizer.zero_grad()
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             scheduler.step()
@@ -344,6 +344,7 @@ def train(model_name, model_path, model_params, timestamp):
         signaturebar_gray(fig, f'{model_params.get_model_code()} - epoch{model_params.num_epochs} - {timestamp}')
         fig.savefig(save_plot_name)
         # plt.show()
+        plt.close(fig)
 
     print('\nFinished Training')
 

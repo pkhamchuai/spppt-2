@@ -1141,16 +1141,15 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
                         break
                     suffix += 1
 
-            fig2 = signaturebar_gray(fig, f"{name}, S: {image1_name}, T: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
+            signaturebar_gray(fig, f"{name}, S: {image1_name}, T: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
                     rect_kw={"facecolor": "gray", "edgecolor": None},
                     text_kw={"color": "w"})
-            fig2.savefig(save_file_name)
+            fig.savefig(save_file_name)
             
             # save images to output folder
             '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image3*255)
             cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_2.png", image2_transformed*255)'''
             plt.close(fig)
-            plt.close(fig2)
             
         except TypeError:
             print("TypeError in plotting")

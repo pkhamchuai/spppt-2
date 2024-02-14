@@ -120,6 +120,7 @@ def train(model_name, model_path, model_params, timestamp):
     os.makedirs(output_dir, exist_ok=True)
     save_plot_name = f"{output_dir}/loss_{model_params.get_model_code()}_epoch{model_params.num_epochs}_{timestamp}.png"
 
+    model_params.num_epochs = 10*model_params.num_epochs
     # Train model
     for epoch in range(model_params.start_epoch, model_params.num_epochs):
         # Set model to training mode
@@ -237,86 +238,87 @@ def train(model_name, model_path, model_params, timestamp):
         # optimizer.step()
         # scheduler.step()
         
-        # Validate model
-        validation_loss = 0.0
-        model.eval()
-        with torch.no_grad():
-            for i, data in enumerate(test_dataset, 0):
-                loss = 0.0
-                # Get images and affine parameters
-                source_image, target_image, affine_params_true, \
-                    points1, points2, points1_2_true = data
+        if epoch % 10 == 0:
+            # Validate model
+            validation_loss = 0.0
+            model.eval()
+            with torch.no_grad():
+                for i, data in enumerate(test_dataset, 0):
+                    loss = 0.0
+                    # Get images and affine parameters
+                    source_image, target_image, affine_params_true, \
+                        points1, points2, points1_2_true = data
 
-                source_image = source_image.requires_grad_(True).to(device)
-                target_image = target_image.requires_grad_(True).to(device)
-                # add gradient to the matches
-                points1 = points1.requires_grad_(True).to(device)
-                points2 = points2.requires_grad_(True).to(device)
-                points1_2_true = points1_2_true.requires_grad_(True).to(device)
+                    source_image = source_image.requires_grad_(True).to(device)
+                    target_image = target_image.requires_grad_(True).to(device)
+                    # add gradient to the matches
+                    points1 = points1.requires_grad_(True).to(device)
+                    points2 = points2.requires_grad_(True).to(device)
+                    points1_2_true = points1_2_true.requires_grad_(True).to(device)
 
-                # Forward + backward + optimize
-                outputs = model(source_image, target_image, points1)
-                # for i in range(len(outputs)):
-                #         print(i, outputs[i].shape)
-                # 0 torch.Size([1, 1, 256, 256])
-                # 1 torch.Size([1, 2, 3])
-                # 2 (2, 0)
-                # 3 (2, 0)
-                # 4 (256, 100)
-                # 5 (256, 115)
-                # 6 (256, 256)
-                # 7 (256, 256)
-                transformed_source_affine = outputs[0] # image
-                affine_params_predicted = outputs[1] # affine parameters
-                points1_2_predicted = outputs[2].T
+                    # Forward + backward + optimize
+                    outputs = model(source_image, target_image, points1)
+                    # for i in range(len(outputs)):
+                    #         print(i, outputs[i].shape)
+                    # 0 torch.Size([1, 1, 256, 256])
+                    # 1 torch.Size([1, 2, 3])
+                    # 2 (2, 0)
+                    # 3 (2, 0)
+                    # 4 (256, 100)
+                    # 5 (256, 115)
+                    # 6 (256, 256)
+                    # 7 (256, 256)
+                    transformed_source_affine = outputs[0] # image
+                    affine_params_predicted = outputs[1] # affine parameters
+                    points1_2_predicted = outputs[2].T
 
-                try:
-                    points1_2_predicted = points1_2_predicted.reshape(
-                    points1_2_predicted.shape[2], points1_2_predicted.shape[1])
-                except:
-                    pass
+                    try:
+                        points1_2_predicted = points1_2_predicted.reshape(
+                        points1_2_predicted.shape[2], points1_2_predicted.shape[1])
+                    except:
+                        pass
 
-                if model_params.image:
-                    loss += criterion(transformed_source_affine, target_image)
-                # loss += extra(affine_params_predicted)
+                    if model_params.image:
+                        loss += criterion(transformed_source_affine, target_image)
+                    # loss += extra(affine_params_predicted)
 
-                if model_params.sup:
-                    loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
-                #     # TODO: add loss for points1_affine and points2, Euclidean distance
-                #     # loss_points = criterion_points(points1_affine, points2)
-                    loss += loss_affine
+                    if model_params.sup:
+                        loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
+                    #     # TODO: add loss for points1_affine and points2, Euclidean distance
+                    #     # loss_points = criterion_points(points1_affine, points2)
+                        loss += loss_affine
 
-                if model_params.points:
-                    # print the input's device
-                    loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                                    torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
+                    if model_params.points:
+                        # print the input's device
+                        loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
+                                        torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
 
-                # Add to validation loss
-                validation_loss += loss.item()
+                    # Add to validation loss
+                    validation_loss += loss.item()
 
-                # Plot images if i < 5
-                if i % 25 == 0 and epoch % 10 == 0:
-                    if points1_2_predicted.shape[-1] != 2:
-                        points1_2_predicted = points1_2_predicted.T
-                    if points1.shape[-1] != 2:
-                        points1 = points1.T
-                    if points2.shape[-1] != 2:
-                        points2 = points2.T
-                    DL_affine_plot(f"epoch{epoch+1}_valid", output_dir,
-                        f"{i}", model_params.get_model_code(), 
-                        source_image[0, 0, :, :].cpu().numpy(), 
-                        target_image[0, 0, :, :].cpu().numpy(), 
-                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                        points1[0].cpu().detach().numpy().T, 
-                        points2[0].cpu().detach().numpy().T, 
-                        points1_2_predicted.cpu().detach().numpy().T, None, None, 
-                        affine_params_true=affine_params_true,
-                        affine_params_predict=affine_params_predicted, 
-                        heatmap1=None, heatmap2=None, plot=True)
-                    
-        # Print validation statistics
-        validation_loss /= len(test_dataset)
-        print(f'Validation Epoch {epoch+1}/{model_params.num_epochs} loss: {validation_loss}')
+                    # Plot images if i < 5
+                    if i % 25 == 0 and epoch % 10 == 0:
+                        if points1_2_predicted.shape[-1] != 2:
+                            points1_2_predicted = points1_2_predicted.T
+                        if points1.shape[-1] != 2:
+                            points1 = points1.T
+                        if points2.shape[-1] != 2:
+                            points2 = points2.T
+                        DL_affine_plot(f"epoch{epoch+1}_valid", output_dir,
+                            f"{i}", model_params.get_model_code(), 
+                            source_image[0, 0, :, :].cpu().numpy(), 
+                            target_image[0, 0, :, :].cpu().numpy(), 
+                            transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                            points1[0].cpu().detach().numpy().T, 
+                            points2[0].cpu().detach().numpy().T, 
+                            points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                            affine_params_true=affine_params_true,
+                            affine_params_predict=affine_params_predicted, 
+                            heatmap1=None, heatmap2=None, plot=True)
+                        
+            # Print validation statistics
+            validation_loss /= len(test_dataset)
+            print(f'Validation Epoch {epoch+1}/{model_params.num_epochs} loss: {validation_loss}')
 
         # Append epoch number, train loss and validation loss to epoch_loss_list
         epoch_loss_list.append([epoch, running_loss / len(train_dataset), validation_loss])

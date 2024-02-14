@@ -1,7 +1,7 @@
 import subprocess
 
 dataset = [1, 2, 3]
-models = ['AIRNet', 'SP_AffineNet4']
+models = ['DHR', 'AIRNet', 'SP_AffineNet4']
 # models = ['SP_AffineNet4', 'DHR']
 sups = [1, 0]
 runs = []
@@ -11,22 +11,28 @@ runs = []
 # sigma = range(30, 100, 10)
 
 # generate run commands
+# for model in models:
+#     for sup in sups:    
+#         for data in dataset:
+#             if model != 'AIRNet' and sup == 0:
+#                     pass
+#             else:
+#                     # runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
+#                     #              '--model', 'DHR', 
+#                     #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
+#                     # runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
+#                     #              '--model', 'DHR', '--num_epochs', str(100), 
+#                     #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
+#                 runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
+#                     '--model', str(model), '--num_epochs', str(20), 
+#                     '--image', str(1), '--points', str(0), '--loss_image', str(0),
+#                     '--sup', str(sup)])
+
 for model in models:
-    for sup in sups:    
-        for data in dataset:
-            if model != 'AIRNet' and sup == 0:
-                    pass
-            else:
-                    # runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
-                    #              '--model', 'DHR', 
-                    #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
-                    # runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
-                    #              '--model', 'DHR', '--num_epochs', str(100), 
-                    #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
-                runs.append(['python', 'train_img_batch.py', '--dataset', str(data), 
-                                    '--model', str(model), '--num_epochs', str(20), 
-                                    '--image', str(1), '--points', str(0), '--loss_image', str(0),
-                                    '--sup', str(sup)])
+    runs.append(['python', 'train_stage.py', 
+                    '--model', str(model), '--num_epochs', str(20), 
+                    '--image', str(1), '--points', str(0), '--loss_image', str(0),
+                    ])
         
 
 for i in range(len(runs)):
@@ -37,5 +43,5 @@ for i in range(len(runs)):
 ''' notes
 train_points_rigid.py - no batch training
 train_img_batch.py - batch training
-
+train_one_sample.py - one sample training
 '''
