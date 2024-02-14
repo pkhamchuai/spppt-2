@@ -152,16 +152,23 @@ def train(model_name, model_path, model_params, timestamp):
             if i % 50 == 0:
                 if points1_2_predicted.shape[-1] != 2:
                     points1_2_predicted = points1_2_predicted.T
+                if points1.dim() == 3:
+                    points1 = points1[0]
                 if points1.shape[-1] != 2:
                     points1 = points1.T
+                if points2.dim() == 3:
+                    points2 = points2[0]
                 if points2.shape[-1] != 2:
                     points2 = points2.T
+                print(f"points1_2_predicted: {points1_2_predicted.shape}", 
+                      f"points1: {points1.shape}", 
+                      f"points2: {points2.shape}")
                 DL_affine_plot(f"epoch{epoch+1}_train", output_dir,
-                    f"{i}", "_", source_image[0, 0, :, :].detach().cpu().numpy(), 
+                    f"{i}", model_params.get_model_code(), source_image[0, 0, :, :].detach().cpu().numpy(), 
                     target_image[0, 0, :, :].detach().cpu().numpy(), 
                     transformed_source_affine[0, 0, :, :].detach().cpu().numpy(),
-                    points1[0].cpu().detach().numpy(), 
-                    points2[0].cpu().detach().numpy(), 
+                    points1.cpu().detach().numpy(), 
+                    points2.cpu().detach().numpy(), 
                     points1_2_predicted.cpu().detach().numpy(), None, None, 
                     affine_params_true=affine_params_true,
                     affine_params_predict=affine_params_predicted, 
@@ -226,18 +233,20 @@ def train(model_name, model_path, model_params, timestamp):
 
                 # Plot images if i < 5
                 if i % 50 == 0:
-                    if points1_2_predicted.shape[-1] != 2:
-                        points1_2_predicted = points1_2_predicted.T
+                    if points1.dim() == 3:
+                        points1 = points1[0]
                     if points1.shape[-1] != 2:
                         points1 = points1.T
+                    if points2.dim() == 3:
+                        points2 = points2[0]
                     if points2.shape[-1] != 2:
                         points2 = points2.T
                     DL_affine_plot(f"epoch{epoch+1}_valid", output_dir,
-                        f"{i}", "_", source_image[0, 0, :, :].cpu().numpy(), 
+                        f"{i}", model_params.get_model_code(), source_image[0, 0, :, :].cpu().numpy(), 
                         target_image[0, 0, :, :].cpu().numpy(), 
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                        points1[0].cpu().detach().numpy(), 
-                        points2[0].cpu().detach().numpy(), 
+                        points1.cpu().detach().numpy(), 
+                        points2.cpu().detach().numpy(), 
                         points1_2_predicted, None, None, 
                         affine_params_true=affine_params_true,
                         affine_params_predict=affine_params_predicted, 

@@ -1049,7 +1049,7 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
 
             # axe B shows source image
             axes["B"].imshow(overlaid1, cmap='gray')
-            axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}")
+            axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}\n{matches1.shape}, {matches2.shape}, {matches3.shape}") 
             axes["B"].axis('off')
             axes['B'].grid(True)
 
@@ -1129,27 +1129,28 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # dir_name = f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}"
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name) 
-            save_file_name = os.path.join(dir_name, f"{image1_name}_{image2_name}_{name}.png")
+            save_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{image2_name}.png")
             # Check if the file already exists
             if os.path.exists(save_file_name):
                 suffix = 1
                 while True:
                     # Add a suffix to the file name
-                    new_file_name = os.path.join(dir_name, f"{image1_name}_{image2_name}_{name}_{suffix}.png")
+                    new_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{image2_name}_{suffix}.png")
                     if not os.path.exists(new_file_name):
                         save_file_name = new_file_name
                         break
                     suffix += 1
 
-            fig = signaturebar_gray(fig, f"S: {image1_name}, T: {image2_name}, {name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
+            fig2 = signaturebar_gray(fig, f"{name}, S: {image1_name}, T: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
                     rect_kw={"facecolor": "gray", "edgecolor": None},
                     text_kw={"color": "w"})
-            fig.savefig(save_file_name)
+            fig2.savefig(save_file_name)
             
             # save images to output folder
             '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image3*255)
             cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_2.png", image2_transformed*255)'''
             plt.close(fig)
+            plt.close(fig2)
             
         except TypeError:
             print("TypeError in plotting")

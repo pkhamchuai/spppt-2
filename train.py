@@ -1,7 +1,7 @@
 import subprocess
 
-dataset = [3]
-models = ['AIRNet', 'SP_AffineNet4', 'DHR']
+dataset = [1, 2, 3]
+models = ['AIRNet', 'SP_AffineNet4']
 # models = ['SP_AffineNet4', 'DHR']
 sups = [1, 0]
 runs = []
@@ -13,22 +13,29 @@ runs = []
 # generate run commands
 for model in models:
     for sup in sups:    
-        # for data in dataset:
-        if model != 'AIRNet' and sup == 0:
-                pass
-        else:
-                # runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
-                #              '--model', 'DHR', 
-                #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
-                # runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
-                #              '--model', 'DHR', '--num_epochs', str(100), 
-                #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
-            runs.append(['python', 'train_img_batch.py', '--dataset', str(3), 
-                                '--model', str(model), '--num_epochs', str(10), 
-                                '--image', str(1), '--points', str(0), '--sup', str(sup)])
-    
+        for data in dataset:
+            if model != 'AIRNet' and sup == 0:
+                    pass
+            else:
+                    # runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
+                    #              '--model', 'DHR', 
+                    #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
+                    # runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
+                    #              '--model', 'DHR', '--num_epochs', str(100), 
+                    #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
+                runs.append(['python', 'train_img_batch.py', '--dataset', str(data), 
+                                    '--model', str(model), '--num_epochs', str(20), 
+                                    '--image', str(1), '--points', str(0), '--loss_image', str(0),
+                                    '--sup', str(sup)])
+        
 
 for i in range(len(runs)):
-    for j in range(3):
+    for j in range(1):
         print(runs[i])
         subprocess.run(runs[i])
+
+''' notes
+train_points_rigid.py - no batch training
+train_img_batch.py - batch training
+
+'''

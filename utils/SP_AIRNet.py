@@ -31,11 +31,13 @@ class SP_AIRNet(nn.Module):
         
         # create affine transformation matrix from the parameters
         affine_params = create_affine_params(translation, rotation, scale, shear, device)
+        # print('affine_params:', affine_params.shape, affine_params)
         # elif self.model_params.heatmaps == 1:
         #     print("This part is not yet implemented.")
             # affine_params = self.affineNet(source_image, target_image, heatmap1, heatmap2)
         transformed_source_image = tensor_affine_transform(source_image, affine_params)
         transformed_points = points.clone()
+        # print('transformed_points:', transformed_points.shape)  
         transformed_points = transform_points_DVF(transformed_points[0].cpu().detach().T, 
             affine_params.cpu().detach(), transformed_source_image.cpu().detach())
 
@@ -60,7 +62,7 @@ def create_affine_params(translation, rotation, scale, shear, device):
         affine_params[i, 1, 1] = scale[i, 1] * torch.cos(rotation[i, 0])
         affine_params[i, 1, 2] = translation[i, 1]
         # add sheer
-        affine_params[i, 0, 1] += shear[i, 0]
-        affine_params[i, 1, 0] += shear[i, 1]
+        affine_params[i, 0, 1] += shear[i, 1]
+        affine_params[i, 1, 0] += shear[i, 0]
 
     return affine_params
