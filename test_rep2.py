@@ -127,8 +127,8 @@ def test(model_name, model_, model_params, timestamp):
                     points2 = points2.T
                 # print(points1_2_predicted.shape, points2.shape, points1.shape)
 
-                results = DL_affine_plot(f"rep{j:02d}", output_dir,
-                    f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
+                results = DL_affine_plot(f"{i}", output_dir,
+                    f"{i+1}", f"rep{j:02d}", source_image[0, 0, :, :].cpu().numpy(), 
                     target_image[0, 0, :, :].cpu().numpy(), 
                     transformed_source_affine[0, 0, :, :].cpu().numpy(),
                     points1[0].cpu().detach().numpy().T, 

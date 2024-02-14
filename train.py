@@ -29,7 +29,7 @@ runs = []
 #                     '--sup', str(sup)])
 
 for model in models:
-    runs.append(['python', 'train_stage.py', 
+    runs.append(['python', 'train_stage.py', '--learning_rate', str(1e-3), '--decay_rate', str(0.5e-3),
                     '--model', str(model), '--num_epochs', str(20), 
                     '--image', str(1), '--points', str(0), '--loss_image', str(0),
                     ])
