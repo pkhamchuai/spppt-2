@@ -1,7 +1,8 @@
 import subprocess
 
 dataset = [1, 2, 3]
-models = ['DHR_Attn']
+model = 'DHR_5blocks'
+# models = ['DHR_Attn']
 # models = ['DHR', 'AIRNet', 'SP_AffineNet4']
 # models = ['SP_AffineNet4', 'DHR']
 sups = [1, 0]
@@ -22,17 +23,17 @@ for file in files:
         # if model != 'AIRNet' and sup == 0:
         #         pass
         # else:
-        model = 'DHR_Attn'
+        # model = 'DHR_Attn'
         if file == 'train_points_rigid_img':
             runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
                 '--model', str(model), '--num_epochs', str(10), 
                 '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
                 '--image', str(1), '--points', str(0), '--sup', str(sup)])
-        elif file == 'train_points_rigid_pt':
-            runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
-                '--model', str(model), '--num_epochs', str(10), 
-                '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
-                '--image', str(0), '--points', str(1), '--sup', str(sup)])
+        # elif file == 'train_points_rigid_pt':
+        #     runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
+        #         '--model', str(model), '--num_epochs', str(10), 
+        #         '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
+        #         '--image', str(0), '--points', str(1), '--sup', str(sup)])
         elif file == 'train_img_batch.py':
             runs.append(['python', 'train_img_batch.py', '--dataset', str(data), 
                 '--model', str(model), '--num_epochs', str(10), 
