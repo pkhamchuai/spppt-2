@@ -1,0 +1,40 @@
+Seed: 8567425228113717453
+Seed: 293766742767986643
+Seed: 15222171748562708247
+Seed: 4259432107082165372
+Seed: 12393978080414715168
+Seed: 592691073948556306
+Seed: 6848083161476145558
+Seed: 10408143461046957363
+Seed: 12966144796466343781
+Seed: 3046307073309953755
+Seed: 16543668633280267536
+Seed: 11374175513598329048
+DHR_11100_0.01_0_10_1_20240126-150023.pth
+DHR_11105_0.001_0_5_1_20240111-115251.pth
+DHR_21100_0.01_0_10_1_20240126-194030.pth
+DHR_31100_0.01_0_10_1_20240126-112503.pth
+['python', 'test_points.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_11100_0.01_0_10_1_20240126-150023.pth']
+['python', 'test_rep1.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_11100_0.01_0_10_1_20240126-150023.pth']
+['python', 'test_rep2.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_11100_0.01_0_10_1_20240126-150023.pth']
+['python', 'test_points.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_11105_0.001_0_5_1_20240111-115251.pth']
+['python', 'test_rep1.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_11105_0.001_0_5_1_20240111-115251.pth']
+['python', 'test_rep2.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_11105_0.001_0_5_1_20240111-115251.pth']
+['python', 'test_points.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_21100_0.01_0_10_1_20240126-194030.pth']
+['python', 'test_rep1.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_21100_0.01_0_10_1_20240126-194030.pth']
+['python', 'test_rep2.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_21100_0.01_0_10_1_20240126-194030.pth']
+['python', 'test_points.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_31100_0.01_0_10_1_20240126-112503.pth']
+['python', 'test_rep1.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_31100_0.01_0_10_1_20240126-112503.pth']
+['python', 'test_rep2.py', '--model', 'DHR', '--sup', '1', '--dataset', '3', '--model_path', 'keep/DHR_31100_0.01_0_10_1_20240126-112503.pth']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'AIRNet', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'AIRNet', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'AIRNet', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'AIRNet', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '0']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'AIRNet', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '0']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'AIRNet', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '0']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'SP_AffineNet4', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'SP_AffineNet4', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'SP_AffineNet4', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'DHR', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'DHR', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'DHR', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']

@@ -1,38 +1,38 @@
 python train.py
-['python', 'train_points_rigid.py', '--dataset', '1', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_points_rigid.py', '--dataset', '1', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '1', '--points', '0', '--sup', '1']
 
 
-['python', 'train_points_rigid.py', '--dataset', '2', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_points_rigid.py', '--dataset', '2', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '1', '--points', '0', '--sup', '1']
 
 
-['python', 'train_points_rigid.py', '--dataset', '3', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_points_rigid.py', '--dataset', '3', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '1', '--points', '0', '--sup', '1']
 
 
-['python', 'train_points_rigid.py', '--dataset', '1', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '0', '--points', '1', '--sup', '1']
+['python', 'train_points_rigid.py', '--dataset', '1', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '0', '--points', '1', '--sup', '1']
 
 
-['python', 'train_points_rigid.py', '--dataset', '2', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '0', '--points', '1', '--sup', '1']
+['python', 'train_points_rigid.py', '--dataset', '2', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '0', '--points', '1', '--sup', '1']
 
 
-['python', 'train_points_rigid.py', '--dataset', '3', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '0', '--points', '1', '--sup', '1']
+['python', 'train_points_rigid.py', '--dataset', '3', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '0', '--points', '1', '--sup', '1']
 
 
-['python', 'train_img_batch.py', '--dataset', '1', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '1', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '1', '--points', '0', '--sup', '1']
 
 
-['python', 'train_img_batch.py', '--dataset', '2', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '2', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '1', '--points', '0', '--sup', '1']
 
 
-['python', 'train_img_batch.py', '--dataset', '3', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '1', '--points', '0', '--sup', '1']
+['python', 'train_img_batch.py', '--dataset', '3', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '1', '--points', '0', '--sup', '1']
 
 
-['python', 'train_one_sample.py', '--dataset', '1', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '1', '--points', '0', '--loss_image', '0', '--sup', '1']
+['python', 'train_one_sample.py', '--dataset', '1', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '1', '--points', '0', '--loss_image', '0', '--sup', '1']
 
 
-['python', 'train_one_sample.py', '--dataset', '2', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '1', '--points', '0', '--loss_image', '0', '--sup', '1']
+['python', 'train_one_sample.py', '--dataset', '2', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '1', '--points', '0', '--loss_image', '0', '--sup', '1']
 
 
-['python', 'train_one_sample.py', '--dataset', '3', '--model', 'DHR_Attn', '--num_epochs', '10', '--image', '1', '--points', '0', '--loss_image', '0', '--sup', '1']
+['python', 'train_one_sample.py', '--dataset', '3', '--model', 'DHR_Attn', '--num_epochs', '10', '--learning_rate', '0.001', '--decay_rate', '0.0002', '--image', '1', '--points', '0', '--loss_image', '0', '--sup', '1']
 
 
 Total runs:  12

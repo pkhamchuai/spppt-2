@@ -3,7 +3,7 @@
 *:Zone.Identifier
 *.pyc
 trained_models/*.pth
-trained_models/keep/*.pth
+trained_models/*/*.pth
 trained_models/*.pth.filepart
 output/*/*.png
 output/this/*/*

@@ -2,8 +2,9 @@ import subprocess
 import os
 
 dataset = [3]
-sups = [0]
-models = ['DHR']
+sups = [1]
+models = ['DHR_Attn']
+# , 'AIRNet', 'SP_AffineNet4'
 
 # grab the model path in the folder 'trained_models'
 # take only files with 'DHR_*'
@@ -13,7 +14,7 @@ files = os.listdir('trained_models/keep/')
 # iterate through the files
 for file in files:
     # if the file starts with 'DHR_', but ont 'DHR_Rigid'
-    if file.startswith('DHR_') and not file.startswith('DHR_Rigid'):
+    if file.startswith('DHR_Attn') and not file.startswith('DHR_Rigid'):
         # append the file to model_path
         print(file)
         model_path.append(file)
@@ -58,4 +59,4 @@ for model in range(len(models)):
 # runs.sort(key=lambda x: x[5])
 for i in range(len(runs)):
     print(runs[i])
-    subprocess.run(runs[i])
+    # subprocess.run(runs[i])

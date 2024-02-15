@@ -12,6 +12,8 @@ runs = []
 # sigma = range(30, 100, 10)
 files = ['train_points_rigid_img', 'train_points_rigid_pt', 'train_img_batch.py', 'train_one_sample.py']
 
+lr = 1e-3
+decay_rate = 0.2e-3
 # generate run commands
 for file in files:
     sup = 1
@@ -23,19 +25,23 @@ for file in files:
         model = 'DHR_Attn'
         if file == 'train_points_rigid_img':
             runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
-                        '--model', str(model), '--num_epochs', str(10), 
-                        '--image', str(1), '--points', str(0), '--sup', str(sup)])
+                '--model', str(model), '--num_epochs', str(10), 
+                '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
+                '--image', str(1), '--points', str(0), '--sup', str(sup)])
         elif file == 'train_points_rigid_pt':
             runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
-                        '--model', str(model), '--num_epochs', str(10), 
-                        '--image', str(0), '--points', str(1), '--sup', str(sup)])
+                '--model', str(model), '--num_epochs', str(10), 
+                '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
+                '--image', str(0), '--points', str(1), '--sup', str(sup)])
         elif file == 'train_img_batch.py':
             runs.append(['python', 'train_img_batch.py', '--dataset', str(data), 
-                        '--model', str(model), '--num_epochs', str(10), 
-                        '--image', str(1), '--points', str(0), '--sup', str(sup)])
+                '--model', str(model), '--num_epochs', str(10), 
+                '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
+                '--image', str(1), '--points', str(0), '--sup', str(sup)])
         elif file == 'train_one_sample.py':
             runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
                 '--model', str(model), '--num_epochs', str(10), 
+                '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
                 '--image', str(1), '--points', str(0), '--loss_image', str(0),
                 '--sup', str(sup)])
         # runs.append(['python', str(file), '--dataset', str(data), 
