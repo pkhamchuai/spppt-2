@@ -1,7 +1,8 @@
 import subprocess
 
 dataset = [1, 2, 3]
-models = ['DHR', 'AIRNet', 'SP_AffineNet4']
+models = ['DHR_Attn']
+# models = ['DHR', 'AIRNet', 'SP_AffineNet4']
 # models = ['SP_AffineNet4', 'DHR']
 sups = [1, 0]
 runs = []
@@ -9,36 +10,58 @@ runs = []
 # loss = [[1, 1]]
 # offset = 0.01
 # sigma = range(30, 100, 10)
+files = ['train_points_rigid_img', 'train_points_rigid_pt', 'train_img_batch.py', 'train_one_sample.py']
 
 # generate run commands
+for file in files:
+    sup = 1
+    # for model in models:    
+    for data in dataset:
+        # if model != 'AIRNet' and sup == 0:
+        #         pass
+        # else:
+        model = 'DHR_Attn'
+        if file == 'train_points_rigid_img':
+            runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
+                        '--model', str(model), '--num_epochs', str(10), 
+                        '--image', str(1), '--points', str(0), '--sup', str(sup)])
+        elif file == 'train_points_rigid_pt':
+            runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
+                        '--model', str(model), '--num_epochs', str(10), 
+                        '--image', str(0), '--points', str(1), '--sup', str(sup)])
+        elif file == 'train_img_batch.py':
+            runs.append(['python', 'train_img_batch.py', '--dataset', str(data), 
+                        '--model', str(model), '--num_epochs', str(10), 
+                        '--image', str(1), '--points', str(0), '--sup', str(sup)])
+        elif file == 'train_one_sample.py':
+            runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
+                '--model', str(model), '--num_epochs', str(10), 
+                '--image', str(1), '--points', str(0), '--loss_image', str(0),
+                '--sup', str(sup)])
+        # runs.append(['python', str(file), '--dataset', str(data), 
+        #                 '--model', str(model), 
+        #                 '--image', str(1), '--points', str(0), '--sup', str(sup)])
+        # runs.append(['python', str(file), '--dataset', str(data), 
+        #                 '--model', 'DHR', '--num_epochs', str(100), 
+        #                 '--image', str(1), '--points', str(0), '--sup', str(sup)])
+        # runs.append(['python', str(file), '--dataset', str(data), 
+        #     '--model', str(model), '--num_epochs', str(20), 
+        #     '--image', str(1), '--points', str(0), '--loss_image', str(0),
+        #     '--sup', str(sup)])
+
 # for model in models:
-#     for sup in sups:    
-#         for data in dataset:
-#             if model != 'AIRNet' and sup == 0:
-#                     pass
-#             else:
-#                     # runs.append(['python', 'train_points_rigid.py', '--dataset', str(data), 
-#                     #              '--model', 'DHR', 
-#                     #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
-#                     # runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
-#                     #              '--model', 'DHR', '--num_epochs', str(100), 
-#                     #              '--image', str(1), '--points', str(0), '--sup', str(sup)])
-#                 runs.append(['python', 'train_one_sample.py', '--dataset', str(data), 
+#     runs.append(['python', 'train_stage.py', '--learning_rate', str(1e-3), '--decay_rate', str(0.5e-3),
 #                     '--model', str(model), '--num_epochs', str(20), 
 #                     '--image', str(1), '--points', str(0), '--loss_image', str(0),
-#                     '--sup', str(sup)])
-
-for model in models:
-    runs.append(['python', 'train_stage.py', '--learning_rate', str(1e-3), '--decay_rate', str(0.5e-3),
-                    '--model', str(model), '--num_epochs', str(20), 
-                    '--image', str(1), '--points', str(0), '--loss_image', str(0),
-                    ])
+#                     ])
         
-
+dup_runs = 1
 for i in range(len(runs)):
-    for j in range(1):
+    for j in range(dup_runs):
         print(runs[i])
         subprocess.run(runs[i])
+    print("\n")
+print("Total runs: ", len(runs)*dup_runs)
 
 ''' notes
 train_points_rigid.py - no batch training
