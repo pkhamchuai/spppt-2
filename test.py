@@ -3,7 +3,7 @@ import os
 
 dataset = [3]
 sups = [1]
-models = ['DHR_Attn']
+models = ['DHR']
 # , 'AIRNet', 'SP_AffineNet4'
 
 # grab the model path in the folder 'trained_models'
@@ -14,7 +14,7 @@ files = os.listdir('trained_models/keep/')
 # iterate through the files
 for file in files:
     # if the file starts with 'DHR_', but ont 'DHR_Rigid'
-    if file.startswith('DHR_Attn') and not file.startswith('DHR_Rigid'):
+    if file.startswith('DHR_') and not file.startswith('DHR_Rigid'):
         # append the file to model_path
         print(file)
         model_path.append(file)
@@ -34,12 +34,12 @@ for model in range(len(models)):
             runs.append(['python', 'test_points.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
                             '--model_path', str(os.path.join('keep', model_path[path]))
                             ])
-            runs.append(['python', 'test_rep1.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
-                            '--model_path', str(os.path.join('keep', model_path[path]))
-                            ])
-            runs.append(['python', 'test_rep2.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
-                            '--model_path', str(os.path.join('keep', model_path[path]))
-                            ])
+            # runs.append(['python', 'test_rep1.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+            #                 '--model_path', str(os.path.join('keep', model_path[path]))
+            #                 ])
+            # runs.append(['python', 'test_rep2.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+            #                 '--model_path', str(os.path.join('keep', model_path[path]))
+            #                 ])
                 # pass
     # for i in range(len(dataset)):
     #     runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
@@ -59,4 +59,4 @@ for model in range(len(models)):
 # runs.sort(key=lambda x: x[5])
 for i in range(len(runs)):
     print(runs[i])
-    # subprocess.run(runs[i])
+    subprocess.run(runs[i])
