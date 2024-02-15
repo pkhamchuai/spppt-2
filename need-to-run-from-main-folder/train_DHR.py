@@ -37,7 +37,7 @@ if int(cv2.__version__[0]) < 3: # pragma: no cover
 
 image_size = 256
 
-from networks import affine_network_simple as an
+from networks import affine_network_simple_test_size as an
 from utils.SuperPoint import SuperPointFrontend
 from utils.utils1 import transform_points_DVF
 from utils.train import train
