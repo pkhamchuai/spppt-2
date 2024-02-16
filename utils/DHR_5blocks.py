@@ -122,7 +122,7 @@ class Feature_Extractor(nn.Module):
         self.layer_1 = Forward_Layer(64, pool=True)
         self.layer_2 = Forward_Layer(128, pool=False)
         self.layer_3 = Forward_Layer(128, pool=True)
-        self.layer_4 = Forward_Layer(256, pool=False)
+        # self.layer_4 = Forward_Layer(256, pool=False)
         self.layer_5 = Forward_Layer(256, pool=True)
         # self.layer_6 = Forward_Layer(512, pool=False)
 
@@ -133,9 +133,9 @@ class Feature_Extractor(nn.Module):
             nn.Conv2d(512, 256, 3, stride=2, padding=1),
             nn.GroupNorm(256, 256),
             nn.PReLU(),
-            nn.Conv2d(256, 128, 3, stride=2, padding=1),
-            nn.GroupNorm(128, 128),
-            nn.PReLU(),
+            # nn.Conv2d(256, 128, 3, stride=2, padding=1),
+            # nn.GroupNorm(128, 128),
+            # nn.PReLU(),
             nn.AdaptiveAvgPool2d((1, 1))
         )
 
@@ -162,8 +162,9 @@ class Feature_Extractor(nn.Module):
         x = self.layer_1(x)
         x = self.layer_2(x)
         x = self.layer_3(x)
-        x = self.layer_4(x)
+        # x = self.layer_4(x)
         x = self.layer_5(x)
+        # x = self.layer_6(x)
         x = self.last_layer(x)
         return x
 
