@@ -1,9 +1,16 @@
 .PHONY: install-python-package setup clean
 
-PYTHON := python3.10
+PYTHON := python3
 
 install-python-package:
 	@echo "Installing requirements python package"
+	# # install python3.10
+	# @sudo apt-get update
+	# @sudo apt-get install software-properties-common
+	# @sudo add-apt-repository ppa:deadsnakes/ppa
+	# @sudo apt-get update
+	# @sudo apt-get install python3.10
+	@$(PYTHON) -m pip install --upgrade pip
 	@$(PYTHON) -m venv .venv
 	@.venv/bin/pip install -r requirements.txt
 	@.venv/bin/pip install matplotlib scikit-image

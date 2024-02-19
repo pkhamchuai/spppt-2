@@ -1,0 +1,48 @@
+Traceback (most recent call last):
+  File "test_rep1.py", line 24, in <module>
+    from utils.utils0 import *
+  File "/home/pakpoom_kh/spppt-2/utils/utils0.py", line 8, in <module>
+    import SimpleITK as sitk
+ModuleNotFoundError: No module named 'SimpleITK'
+Traceback (most recent call last):
+  File "test_rep2.py", line 24, in <module>
+    from utils.utils0 import *
+  File "/home/pakpoom_kh/spppt-2/utils/utils0.py", line 8, in <module>
+    import SimpleITK as sitk
+ModuleNotFoundError: No module named 'SimpleITK'
+Traceback (most recent call last):
+  File "test_rep1.py", line 24, in <module>
+    from utils.utils0 import *
+  File "/home/pakpoom_kh/spppt-2/utils/utils0.py", line 8, in <module>
+    import SimpleITK as sitk
+ModuleNotFoundError: No module named 'SimpleITK'
+Traceback (most recent call last):
+  File "test_rep2.py", line 24, in <module>
+    from utils.utils0 import *
+  File "/home/pakpoom_kh/spppt-2/utils/utils0.py", line 8, in <module>
+    import SimpleITK as sitk
+ModuleNotFoundError: No module named 'SimpleITK'
+Traceback (most recent call last):
+  File "test_rep1.py", line 24, in <module>
+    from utils.utils0 import *
+  File "/home/pakpoom_kh/spppt-2/utils/utils0.py", line 8, in <module>
+    import SimpleITK as sitk
+ModuleNotFoundError: No module named 'SimpleITK'
+Traceback (most recent call last):
+  File "test_rep2.py", line 24, in <module>
+    from utils.utils0 import *
+  File "/home/pakpoom_kh/spppt-2/utils/utils0.py", line 8, in <module>
+    import SimpleITK as sitk
+ModuleNotFoundError: No module named 'SimpleITK'
+Traceback (most recent call last):
+  File "test_rep1.py", line 24, in <module>
+    from utils.utils0 import *
+  File "/home/pakpoom_kh/spppt-2/utils/utils0.py", line 8, in <module>
+    import SimpleITK as sitk
+ModuleNotFoundError: No module named 'SimpleITK'
+Traceback (most recent call last):
+  File "test_rep2.py", line 24, in <module>
+    from utils.utils0 import *
+  File "/home/pakpoom_kh/spppt-2/utils/utils0.py", line 8, in <module>
+    import SimpleITK as sitk
+ModuleNotFoundError: No module named 'SimpleITK'
