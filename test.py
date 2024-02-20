@@ -12,12 +12,13 @@ model_path = []
 # list all files in the folder
 files = os.listdir('trained_models/keep/')
 # iterate through the files
-for file in files:
-    # if the file starts with 'DHR_', but ont 'DHR_Rigid'
-    if file.startswith('DHR_') and not file.startswith('DHR_Rigid'):
-        # append the file to model_path
-        print(file)
-        model_path.append(file)
+# for file in files:
+#     # if the file starts with 'DHR_', but ont 'DHR_Rigid'
+#     if file.startswith('DHR_') and not file.startswith('DHR_Rigid'):
+#         # append the file to model_path
+#         print(file)
+#         model_path.append(file)
+model_path = 'DHR_11105_0.001_0_5_1_20240111-115251.pth'
 
 runs = []
 learning_rate = 1e-3
@@ -29,18 +30,19 @@ for model in range(len(models)):
     #     runs.append(['python', 'train.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
     #                     '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])
 
-    for path in range(len(model_path)):
-        for dataset_ in range(len(dataset)):
-            runs.append(['python', 'test_points.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
-                            '--model_path', str(os.path.join('keep', model_path[path]))
-                            ])
-            # runs.append(['python', 'test_rep1.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
-            #                 '--model_path', str(os.path.join('keep', model_path[path]))
-            #                 ])
-            # runs.append(['python', 'test_rep2.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
-            #                 '--model_path', str(os.path.join('keep', model_path[path]))
-            #                 ])
-                # pass
+    # for path in range(len(model_path)):
+    for dataset_ in range(len(dataset)):
+        for i in range(3):
+            runs.append(['python', 'test_points.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(3),
+                            '--model_path', str(os.path.join('keep', model_path))
+                                ])
+                # runs.append(['python', 'test_rep1.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+                #                 '--model_path', str(os.path.join('keep', model_path[path]))
+                #                 ])
+                # runs.append(['python', 'test_rep2.py', '--model', str(models[model]), '--sup', str(1), '--dataset', str(dataset[dataset_]),
+                #                 '--model_path', str(os.path.join('keep', model_path[path]))
+                #                 ])
+                    # pass
     # for i in range(len(dataset)):
     #     runs.append(['python', 'train_points.py', '--model', str(models[j]), '--sup', str(sups[i]), '--dataset', str(dataset[i]),
     #                     '--num_epochs', '5', '--loss_image', '5', '--learning_rate', learning_rate])
@@ -59,4 +61,4 @@ for model in range(len(models)):
 # runs.sort(key=lambda x: x[5])
 for i in range(len(runs)):
     print(runs[i])
-    subprocess.run(runs[i])
+    # subprocess.run(runs[i])
