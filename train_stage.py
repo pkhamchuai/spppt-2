@@ -19,7 +19,7 @@ from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams
 from train_points_rigid import train
-from test_points import test
+# from test_points import test
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f'Device: {device}')
@@ -85,12 +85,13 @@ def train(model_name, model_path, model_params, timestamp):
     epochs = [0, 5, 10, 15, 20]
     sups = [1, 1, 1, 0]
 
-    # Create empty list to store epoch number, train loss and validation loss
-    epoch_loss_list = []
-    running_loss_list = []
-
+    
     for idx in range(4):
         print(f'\nStage: {idx+1}')
+
+        # Create empty list to store epoch number, train loss and validation loss
+        epoch_loss_list = []
+        running_loss_list = []
 
         model_params.dataset = datasets[idx]
         model_params.sup = sups[idx]
@@ -119,9 +120,12 @@ def train(model_name, model_path, model_params, timestamp):
         # print(f'Fixed seed: {torch.initial_seed()}')
         
         # Create output directory
-        output_dir = f"output/{timestamp}_{idx+1}_{model_name}_{model_params.get_model_code()}"
+        output_dir = f"output/{timestamp}_stage{idx+1}_{model_name}_{model_params.get_model_code()}"
         os.makedirs(output_dir, exist_ok=True)
         save_plot_name = f"{output_dir}/loss_{model_params.get_model_code()}_epoch{model_params.num_epochs}_{timestamp}.png"
+
+        # Plot train loss and validation loss against epoch number
+        fig = plt.figure(figsize=(12, 8))
 
         # Train model
         for epoch in range(epochs[idx], epochs[idx+1]):
@@ -316,12 +320,14 @@ def train(model_name, model_path, model_params, timestamp):
                             affine_params_predict=affine_params_predicted, 
                             heatmap1=None, heatmap2=None, plot=True)
                         
-            # Print validation statistics
-            validation_loss /= len(test_dataset)
-            print(f'Validation Epoch {epoch+1}/{model_params.num_epochs} loss: {validation_loss}')
+                    # Print validation statistics
+                    validation_loss /= len(test_dataset)
+                    print(f'Validation Epoch {epoch+1}/{model_params.num_epochs} loss: {validation_loss}')
 
-            # Append epoch number, train loss and validation loss to epoch_loss_list
-            epoch_loss_list.append([epoch, running_loss / len(train_dataset), validation_loss])
+                    # Append epoch number, train loss and validation loss to epoch_loss_list
+                    epoch_loss_list.append([epoch, running_loss / len(train_dataset), validation_loss])
+
+            print(f'\nFinished Training Stage: {idx+1}')
 
             # Extract epoch number, train loss and validation loss from epoch_loss_list
             epoch = [x[0] for x in epoch_loss_list]
@@ -331,36 +337,39 @@ def train(model_name, model_path, model_params, timestamp):
             running_train_loss = [x[1] for x in running_loss_list]
 
             # Plot train loss and validation loss against epoch number
-            fig = plt.figure(figsize=(12, 5))
-            plt.plot(step, running_train_loss, label='Running Train Loss', alpha=0.3)
-            plt.plot(epoch, train_loss, label='Train Loss', linewidth=3)
-            plt.plot(epoch, val_loss, label='Validation Loss', linewidth=3)
+            # fig = plt.figure(figsize=(12, 5))
+            plt.subplot(2, 2, idx+1)
+            plt.plot(step, running_train_loss, label='Running Train', alpha=0.3)
+            plt.plot(epoch, train_loss, label='Train', linewidth=3)
+            plt.plot(epoch, val_loss, label='Validation', linewidth=3)
             plt.title('Train and Validation Loss')
             plt.legend()
-            plt.xlabel('Epoch')
-            plt.ylabel('Loss')
+            plt.xlabel(f"(Stage {i + 1}) Epochs")
+            if idx == 0 or idx == 2:
+                plt.ylabel("Loss")
             plt.grid(True)
             plt.yscale('log')
             plt.tight_layout()
 
-            # Save plot
-            signaturebar_gray(fig, f'{model_params.get_model_code()} - epoch{model_params.num_epochs} - {timestamp}')
-            fig.savefig(save_plot_name)
-            # plt.show()
-            plt.close(fig)
+            # test using all datasets
+            test(model_name, model, model_params, timestamp)
 
-        print(f'\nFinished Training Stage: {idx+1}')
+            # Save model
+            model_save_path = "trained_models/"
+            model_name_to_save = model_save_path + f"{timestamp}_{model_name}_{model_params.get_model_code()}_{idx}.pth"
+            torch.save(model.state_dict(), model_name_to_save)
+            print(f'Model saved in: {model_name_to_save}')
+
+        # Save plot
+        signaturebar_gray(fig, f'{model_params.get_model_code()} - epoch{model_params.num_epochs} - {timestamp}')
+        fig.savefig(save_plot_name)
+        # plt.show()
+        plt.close(fig)
 
         # delete all txt files in output_dir
         for file in os.listdir(output_dir):
             if file.endswith(".txt"):
                 os.remove(os.path.join(output_dir, file))
-
-        # Save model
-        model_save_path = "trained_models/"
-        model_name_to_save = model_save_path + f"{timestamp}_{model_name}_{model_params.get_model_code()}.pth"
-        torch.save(model.state_dict(), model_name_to_save)
-        print(f'Model saved in: {model_name_to_save}')
 
         # save the output of print_explanation() and loss_list to a txt file
         print_summary(model_name, model_name_to_save, 
@@ -368,6 +377,197 @@ def train(model_name, model_path, model_params, timestamp):
 
     # Return epoch_loss_list
     return model, epoch_loss_list
+
+def test(model_name, model_, model_params, timestamp, stage=0):
+
+    print('Test function input:', model_name, model_, model_params, timestamp)
+
+    # if model is a string, load the model
+    # if model is a loaded model, use the model
+    # if isinstance(model_, str):
+    #     model = model_loader(model_name, model_params)
+    #     buffer = io.BytesIO()
+    #     torch.save(model.state_dict(), buffer)
+    #     buffer.seek(0)
+    #     model.load_state_dict(torch.load(model_))
+    #     print(f'Loaded model from {model_}')
+    # elif isinstance(model_, nn.Module):
+    #     print(f'Using model {model_name}')
+    model = model_
+    datasets = [1, 2, 3, 0]
+    epochs = [0, 2, 4, 6, 8]
+    # epochs = [0, 5, 10, 15, 20]
+    sups = [1, 1, 1, 0]
+
+    for idx in range(4):
+        print(f'\nDataset: {idx+1}')
+
+        model_params.dataset = datasets[idx]
+        model_params.sup = sups[idx]
+        model_params.num_epochs = epochs[idx+1]
+        model_params.start_epoch = epochs[idx]
+
+        # Set model to training mode
+        model.eval()
+        test_dataset = datagen(model_params.dataset, False, model_params.sup)
+
+        # Create output directory
+        output_dir = f"output/{timestamp}_stage{stage}_dataset{idx+1}_{model_name}_{model_params.get_model_code()}_test"
+        # output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_test"
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Validate model
+        # validation_loss = 0.0
+
+        metrics = []
+        # create a csv file to store the metrics
+        csv_file = f"{output_dir}/metrics.csv"
+
+        with torch.no_grad():
+            testbar = tqdm(test_dataset, desc=f'Testing:')
+            for i, data in enumerate(testbar, 0):
+                # Get images and affine parameters
+                source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
+
+                source_image = source_image.requires_grad_(True).to(device)
+                target_image = target_image.requires_grad_(True).to(device)
+                # add gradient to the matches
+                points1 = points1.requires_grad_(True).to(device)
+                points2 = points2.requires_grad_(True).to(device)
+
+                for j in range(1):
+                    # Forward + backward + optimize
+                    outputs = model(source_image, target_image, points1)
+                    # for i in range(len(outputs)):
+                    #     print(i, outputs[i].shape)
+                    transformed_source_affine = outputs[0]
+                    affine_params_predicted = outputs[1]
+                    points1_2_predicted = outputs[2]
+
+                    try:
+                        points1_2_predicted = points1_2_predicted.reshape(
+                        points1_2_predicted.shape[2], points1_2_predicted.shape[1])
+                    except:
+                        pass
+
+                    if i < 100:
+                        plot_ = True
+                    else:
+                        plot_ = False
+
+                    if points1_2_predicted.shape[-1] != 2:
+                        points1_2_predicted = points1_2_predicted.T
+                    if points1.shape[-1] != 2:
+                        points1 = points1.T
+                    if points2.shape[-1] != 2:
+                        points2 = points2.T
+
+    # Set model to training mode
+    model.eval()
+    test_dataset = datagen(model_params.dataset, False, model_params.sup)
+
+    # Create output directory
+    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_test"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Validate model
+    # validation_loss = 0.0
+
+    metrics = []
+    # create a csv file to store the metrics
+    csv_file = f"{output_dir}/metrics.csv"
+
+    with torch.no_grad():
+        testbar = tqdm(test_dataset, desc=f'Testing:')
+        for i, data in enumerate(testbar, 0):
+            # Get images and affine parameters
+            source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
+
+            source_image = source_image.requires_grad_(True).to(device)
+            target_image = target_image.requires_grad_(True).to(device)
+            # add gradient to the matches
+            points1 = points1.requires_grad_(True).to(device)
+            points2 = points2.requires_grad_(True).to(device)
+
+            for j in range(1):
+                # Forward + backward + optimize
+                outputs = model(source_image, target_image, points1)
+                # for i in range(len(outputs)):
+                #     print(i, outputs[i].shape)
+                transformed_source_affine = outputs[0]
+                affine_params_predicted = outputs[1]
+                points1_2_predicted = outputs[2]
+
+                try:
+                    points1_2_predicted = points1_2_predicted.reshape(
+                    points1_2_predicted.shape[2], points1_2_predicted.shape[1])
+                except:
+                    pass
+
+                if i < 100:
+                    plot_ = True
+                else:
+                    plot_ = False
+
+                if points1_2_predicted.shape[-1] != 2:
+                    points1_2_predicted = points1_2_predicted.T
+                if points1.shape[-1] != 2:
+                    points1 = points1.T
+                if points2.shape[-1] != 2:
+                    points2 = points2.T
+                # print(points1_2_predicted.shape, points2.shape, points1.shape)
+
+                results = DL_affine_plot(f"test", output_dir,
+                    f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
+                    target_image[0, 0, :, :].cpu().numpy(), 
+                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                    points1[0].cpu().detach().numpy().T, 
+                    points2[0].cpu().detach().numpy().T, 
+                    points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                    affine_params_true=affine_params_true,
+                    affine_params_predict=affine_params_predicted, 
+                    heatmap1=None, heatmap2=None, plot=plot_)
+
+                # calculate metrics
+                # matches1_transformed = results[0]
+                mse_before = results[1]
+                mse12 = results[2]
+                tre_before = results[3]
+                tre12 = results[4]
+                mse12_image_before = results[5]
+                mse12_image = results[6]
+                ssim12_image_before = results[7]
+                ssim12_image = results[8]
+
+                # append metrics to metrics list
+                metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, np.max(points1_2_predicted.shape)])
+
+    with open(csv_file, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", "ssim12_image_before", "ssim12_image", "num_points"])
+        for i in range(len(metrics)):
+            writer.writerow(metrics[i])
+        # write the average and std of the metrics
+        metrics = np.array(metrics)
+        nan_mask = np.isnan(metrics).any(axis=1)
+        metrics = metrics[~nan_mask]
+        avg = ["average", np.mean(metrics[:, 1]), np.mean(metrics[:, 2]), np.mean(metrics[:, 3]), np.mean(metrics[:, 4]), 
+            np.mean(metrics[:, 5]), np.mean(metrics[:, 6]), np.mean(metrics[:, 7]), np.mean(metrics[:, 8])]
+        std = ["std", np.std(metrics[:, 1]), np.std(metrics[:, 2]), np.std(metrics[:, 3]), np.std(metrics[:, 4]), 
+            np.std(metrics[:, 5]), np.std(metrics[:, 6]), np.std(metrics[:, 7]), np.std(metrics[:, 8])]
+        writer.writerow(avg)
+        writer.writerow(std)
+
+    print(f"The test results are saved in {csv_file}")
+
+    # delete all txt files in output_dir
+    # for file in os.listdir(output_dir):
+    #     if file.endswith(".txt"):
+    #         os.remove(os.path.join(output_dir, file))
+
+    # extra_text = f"Test model {model_name} at {model_} with dataset {model_params.dataset}. "
+    print_summary(model_name, model_, model_params, 
+                  None, timestamp, test=True)
 
 if __name__ == '__main__':
     # get the arguments
@@ -380,7 +580,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default='DHR_Rigid', help='which model to use')
+    parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     # parser.add_argument('--model', type=str, default='SP_Rigid', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     args = parser.parse_args()
@@ -400,9 +600,9 @@ if __name__ == '__main__':
     
     trained_model, loss_list = train(args.model, model_path, model_params, timestamp)
     
-    print("\nTesting the trained model +++++++++++++++++++++++")
-    test(args.model, trained_model, model_params, timestamp)
-    print("Test model finished +++++++++++++++++++++++++++++")
+    # print("\nTesting the trained model +++++++++++++++++++++++")
+    # test(args.model, trained_model, model_params, timestamp)
+    # print("Test model finished +++++++++++++++++++++++++++++")
     
     # for i in range(1, 4):
     #   print(datasets[i], sups[i], epochs[i])
@@ -413,6 +613,6 @@ if __name__ == '__main__':
       
     #   trained_model, loss_list = train(args.model, trained_model, model_params, timestamp)
 
-    print("\nTesting the trained model +++++++++++++++++++++++")
-    test(args.model, trained_model, model_params, timestamp)
-    print("Test model finished +++++++++++++++++++++++++++++")
+    # print("\nTesting the trained model +++++++++++++++++++++++")
+    # test(args.model, trained_model, model_params, timestamp)
+    # print("Test model finished +++++++++++++++++++++++++++++")

@@ -11,7 +11,8 @@ from pytorch_model_summary import summary
 image_size = 256
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-from networks import affine_network_simple_test_size as an
+# from networks import affine_network_simple_test_size as an
+from networks import affine_network_simple as an
 from utils.SuperPoint import SuperPointFrontend
 from utils.utils1 import transform_points_DVF
 
