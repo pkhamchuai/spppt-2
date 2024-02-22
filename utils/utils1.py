@@ -392,16 +392,19 @@ class ModelParams:
     
 
 def print_summary(model_name, model_path, model_params, 
-                  loss_list, timestamp, test=False, extra=None):
-    print("Training output:")
+                  loss_list, timestamp, output_dir=None, test=False, extra=None):
+    
     if loss_list is not None:
+        print("Training output:")
         for i in range(len(loss_list)):
             print(loss_list[i])
 
     # save the output of print_explanation() and loss_list to a txt file
-    if test:
+    if output_dir is not None:
+        pass
+    elif test and output_dir is None:
         output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_test"
-    else:
+    elif not test and output_dir is None:
         output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}"
     os.makedirs(output_dir, exist_ok=True)
     save_txt_name = f"{output_dir}/test_output_{model_name}_{model_params.get_model_code()}_{timestamp}.txt"
