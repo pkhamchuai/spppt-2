@@ -73,7 +73,7 @@ class MyDataset(torch.utils.data.Dataset):
             return source_img, target_img, np.array([]), matches1, matches2, np.array([])
         
 
-def datagen(dataset, is_train, sup):
+def datagen(dataset, is_train, sup, batch_size=1):
     if dataset == 0:
         # actual eye dataset
         dataset_path = 'Dataset/Dataset-processed'
@@ -121,12 +121,23 @@ def datagen(dataset, is_train, sup):
             df = pd.read_csv('Dataset/synth_eye_hard_test.csv')
 
     elif dataset == 4:
-        # synthetic shape dataset
-        dataset_path = 'Dataset/synthetic_shape_dataset'
+        # new easy dataset
         if is_train:
-            df = pd.read_csv('Dataset/dataset_shape_synth_train.csv')
-        else:  
-            df = pd.read_csv('Dataset/dataset_shape_synth_test.csv')
+            # synthetic eye dataset
+            dataset_path = 'Dataset/synth_eye_easy_2000_train'
+            df = pd.read_csv('Dataset/synth_eye_easy_2000_train.csv')
+        else:
+            # synthetic eye dataset
+            dataset_path = 'Dataset/synthetic_eye_easy_2000_test'
+            df = pd.read_csv('Dataset/synth_eye_easy_2000_test.csv')
+
+    # elif dataset == 4:
+    #     # synthetic shape dataset
+    #     dataset_path = 'Dataset/synthetic_shape_dataset'
+    #     if is_train:
+    #         df = pd.read_csv('Dataset/dataset_shape_synth_train.csv')
+    #     else:  
+    #         df = pd.read_csv('Dataset/dataset_shape_synth_test.csv')
 
     # elif dataset == 5:
     #     # MNIST dataset
@@ -143,7 +154,7 @@ def datagen(dataset, is_train, sup):
         raise ValueError('Input dataset parameter 0-4')
 
     dataset = MyDataset(dataset_path, df, is_train, sup)
-    dataloader = DataLoader(dataset, shuffle=is_train)
+    dataloader = DataLoader(dataset, shuffle=is_train, batch_size=batch_size)
 
     return dataloader#, df, dataset_path
 

@@ -208,8 +208,8 @@ class loss_points:
 
 class ModelParams:
     def __init__(self, dataset=0, sup=0, image=1, points=0, loss_image=0, 
-                 learning_rate=0.001, decay_rate = 0.96, start_epoch=0, 
-                 num_epochs=10, batch_size=1):
+                 learning_rate=0.001, decay_rate = 0.96, model=None,   
+                 start_epoch=0, num_epochs=10, batch_size=1):
         # dataset: dataset used
         # dataset=0: actual eye
         # dataset=1: synthetic eye easy
