@@ -17,9 +17,9 @@ from utils.SuperPoint import SuperPointFrontend
 from utils.utils1 import transform_points_DVF
 
 class SP_DHR_Net(nn.Module):
-    def __init__(self, model_params, batch_size=1):
+    def __init__(self, model_params):
         super(SP_DHR_Net, self).__init__()
-        self.affineNet = an.load_network(device, batch_size=batch_size)
+        self.affineNet = an.load_network(device)
         self.model_params = model_params
         print("\nRunning new version (not run SP on source image)")
 
@@ -35,7 +35,7 @@ class SP_DHR_Net(nn.Module):
             # affine_params = self.affineNet(source_image, target_image, heatmap1, heatmap2)
         transformed_source_image = tensor_affine_transform(source_image, affine_params)
         transformed_points = points.clone()
-        transformed_points = transform_points_DVF(transformed_points[0].cpu().detach().T, 
+        transformed_points = transform_points_DVF(transformed_points.cpu().detach().T, 
             affine_params.cpu().detach(), transformed_source_image.cpu().detach())
 
         return transformed_source_image, affine_params, transformed_points.T

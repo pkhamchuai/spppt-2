@@ -21,9 +21,11 @@ class Affine_Network(nn.Module):
         print("class Affine_Network")
         print(torch.cat((source, target), dim=1).shape)
         x = self.feature_extractor(torch.cat((source, target), dim=1))
-        print("x shape:", x.shape)
-        x = x.view(1, -1)
-        print("x shape:", x.shape)
+        print("After self.feature_extractor:", x.shape)
+        # x = x.view(1, -1)
+        # squeeze to [batch_size, 256]
+        x = x.squeeze()
+        print("After squeeze:", x.shape)
         x = self.regression_network(x)
         print("After regression, x shape:", x.shape)
         return x
@@ -37,7 +39,10 @@ class Regression_Network(nn.Module):
         )
 
     def forward(self, x):
+        # reshape to [batch_size, 256]
+        # x = x.view(-1, 256)
         x = self.fc(x)
+        print(f"Regression Network: {x.shape}")
         return x.view(-1, 2, 3)
 
 class Forward_Layer(nn.Module):
@@ -129,14 +134,14 @@ def load_network(device, path=None):
 def test_forward_pass():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = load_network(device)
-    y_size = 512
-    x_size = 512
+    y_size = 256
+    x_size = 256
     no_channels = 1
     # summary(model, [(no_channels, y_size, x_size), (no_channels, y_size, x_size)])
     # summary(model, [(no_channels, y_size, x_size), (no_channels, y_size, x_size)])
 
 
-    batch_size = 1
+    batch_size = 4
     example_source = torch.rand((batch_size, no_channels, y_size, x_size)).to(device)
     example_target = torch.rand((batch_size, no_channels, y_size, x_size)).to(device)
 

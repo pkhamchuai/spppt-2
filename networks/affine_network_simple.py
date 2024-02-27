@@ -10,25 +10,26 @@ from torchsummary import summary
 
 
 class Affine_Network(nn.Module):
-    def __init__(self, device, batch_size=1):
+    def __init__(self, device):
         super(Affine_Network, self).__init__()
         self.device = device
 
         self.feature_extractor = Feature_Extractor(self.device)
-        self.regression_network = Regression_Network(batch_size=batch_size)
+        self.regression_network = Regression_Network()
 
     def forward(self, source, target):
         x = self.feature_extractor(torch.cat((source, target), dim=1))
-        x = x.view(1, -1)
+        # x = x.view(1, -1)
+        x = x.squeeze()
         x = self.regression_network(x)
         return x
 
 class Regression_Network(nn.Module):
-    def __init__(self, batch_size=1):
+    def __init__(self):
         super(Regression_Network, self).__init__()
 
         self.fc = nn.Sequential(
-            nn.Linear(batch_size * 256, 6),
+            nn.Linear(256, 6),
         )
 
     def forward(self, x):
@@ -102,8 +103,8 @@ class Feature_Extractor(nn.Module):
         x = self.last_layer(x)
         return x
 
-def load_network(device, path=None, batch_size=1):
-    model = Affine_Network(device, batch_size=batch_size)
+def load_network(device, path=None):
+    model = Affine_Network(device)
     model = model.to(device)
     # summary(model, [(batch_size, 1, 256, 256), (batch_size, 1, 256, 256)])
     if path is not None:

@@ -455,6 +455,7 @@ def tensor_affine_transform(tensor, tensor_transform):
 
 
 def transform_to_displacement_field(tensor, tensor_transform, device='cpu'):
+    # TODO: reshape the displacement field to (B, 2, H, W)
     """
     Transforms a tensor using an affine transformation matrix and returns the corresponding displacement field.
 

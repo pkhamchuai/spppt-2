@@ -53,7 +53,7 @@ def model_loader(model_name, model_params):
         elif model_name == 'DHR':
             print('Loading DHR model (networks/affine_network_simple.py)')
             from utils.SP_DHR import SP_DHR_Net
-            model = SP_DHR_Net(model_params, batch_size=model_params.batch_size).to(device)
+            model = SP_DHR_Net(model_params).to(device)
         # elif model_name == 'DHR_Rep':
         #     print('Loading DHR_Rep model (utils/SP_DHR_Rep.py)')
         #     from utils.SP_DHR_Rep import SP_DHR_Net
@@ -945,7 +945,7 @@ def blend_img(edge, image):
 #     result = torch.subtract(points, result)
 #     return result
 
-def transform_points_DVF(points_, M, image): # original version
+def transform_points_DVF_original(points_, M, image): # original version
     # transform points using displacement field
     # DVF.shape = (2, H, W)
     # points.shape = (2, N)
@@ -973,6 +973,39 @@ def transform_points_DVF(points_, M, image): # original version
             elif int(points[0, i]) < 0:
                 points[0, i] = 0
             points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+    return torch.tensor(points)
+
+def transform_points_DVF(points_, M, image): # batch version
+    # transform points using displacement field
+    # DVF.shape = (B, 2, H, W)
+    # points.shape = (B, 2, N)
+    B, _, H, W = image.shape
+    displacement_field = torch.zeros(B, H, W)
+    # TODO: reshape DVF to (B, 2, H, W), fix point indexing in for loop
+    DVF = transform_to_displacement_field(
+        displacement_field.view(B, 1, H, W), 
+        M.clone().view(B, 2, 3))
+    if isinstance(DVF, torch.Tensor):
+        DVF = DVF.detach().numpy()
+    # loop through each point and apply the transformation
+    points = points_.clone()
+    points = points.detach().numpy()#.copy()
+    # print("points shape:", points.shape)
+    for b in range(B):
+        for i in range(points.shape[2]):
+            try:
+                points[b, :, i] = points[b, :, i] - DVF[b, :, int(points[b, 1, i]), int(points[b, 0, i])]
+            except IndexError:
+                # change int(points[b, 1, i]), int(points[b, 0, i]) to 255 if it is 257
+                if int(points[b, 1, i]) > 255:
+                    points[b, 1, i] = 255
+                elif int(points[b, 1, i]) < 0:
+                    points[b, 1, i] = 0
+                if int(points[b, 0, i]) > 255:
+                    points[b, 0, i] = 255
+                elif int(points[b, 0, i]) < 0:
+                    points[b, 0, i] = 0
+                points[b, :, i] = points[b, :, i] - DVF[b, :, int(points[b, 1, i]), int(points[b, 0, i])]
     return torch.tensor(points)
 
 # def transform_points_DVF(points, M, image): # original version
