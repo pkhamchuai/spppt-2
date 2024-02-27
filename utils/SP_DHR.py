@@ -17,9 +17,9 @@ from utils.SuperPoint import SuperPointFrontend
 from utils.utils1 import transform_points_DVF
 
 class SP_DHR_Net(nn.Module):
-    def __init__(self, model_params):
+    def __init__(self, model_params, batch_size=1):
         super(SP_DHR_Net, self).__init__()
-        self.affineNet = an.load_network(device)
+        self.affineNet = an.load_network(device, batch_size=batch_size)
         self.model_params = model_params
         print("\nRunning new version (not run SP on source image)")
 

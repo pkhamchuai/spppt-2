@@ -57,9 +57,9 @@ if __name__ == '__main__':
     else:
       model_path = 'trained_models/' + args.model_path
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, points=args.points,
-                               loss_image=args.loss_image, num_epochs=args.num_epochs, 
-                               learning_rate=args.learning_rate, decay_rate=args.decay_rate,
-                                model=args.model, batch_size=args.batch_size)
+                              loss_image=args.loss_image, num_epochs=args.num_epochs, 
+                              learning_rate=args.learning_rate, decay_rate=args.decay_rate,
+                              model=args.model, batch_size=args.batch_size)
     
     if args.timestamp is not None:
       timestamp = args.timestamp
@@ -67,7 +67,8 @@ if __name__ == '__main__':
       timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
       # print(f'Timestamp: {timestamp}')
       model_params.timestamp = timestamp
-    model_params.print_explanation()
+    # model_params.print_explanation()
+      
     trained_model, loss_list = train(model_params.model, # model_params.model is a model name
                              model_path, model_params, model_params.timestamp)
 

@@ -10,12 +10,12 @@ from torchsummary import summary
 
 
 class Affine_Network(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, batch_size=1):
         super(Affine_Network, self).__init__()
         self.device = device
 
         self.feature_extractor = Feature_Extractor(self.device)
-        self.regression_network = Regression_Network()
+        self.regression_network = Regression_Network(batch_size=batch_size)
 
     def forward(self, source, target):
         x = self.feature_extractor(torch.cat((source, target), dim=1))
@@ -24,11 +24,11 @@ class Affine_Network(nn.Module):
         return x
 
 class Regression_Network(nn.Module):
-    def __init__(self):
+    def __init__(self, batch_size=1):
         super(Regression_Network, self).__init__()
 
         self.fc = nn.Sequential(
-            nn.Linear(256, 6),
+            nn.Linear(batch_size * 256, 6),
         )
 
     def forward(self, x):
@@ -102,10 +102,10 @@ class Feature_Extractor(nn.Module):
         x = self.last_layer(x)
         return x
 
-def load_network(device, path=None):
-    model = Affine_Network(device)
+def load_network(device, path=None, batch_size=1):
+    model = Affine_Network(device, batch_size=batch_size)
     model = model.to(device)
-    # summary(model, [(1, 1, 256, 256), (1, 1, 256, 256)])
+    # summary(model, [(batch_size, 1, 256, 256), (batch_size, 1, 256, 256)])
     if path is not None:
         model.load_state_dict(torch.load(path))
         model.eval()
@@ -114,12 +114,12 @@ def load_network(device, path=None):
 def test_forward_pass():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = load_network(device)
-    y_size = 760
-    x_size = 512
+    y_size = 256
+    x_size = 256
     no_channels = 1
     summary(model, [(no_channels, y_size, x_size), (no_channels, y_size, x_size)])
 
-    batch_size = 1
+    batch_size = 2
     example_source = torch.rand((batch_size, no_channels, y_size, x_size)).to(device)
     example_target = torch.rand((batch_size, no_channels, y_size, x_size)).to(device)
 
@@ -135,4 +135,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-

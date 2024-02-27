@@ -53,7 +53,7 @@ def model_loader(model_name, model_params):
         elif model_name == 'DHR':
             print('Loading DHR model (networks/affine_network_simple.py)')
             from utils.SP_DHR import SP_DHR_Net
-            model = SP_DHR_Net(model_params).to(device)
+            model = SP_DHR_Net(model_params, batch_size=model_params.batch_size).to(device)
         # elif model_name == 'DHR_Rep':
         #     print('Loading DHR_Rep model (utils/SP_DHR_Rep.py)')
         #     from utils.SP_DHR_Rep import SP_DHR_Net
@@ -238,6 +238,7 @@ class ModelParams:
         # loss_affine=0: loss_extra
         # loss_affine=1: loss_affine
 
+        self.model = model
         self.dataset = dataset
         if self.dataset == 0:
             self.sup = 0

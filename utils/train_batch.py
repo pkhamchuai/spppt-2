@@ -103,6 +103,7 @@ def train(model_name, model_path, model_params, timestamp):
                 points1, points2, points1_2_true = data
             source_image = source_image.to(device)
             target_image = target_image.to(device)
+
             # Forward + backward + optimize
             outputs = model(source_image, target_image, points1)
             for i in range(len(outputs)):
