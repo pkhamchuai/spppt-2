@@ -44,7 +44,8 @@ def test(model_name, model_, model_params, timestamp):
     # timestamp: timestamp of the model
     print('Test function input:', model_name, model_, model_params, timestamp)
 
-    test_dataset = datagen(model_params.dataset, False, model_params.sup)
+    test_dataset = datagen(model_params.dataset, False, model_params.sup, batch_size=model_params.batch_size)
+    print(model_params.batch_size)
 
     # if model is a string, load the model
     # if model is a loaded model, use the model
@@ -85,7 +86,7 @@ def test(model_name, model_, model_params, timestamp):
             points1 = points1.requires_grad_(True).to(device)
             points2 = points2.requires_grad_(True).to(device)
 
-            for j in range(1):
+            for dups in range(1):
                 # Forward + backward + optimize
                 outputs = model(source_image, target_image, points1)
                 # for i in range(len(outputs)):
@@ -94,49 +95,94 @@ def test(model_name, model_, model_params, timestamp):
                 affine_params_predicted = outputs[1]
                 points1_2_predicted = outputs[2]
 
-                try:
-                    points1_2_predicted = points1_2_predicted.reshape(
-                    points1_2_predicted.shape[2], points1_2_predicted.shape[1])
-                except:
-                    pass
+                # try:
+                #     points1_2_predicted = points1_2_predicted.reshape(
+                #     points1_2_predicted.shape[2], points1_2_predicted.shape[1])
+                # except:
+                #     pass
 
                 if i < 100:
                     plot_ = True
                 else:
                     plot_ = False
 
-                if points1_2_predicted.shape[-1] != 2:
-                    points1_2_predicted = points1_2_predicted.T
-                if points1.shape[-1] != 2:
-                    points1 = points1.T
-                if points2.shape[-1] != 2:
-                    points2 = points2.T
-                # print(points1_2_predicted.shape, points2.shape, points1.shape)
+                print(points1_2_predicted.shape, points2.shape, points1.shape)
+                # for loop to plot each image, use the actual batch size from output
+                
+                for batch in range(points1_2_predicted.shape[0]):
+                    # print(points1_2_predicted[batch].shape, points2[batch].shape, points1[batch].shape)
+                    try: 
+                        # points1_2_predicted[batch] = points1_2_predicted[batch].reshape(
+                        #     points1_2_predicted[batch].shape[1], points1_2_predicted[batch].shape[0])
+                        results = DL_affine_plot(f"test", output_dir,
+                            f"{i*model_params.batch_size+batch}", f"{i*model_params.batch_size+batch+1}", 
+                            source_image[batch, 0, :, :].cpu().numpy(), 
+                            target_image[batch, 0, :, :].cpu().numpy(), 
+                            transformed_source_affine[batch, 0, :, :].cpu().numpy(),
+                            points1[batch].cpu().detach().numpy().T, 
+                            points2[batch].cpu().detach().numpy().T, 
+                            points1_2_predicted[batch].cpu().detach().numpy().T, None, None, 
+                            affine_params_true[batch], affine_params_predicted[batch], 
+                            heatmap1=None, heatmap2=None, plot=plot_)
 
-                results = DL_affine_plot(f"test", output_dir,
-                    f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
-                    target_image[0, 0, :, :].cpu().numpy(), 
-                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    points1[0].cpu().detach().numpy().T, 
-                    points2[0].cpu().detach().numpy().T, 
-                    points1_2_predicted.cpu().detach().numpy().T, None, None, 
-                    affine_params_true=affine_params_true,
-                    affine_params_predict=affine_params_predicted, 
-                    heatmap1=None, heatmap2=None, plot=plot_)
+                        # calculate metrics
+                        # matches1_transformed = results[0]
+                        mse_before = results[1]
+                        mse12 = results[2]
+                        tre_before = results[3]
+                        tre12 = results[4]
+                        mse12_image_before = results[5]
+                        mse12_image = results[6]
+                        ssim12_image_before = results[7]
+                        ssim12_image = results[8]
 
-                # calculate metrics
-                # matches1_transformed = results[0]
-                mse_before = results[1]
-                mse12 = results[2]
-                tre_before = results[3]
-                tre12 = results[4]
-                mse12_image_before = results[5]
-                mse12_image = results[6]
-                ssim12_image_before = results[7]
-                ssim12_image = results[8]
+                        # append metrics to metrics list
+                        metrics.append([i*model_params.batch_size+batch, mse_before, mse12, tre_before, tre12, \
+                                        mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, np.max(points1_2_predicted[batch].shape)])
+                    except:
+                        # print(f"Error at {i*model_params.batch_size+batch}")
+                        pass
+                # # if dimensions > 2, squeeze the first dimension
+                # if points1_2_predicted.shape[0] == 1:
+                #     points1_2_predicted = points1_2_predicted.squeeze(0)
+                # if points1_2_predicted.shape[-1] != 2:
+                #     points1_2_predicted = points1_2_predicted.T
 
-                # append metrics to metrics list
-                metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, np.max(points1_2_predicted.shape)])
+                # if points1.shape[0] == 1:
+                #     points1 = points1.squeeze(0)
+                # if points1.shape[-1] != 2:
+                #     points1 = points1.T
+
+                # if points2.shape[0] == 1:
+                #     points2 = points2.squeeze(0)
+                # if points2.shape[-1] != 2:
+                #     points2 = points2.T
+                # # print(points1_2_predicted.shape, points2.shape, points1.shape)
+
+                # results = DL_affine_plot(f"test", output_dir,
+                #     f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
+                #     target_image[0, 0, :, :].cpu().numpy(), 
+                #     transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                #     points1.cpu().detach().numpy().T, 
+                #     points2.cpu().detach().numpy().T, 
+                #     points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                #     affine_params_true=affine_params_true,
+                #     affine_params_predict=affine_params_predicted, 
+                #     heatmap1=None, heatmap2=None, plot=plot_)
+
+                # # calculate metrics
+                # # matches1_transformed = results[0]
+                # mse_before = results[1]
+                # mse12 = results[2]
+                # tre_before = results[3]
+                # tre12 = results[4]
+                # mse12_image_before = results[5]
+                # mse12_image = results[6]
+                # ssim12_image_before = results[7]
+                # ssim12_image = results[8]
+
+                # # append metrics to metrics list
+                # metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, np.max(points1_2_predicted.shape)])
 
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
@@ -170,20 +216,22 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Deep Learning for Image Registration')    
     parser.add_argument('--dataset', type=int, default=1, help='dataset number')
     parser.add_argument('--sup', type=int, default=1, help='supervised learning (1) or unsupervised learning (0)')
-    parser.add_argument('--image', type=int, default=1, help='image used for training')
-    parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
+    parser.add_argument('--image', type=int, default=1, help='loss image used for training')
+    parser.add_argument('--points', type=int, default=0, help='use loss points (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=1, help='number of epochs')
-    parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
+    parser.add_argument('--num_epochs', type=int, default=2, help='number of epochs')
+    parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default=None, help='which model to use')
+    parser.add_argument('--model', type=str, default="DHR", help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
+    parser.add_argument('--timestamp', type=str, default=None, help='timestamp')
+    parser.add_argument('--batch_size', type=int, default=1, help='batch size')
     args = parser.parse_args()
 
     model_path = 'trained_models/' + args.model_path
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
-                               learning_rate=args.learning_rate, decay_rate=args.decay_rate)
+                               learning_rate=args.learning_rate, decay_rate=args.decay_rate, batch_size=args.batch_size)
     model_params.print_explanation()
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")

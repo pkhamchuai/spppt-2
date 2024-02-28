@@ -46,19 +46,19 @@ class Forward_Layer(nn.Module):
             )
             self.layer = nn.Sequential(
                 nn.Conv2d(channels, 2*channels, 3, stride=2, padding=3),
-                nn.GroupNorm(2*channels, 2*channels),
+                # nn.GroupNorm(2*channels, 2*channels),
                 nn.PReLU(),
                 nn.Conv2d(2*channels, 2*channels, 3, stride=1, padding=1),
-                nn.GroupNorm(2*channels, 2*channels),
+                # nn.GroupNorm(2*channels, 2*channels),
                 nn.PReLU(),
             )
         else:
             self.layer = nn.Sequential(
                 nn.Conv2d(channels, channels, 3, stride=1, padding=1),
-                nn.GroupNorm(channels, channels),
+                # nn.GroupNorm(channels, channels),
                 nn.PReLU(),
                 nn.Conv2d(channels, channels, 3, stride=1, padding=1),
-                nn.GroupNorm(channels, channels),
+                # nn.GroupNorm(channels, channels),
                 nn.PReLU(),
             )
 

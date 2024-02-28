@@ -633,8 +633,11 @@ def transform_points_DVF_unbatched(points_, M, image): # original version
     # transform points using displacement field
     # DVF.shape = (2, H, W)
     # points.shape = (2, N, 1)
-    # print("points_ shape:", points_.shape)
-    points_ = points_.squeeze(-1)
+    # print("points_ shape:", points_.shape, "M shape:", M.shape, "image shape:", image.shape)
+
+    # if points_ has 3 dimensions, remove the last dimension
+    if len(points_.shape) == 3:
+        points_ = points_.squeeze(-1)
     # print("points_ shape:", points_.shape)
     displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
     DVF = transform_to_displacement_field(
@@ -642,13 +645,16 @@ def transform_points_DVF_unbatched(points_, M, image): # original version
         M.clone().view(1, 2, 3))
     if isinstance(DVF, torch.Tensor):
         DVF = DVF.detach().numpy()
+
     # loop through each point and apply the transformation
     points = points_.clone()
     points = points.detach().numpy()#.copy()
-    # print("points shape:", points.shape)
+
     for i in range(points.shape[1]):
         try:
+            # print(points[:, i], DVF[:, int(points[1, i]), int(points[0, i])])
             points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+            # print(points[:, i])
         except IndexError:
             # change int(points[1, i]), int(points[0, i]) to 256 if it is 257
             if int(points[1, i]) > 255:
@@ -660,17 +666,24 @@ def transform_points_DVF_unbatched(points_, M, image): # original version
             elif int(points[0, i]) < 0:
                 points[0, i] = 0
             points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+    # print("points shape:", points.shape)
     return torch.tensor(points)
 
 
 def transform_points_DVF(points_, M, image): # batch version
+    # DVF.shape = (B, 2, H, W)
+    # points.shape = (2, N, B)
     # print(points_.shape)
     # print(M.shape)
     # print(image.shape)
-    B, _, H, W = image.shape
+    _, _, B = points_.shape
+    # points = [transform_points_DVF_unbatched(points_[:, :, b], M[b, :, :], image[b, :, :, :]) for b in range(B)]
     for b in range(B):
+        # print("points_ shape:", points_[:, :, b].shape, "M shape:", M[b].shape, "image shape:", image[b].shape)
         points_[:, :, b] = \
-            transform_points_DVF_unbatched(points_[:, :, b], M[b], image[b])
+            transform_points_DVF_unbatched(points_[:, :, b].view(2, -1, 1), \
+                                           M[b].view(1, 2, 3), image[b].view(1, 1, image[b].size(-1), image[b].size(-1)))
+    # print(points_.shape)
     return points_
         
 

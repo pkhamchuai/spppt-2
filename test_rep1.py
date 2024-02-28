@@ -107,23 +107,29 @@ def test(model_name, model_, model_params, timestamp):
                 affine_params_predicted = outputs[1]
                 points1_2_predicted = outputs[2]
 
-                try:
-                    points1_2_predicted = points1_2_predicted.reshape(
-                    points1_2_predicted.shape[2], points1_2_predicted.shape[1])
-                except:
-                    pass
+                # try:
+                #     points1_2_predicted = points1_2_predicted.reshape(
+                #     points1_2_predicted.shape[2], points1_2_predicted.shape[1])
+                # except:
+                #     pass
 
                 if i < 100:
                     plot_ = True
                 else:
                     plot_ = False
 
-                if points1_2_predicted.shape[-1] != 2:
-                    points1_2_predicted = points1_2_predicted.T
-                if points1.shape[-1] != 2:
-                    points1 = points1.T
-                if points2.shape[-1] != 2:
-                    points2 = points2.T
+                # if len(points1_2_predicted.shape) == 3:
+                #     points1_2_predicted = points1_2_predicted.squeeze(0)
+                # if len(points1.shape) == 3:
+                #     points1 = points1.squeeze(0)
+                # if len(points2.shape) == 3:
+                #     points2 = points2.squeeze(0)
+                # if points1_2_predicted.shape[-1] != 2:
+                #     points1_2_predicted = points1_2_predicted.T
+                # if points1.shape[-1] != 2:
+                #     points1 = points1.T
+                # if points2.shape[-1] != 2:
+                #     points2 = points2.T
                 # print(points1_2_predicted.shape, points2.shape, points1.shape)
 
                 results = DL_affine_plot(f"{i}", output_dir,
@@ -132,7 +138,7 @@ def test(model_name, model_, model_params, timestamp):
                     transformed_source_affine[0, 0, :, :].cpu().numpy(),
                     points1[0].cpu().detach().numpy().T, 
                     points2[0].cpu().detach().numpy().T, 
-                    points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                    points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
                     affine_params_true=affine_params_true,
                     affine_params_predict=affine_params_predicted, 
                     heatmap1=None, heatmap2=None, plot=plot_)
@@ -155,7 +161,7 @@ def test(model_name, model_, model_params, timestamp):
                 # print(np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()),
                 #       np.linalg.norm(affine_params_predicted[0].cpu().numpy() - identity))
                 if tre12 < TRE_last and mse12 < MSE_last:
-                    points1 = points1_2_predicted.unsqueeze(0).clone()
+                    points1 = points1_2_predicted.clone()
                     source_image = transformed_source_affine.clone() # update the source image
                     TRE_last = tre12
                     MSE_last = mse12
