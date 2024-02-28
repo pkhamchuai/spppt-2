@@ -1,0 +1,335 @@
+Seed: 2870001586255702572
+Device: cpu
+Device: cpu
+Device: cpu
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Model params:  {'dataset': 1, 'sup': 1, 'image': 1, 'points': 0, 'loss_image_case': 0, 'loss_image': MSELoss(), 'loss_affine': <utils.utils1.loss_affine object at 0x7f91515bf4c0>, 'learning_rate': 0.0001, 'decay_rate': 0.96, 'start_epoch': 0, 'num_epochs': 2, 'batch_size': 1, 'model_name': 'dataset1_sup1_image1_points0_loss_image0'}
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7f91515bf4c0>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+
+
+Testing the trained model: DHR +++++++++++++++++++++++
+Test function input: DHR trained_models/with_groupnorm/1 DHR_11100_0.001_0_5_1_20240228-172824.pth dataset1_sup1_image1_points0_loss_image0 20240228-191723
+1
+Loading DHR model (networks/affine_network_simple.py)
+
+Running new version (not run SP on source image)
+Loaded model from trained_models/with_groupnorm/1 DHR_11100_0.001_0_5_1_20240228-172824.pth
+The test results are saved in output/DHR_11100_0.0001_0_2_1_20240228-191723_test/metrics.csv
+Output directory: output/DHR_11100_0.0001_0_2_1_20240228-191723_test
+Output saved to output/DHR_11100_0.0001_0_2_1_20240228-191723_test/test_output_DHR_11100_0.0001_0_2_1_20240228-191723.txt
+Test model finished +++++++++++++++++++++++++++++
+Seed: 16849202889121520538
+Device: cpu
+Device: cpu
+Device: cpu
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Model params:  {'dataset': 1, 'sup': 1, 'image': 1, 'points': 0, 'loss_image_case': 0, 'loss_image': MSELoss(), 'loss_affine': <utils.utils1.loss_affine object at 0x7f55774e31f0>, 'learning_rate': 0.0001, 'decay_rate': 0.96, 'start_epoch': 0, 'num_epochs': 2, 'batch_size': 1, 'model_name': 'dataset1_sup1_image1_points0_loss_image0'}
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7f55774e31f0>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+
+
+Testing the trained model: DHR +++++++++++++++++++++++
+Test function input: DHR trained_models/with_groupnorm/2 DHR_11100_0.001_0_5_2_20240228-173219.pth dataset1_sup1_image1_points0_loss_image0 20240228-191825
+1
+Loading DHR model (networks/affine_network_simple.py)
+
+Running new version (not run SP on source image)
+Loaded model from trained_models/with_groupnorm/2 DHR_11100_0.001_0_5_2_20240228-173219.pth
+The test results are saved in output/DHR_11100_0.0001_0_2_1_20240228-191825_test/metrics.csv
+Output directory: output/DHR_11100_0.0001_0_2_1_20240228-191825_test
+Output saved to output/DHR_11100_0.0001_0_2_1_20240228-191825_test/test_output_DHR_11100_0.0001_0_2_1_20240228-191825.txt
+Test model finished +++++++++++++++++++++++++++++
+Seed: 1349004520303732034
+Device: cpu
+Device: cpu
+Device: cpu
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Model params:  {'dataset': 1, 'sup': 1, 'image': 1, 'points': 0, 'loss_image_case': 0, 'loss_image': MSELoss(), 'loss_affine': <utils.utils1.loss_affine object at 0x7fd73fddb2b0>, 'learning_rate': 0.0001, 'decay_rate': 0.96, 'start_epoch': 0, 'num_epochs': 2, 'batch_size': 1, 'model_name': 'dataset1_sup1_image1_points0_loss_image0'}
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7fd73fddb2b0>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+
+
+Testing the trained model: DHR +++++++++++++++++++++++
+Test function input: DHR trained_models/with_groupnorm/3 DHR_11100_0.001_0_5_3_20240228-173550.pth dataset1_sup1_image1_points0_loss_image0 20240228-191923
+1
+Loading DHR model (networks/affine_network_simple.py)
+
+Running new version (not run SP on source image)
+Loaded model from trained_models/with_groupnorm/3 DHR_11100_0.001_0_5_3_20240228-173550.pth
+The test results are saved in output/DHR_11100_0.0001_0_2_1_20240228-191923_test/metrics.csv
+Output directory: output/DHR_11100_0.0001_0_2_1_20240228-191923_test
+Output saved to output/DHR_11100_0.0001_0_2_1_20240228-191923_test/test_output_DHR_11100_0.0001_0_2_1_20240228-191923.txt
+Test model finished +++++++++++++++++++++++++++++
+Seed: 5899566402232512775
+Device: cpu
+Device: cpu
+Device: cpu
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Model params:  {'dataset': 1, 'sup': 1, 'image': 1, 'points': 0, 'loss_image_case': 0, 'loss_image': MSELoss(), 'loss_affine': <utils.utils1.loss_affine object at 0x7ff7c12d7010>, 'learning_rate': 0.0001, 'decay_rate': 0.96, 'start_epoch': 0, 'num_epochs': 2, 'batch_size': 1, 'model_name': 'dataset1_sup1_image1_points0_loss_image0'}
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7ff7c12d7010>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+
+
+Testing the trained model: DHR +++++++++++++++++++++++
+Test function input: DHR trained_models/with_groupnorm/4 DHR_11100_0.001_0_5_4_20240228-173857.pth dataset1_sup1_image1_points0_loss_image0 20240228-192021
+1
+Loading DHR model (networks/affine_network_simple.py)
+
+Running new version (not run SP on source image)
+Loaded model from trained_models/with_groupnorm/4 DHR_11100_0.001_0_5_4_20240228-173857.pth
+The test results are saved in output/DHR_11100_0.0001_0_2_1_20240228-192021_test/metrics.csv
+Output directory: output/DHR_11100_0.0001_0_2_1_20240228-192021_test
+Output saved to output/DHR_11100_0.0001_0_2_1_20240228-192021_test/test_output_DHR_11100_0.0001_0_2_1_20240228-192021.txt
+Test model finished +++++++++++++++++++++++++++++
+Seed: 6364325994029323819
+Device: cpu
+Device: cpu
+Device: cpu
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Model params:  {'dataset': 1, 'sup': 1, 'image': 1, 'points': 0, 'loss_image_case': 0, 'loss_image': MSELoss(), 'loss_affine': <utils.utils1.loss_affine object at 0x7f43d55cf2b0>, 'learning_rate': 0.0001, 'decay_rate': 0.96, 'start_epoch': 0, 'num_epochs': 2, 'batch_size': 1, 'model_name': 'dataset1_sup1_image1_points0_loss_image0'}
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7f43d55cf2b0>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+
+
+Testing the trained model: DHR +++++++++++++++++++++++
+Test function input: DHR trained_models/with_groupnorm/5 DHR_11100_0.001_0_5_5_20240228-174150.pth dataset1_sup1_image1_points0_loss_image0 20240228-192119
+1
+Loading DHR model (networks/affine_network_simple.py)
+
+Running new version (not run SP on source image)
+Loaded model from trained_models/with_groupnorm/5 DHR_11100_0.001_0_5_5_20240228-174150.pth
+The test results are saved in output/DHR_11100_0.0001_0_2_1_20240228-192119_test/metrics.csv
+Output directory: output/DHR_11100_0.0001_0_2_1_20240228-192119_test
+Output saved to output/DHR_11100_0.0001_0_2_1_20240228-192119_test/test_output_DHR_11100_0.0001_0_2_1_20240228-192119.txt
+Test model finished +++++++++++++++++++++++++++++
+Seed: 3083061374192833851
+Device: cpu
+Device: cpu
+Device: cpu
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Model params:  {'dataset': 1, 'sup': 1, 'image': 1, 'points': 0, 'loss_image_case': 0, 'loss_image': MSELoss(), 'loss_affine': <utils.utils1.loss_affine object at 0x7f56f28cf520>, 'learning_rate': 0.0001, 'decay_rate': 0.96, 'start_epoch': 0, 'num_epochs': 2, 'batch_size': 1, 'model_name': 'dataset1_sup1_image1_points0_loss_image0'}
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7f56f28cf520>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+
+
+Testing the trained model: DHR +++++++++++++++++++++++
+Test function input: DHR trained_models/without_groupnorm/1 DHR_11100_0.001_0_5_1_20240228-172146.pth dataset1_sup1_image1_points0_loss_image0 20240228-192220
+1
+Loading DHR model (networks/affine_network_simple.py)
+
+Running new version (not run SP on source image)
+Seed: 15773440036850405386
+Device: cpu
+Device: cpu
+Device: cpu
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Model params:  {'dataset': 1, 'sup': 1, 'image': 1, 'points': 0, 'loss_image_case': 0, 'loss_image': MSELoss(), 'loss_affine': <utils.utils1.loss_affine object at 0x7f6e439d3190>, 'learning_rate': 0.0001, 'decay_rate': 0.96, 'start_epoch': 0, 'num_epochs': 2, 'batch_size': 1, 'model_name': 'dataset1_sup1_image1_points0_loss_image0'}
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7f6e439d3190>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+
+
+Testing the trained model: DHR +++++++++++++++++++++++
+Test function input: DHR trained_models/without_groupnorm/2 DHR_11100_0.001_0_5_2_20240228-170518.pth dataset1_sup1_image1_points0_loss_image0 20240228-192223
+1
+Loading DHR model (networks/affine_network_simple.py)
+
+Running new version (not run SP on source image)
+Seed: 13915889394357563267
+Device: cpu
+Device: cpu
+Device: cpu
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Model params:  {'dataset': 1, 'sup': 1, 'image': 1, 'points': 0, 'loss_image_case': 0, 'loss_image': MSELoss(), 'loss_affine': <utils.utils1.loss_affine object at 0x7fc666bcf3d0>, 'learning_rate': 0.0001, 'decay_rate': 0.96, 'start_epoch': 0, 'num_epochs': 2, 'batch_size': 1, 'model_name': 'dataset1_sup1_image1_points0_loss_image0'}
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7fc666bcf3d0>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+
+
+Testing the trained model: DHR +++++++++++++++++++++++
+Test function input: DHR trained_models/without_groupnorm/3 DHR_11100_0.001_0_5_3_20240228-170845.pth dataset1_sup1_image1_points0_loss_image0 20240228-192225
+1
+Loading DHR model (networks/affine_network_simple.py)
+
+Running new version (not run SP on source image)
+Seed: 16632862168721909350
+Device: cpu
+Device: cpu
+Device: cpu
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Model params:  {'dataset': 1, 'sup': 1, 'image': 1, 'points': 0, 'loss_image_case': 0, 'loss_image': MSELoss(), 'loss_affine': <utils.utils1.loss_affine object at 0x7f2de81b71c0>, 'learning_rate': 0.0001, 'decay_rate': 0.96, 'start_epoch': 0, 'num_epochs': 2, 'batch_size': 1, 'model_name': 'dataset1_sup1_image1_points0_loss_image0'}
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7f2de81b71c0>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+
+
+Testing the trained model: DHR +++++++++++++++++++++++
+Test function input: DHR trained_models/without_groupnorm/4 DHR_11100_0.001_0_5_4_20240228-171155.pth dataset1_sup1_image1_points0_loss_image0 20240228-192227
+1
+Loading DHR model (networks/affine_network_simple.py)
+
+Running new version (not run SP on source image)
+Seed: 6406566507043122245
+Device: cpu
+Device: cpu
+Device: cpu
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Model params:  {'dataset': 1, 'sup': 1, 'image': 1, 'points': 0, 'loss_image_case': 0, 'loss_image': MSELoss(), 'loss_affine': <utils.utils1.loss_affine object at 0x7f342b6d7250>, 'learning_rate': 0.0001, 'decay_rate': 0.96, 'start_epoch': 0, 'num_epochs': 2, 'batch_size': 1, 'model_name': 'dataset1_sup1_image1_points0_loss_image0'}
+
+Model name:  dataset1_sup1_image1_points0_loss_image0
+Model code:  11100_0.0001_0_2_1
+Dataset used:  Synthetic eye easy
+Supervised or unsupervised model:  Supervised
+Loss image type:  Image used
+Points used:  Points not used
+Loss function case:  0
+Loss function for image:  MSELoss()
+Loss function for affine:  <utils.utils1.loss_affine object at 0x7f342b6d7250>
+Learning rate:  0.0001
+Decay rate:  0.96
+Start epoch:  0
+Number of epochs:  2
+Batch size:  1
+
+
+
+Testing the trained model: DHR +++++++++++++++++++++++
+Test function input: DHR trained_models/without_groupnorm/5 DHR_11100_0.001_0_5_5_20240228-171449.pth dataset1_sup1_image1_points0_loss_image0 20240228-192230
+1
+Loading DHR model (networks/affine_network_simple.py)
+
+Running new version (not run SP on source image)

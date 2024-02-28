@@ -44,7 +44,7 @@ def test(model_name, model_, model_params, timestamp):
     # timestamp: timestamp of the model
     print('Test function input:', model_name, model_, model_params, timestamp)
 
-    test_dataset = datagen(model_params.dataset, False, model_params.sup, batch_size=model_params.batch_size)
+    test_dataset = datagen(model_params.dataset, False, model_params.sup, batch_size=1) # batch_size need to be 1
     print(model_params.batch_size)
 
     # if model is a string, load the model
@@ -212,6 +212,7 @@ def test(model_name, model_, model_params, timestamp):
                   None, timestamp, test=True)
 
 if __name__ == '__main__':
+    print('\ntest_points.py: testing the trained model +++++++++++++++++++++++')
     # get the arguments
     parser = argparse.ArgumentParser(description='Deep Learning for Image Registration')    
     parser.add_argument('--dataset', type=int, default=1, help='dataset number')

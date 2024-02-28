@@ -16,6 +16,14 @@ import torch.optim as optim
 from utils.utils0 import *
 from utils.utils1 import *
 
+# class for TRE loss
+class TRE_loss(nn.Module):
+    def __init__(self):
+        super(TRE_loss, self).__init__()
+
+    def __call__(self, points1, points2):
+        return torch.mean(torch.sqrt(torch.sum((points1 - points2)**2, dim=0)))
+
 # Define training function
 def train(model_name, model_path, model_params, timestamp):
 
@@ -31,6 +39,9 @@ def train(model_name, model_path, model_params, timestamp):
     # Define loss function based on supervised or unsupervised learning
     criterion = model_params.loss_image
     # extra = loss_extra()
+    # criterion_points = nn.MSELoss() # 
+    # criterion_points = loss_points()
+    criterion_points = TRE_loss()
 
     if model_params.sup:
         criterion_affine = nn.MSELoss()
@@ -125,11 +136,11 @@ def train(model_name, model_path, model_params, timestamp):
             # print(f"affine_params_true: {affine_params_true}")
             # print(f"affine_params_predicted: {affine_params_predicted}\n")
 
-            try:
-                points1_2_predicted = points1_2_predicted.reshape(
-                    points1_2_predicted.shape[2], points1_2_predicted.shape[1])
-            except:
-                pass
+            # try:
+            #     points1_2_predicted = points1_2_predicted.reshape(
+            #         points1_2_predicted.shape[2], points1_2_predicted.shape[1])
+            # except:
+            #     pass
 
             if model_params.image:
                 loss += criterion(transformed_source_affine, target_image)
@@ -143,11 +154,14 @@ def train(model_name, model_path, model_params, timestamp):
                 # loss_points = criterion_points(points1_affine, points2)
                 loss += loss_affine
 
-            # if model_params.points:
-            #     loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1), 
-            #                         torch.flatten(points1_2_true[0], start_dim=1).to(device))
-            #     # loss_ = torch.subtract(points1_2_predicted.cpu().detach(), points1_2_true[0].cpu().detach())
-            #     # loss += torch.sum(torch.square(loss_))
+            if model_params.points:
+                if not isinstance(points1_2_predicted, torch.Tensor):
+                        points1_2_predicted = torch.tensor(points1_2_predicted)
+                if not isinstance(points1_2_true, torch.Tensor):
+                        points1_2_true = torch.tensor(points1_2_true)
+                # print(f"points1_2_predicted: {points1_2_predicted.shape}, points1_2_true: {points1_2_true.shape}")
+                loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
+                                    torch.flatten(points1_2_true, start_dim=1).cpu().detach())
                 
             loss.backward()
             optimizer.step()
@@ -203,11 +217,11 @@ def train(model_name, model_path, model_params, timestamp):
                 # points2 = np.array(outputs[3])
                 points1_2_predicted = np.array(outputs[2])
 
-                try:
-                    points1_2_predicted = points1_2_predicted.reshape(
-                        points1_2_predicted.shape[2], points1_2_predicted.shape[1])
-                except:
-                    pass
+                # try:
+                #     points1_2_predicted = points1_2_predicted.reshape(
+                #         points1_2_predicted.shape[2], points1_2_predicted.shape[1])
+                # except:
+                #     pass
 
                 # desc1_2 = outputs[5]
                 # desc2 = outputs[6]
@@ -224,10 +238,15 @@ def train(model_name, model_path, model_params, timestamp):
                 #     # loss_points = criterion_points(points1_affine, points2)
                     loss += loss_affine
 
-                # if model_params.points:
-                #     # print the input's device
-                #     loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                #                     torch.flatten(points1_2_true[0], start_dim=1).cpu().detach())
+                if model_params.points:
+                    # if the input is not a tensor, convert it to a tensor
+                    if not isinstance(points1_2_predicted, torch.Tensor):
+                        points1_2_predicted = torch.tensor(points1_2_predicted)
+                    if not isinstance(points1_2_true, torch.Tensor):
+                        points1_2_true = torch.tensor(points1_2_true)
+                    # print(f"points1_2_predicted: {points1_2_predicted}, points1_2_true: {points1_2_true}")
+                    loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
+                                    torch.flatten(points1_2_true, start_dim=1).cpu().detach())
 
                 # Add to validation loss
                 validation_loss += loss.item()

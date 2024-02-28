@@ -780,7 +780,7 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # axe C shows target image
             axes["C"].imshow(overlaid2, cmap='gray')
             if affine_params_true is not None:
-                axes["C"].set_title(f"Target, {affine_params_true[0]}")
+                axes["C"].set_title(f"Target, {affine_params_true}")
             else:
                 axes["C"].set_title(f"Target (unsupervised)")
             axes["C"].axis('off')

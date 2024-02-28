@@ -13,9 +13,10 @@ runs = []
 # sigma = range(30, 100, 10)
 files = ['train_img_batch.py']
 # files = ['train_points_rigid_img', 'train_points_rigid_pt', 'train_img_batch.py', 'train_one_sample.py']
-batch_size = [1, 2, 3, 4, 5]
+batch_size = [1] # 2, 3, 4, 5
 lr = 1e-3
 decay_rate = 0.96
+
 # generate run commands
 for file in files:
     sup = 1
@@ -23,7 +24,7 @@ for file in files:
         runs.append(['python', str(file), '--dataset', str(1), 
             '--model', str(model), '--num_epochs', str(5), 
             '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
-            '--image', str(1), '--points', str(0), '--sup', str(sup),
+            '--image', str(0), '--points', str(1), '--sup', str(sup),
             '--batch_size', str(batch)])  
     # for data in dataset:
     #     # if model != 'AIRNet' and sup == 0:
@@ -71,9 +72,9 @@ for file in files:
 dup_runs = 1
 for i in range(len(runs)):
     for j in range(dup_runs):
-        print(runs[i])
+        print(f"\n{runs[i]}")
         subprocess.run(runs[i])
-    print("\n")
+    
 print("Total runs: ", len(runs)*dup_runs)
 
 ''' notes
