@@ -106,8 +106,8 @@ def train(model_name, model_path, model_params, timestamp):
 
             # Forward + backward + optimize
             outputs = model(source_image, target_image, points1)
-            for i in range(len(outputs)):
-                    print(i, outputs[i].shape)
+            # for i in range(len(outputs)):
+            #         print(i, outputs[i].shape)
             # 0 torch.Size([1, 1, 256, 256])
             # 1 torch.Size([1, 2, 3])
             # 2 (2, 0)
@@ -136,7 +136,9 @@ def train(model_name, model_path, model_params, timestamp):
                 # loss += extra(affine_params_predicted)
                 
             if model_params.sup:
-                loss_affine = criterion_affine(affine_params_true.view(1, 2, 3), affine_params_predicted.cpu())
+                # print(f"affine_params_true: {affine_params_true.shape}")
+                loss_affine = criterion_affine(affine_params_true, \
+                                               affine_params_predicted.cpu())
                 # TODO: add loss for points1_affine and points2, Euclidean distance
                 # loss_points = criterion_points(points1_affine, points2)
                 loss += loss_affine
@@ -263,7 +265,7 @@ def train(model_name, model_path, model_params, timestamp):
         running_train_loss = [x[1] for x in running_loss_list]
 
         # Plot train loss and validation loss against epoch number
-        plt.figure()
+        fig = plt.figure(figsize=(12, 5))
         plt.plot(step, running_train_loss, label='Running Train Loss', alpha=0.3)
         plt.plot(epoch, train_loss, label='Train Loss', linewidth=3)
         plt.plot(epoch, val_loss, label='Validation Loss', linewidth=3)
@@ -271,10 +273,12 @@ def train(model_name, model_path, model_params, timestamp):
         plt.legend()
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
-        # plt.yscale('log')
+        plt.yscale('log')
+        plt.grid(True)
         plt.tight_layout()
+        signaturebar_gray(fig, f'{model_params.get_model_code()} - {model_params.num_epochs} epochs - {timestamp}')
         plt.savefig(save_plot_name)
-        # plt.show()
+        plt.close(fig)
 
     print('\nFinished Training')
 
@@ -290,8 +294,8 @@ def train(model_name, model_path, model_params, timestamp):
     print(f'Model saved in: {model_name_to_save}')
 
     # save the output of print_explanation() and loss_list to a txt file
-    print_summary(model_name, model_name_to_save, 
-                  model_params, epoch_loss_list, timestamp, False)
+    print_summary(model_name, model_name_to_save, model_params, 
+                  epoch_loss_list, timestamp, output_dir=output_dir, test=False)
 
     # Return epoch_loss_list
     return model, epoch_loss_list

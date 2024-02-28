@@ -407,6 +407,7 @@ def print_summary(model_name, model_path, model_params,
         output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_test"
     elif not test and output_dir is None:
         output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}"
+    print(f"Output directory: {output_dir}")
     os.makedirs(output_dir, exist_ok=True)
     save_txt_name = f"{output_dir}/test_output_{model_name}_{model_params.get_model_code()}_{timestamp}.txt"
 
@@ -602,6 +603,400 @@ def load_images_from_folder(folder, img_size=(512, 512)):
         if image is not None:
             images.append(image)
     return images
+
+def blend_img(edge, image):
+    """
+    Overlaying edges (contour) onto an image.
+    :param color:
+    :param edge: edges of fixed image
+    :param image: moving/warped image
+    :return: output image
+    """
+
+    edge_color = np.array((255, 255, 0)) / 255.  # now 0 = dark, 255 = light
+    # if the image is float, convert to uint8
+    if image.dtype == np.float32:
+        image = np.uint8(image * 255)
+    out = np.zeros((image.shape[0], image.shape[1], 3))
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            if edge[i, j] > 127:
+                out[i, j] = edge_color
+            else:
+                out[i, j] = np.array((image[i, j], image[i, j], image[i, j])) / 255.
+
+    # convert image to float
+    # out = np.float32(out)
+    return out
+
+def transform_points_DVF_unbatched(points_, M, image): # original version
+    # transform points using displacement field
+    # DVF.shape = (2, H, W)
+    # points.shape = (2, N, 1)
+    # print("points_ shape:", points_.shape)
+    points_ = points_.squeeze(-1)
+    # print("points_ shape:", points_.shape)
+    displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
+    DVF = transform_to_displacement_field(
+        displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
+        M.clone().view(1, 2, 3))
+    if isinstance(DVF, torch.Tensor):
+        DVF = DVF.detach().numpy()
+    # loop through each point and apply the transformation
+    points = points_.clone()
+    points = points.detach().numpy()#.copy()
+    # print("points shape:", points.shape)
+    for i in range(points.shape[1]):
+        try:
+            points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+        except IndexError:
+            # change int(points[1, i]), int(points[0, i]) to 256 if it is 257
+            if int(points[1, i]) > 255:
+                points[1, i] = 255
+            elif int(points[1, i]) < 0:
+                points[1, i] = 0
+            if int(points[0, i]) > 255:
+                points[0, i] = 255
+            elif int(points[0, i]) < 0:
+                points[0, i] = 0
+            points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+    return torch.tensor(points)
+
+
+def transform_points_DVF(points_, M, image): # batch version
+    # print(points_.shape)
+    # print(M.shape)
+    # print(image.shape)
+    B, _, H, W = image.shape
+    for b in range(B):
+        points_[:, :, b] = \
+            transform_points_DVF_unbatched(points_[:, :, b], M[b], image[b])
+    return points_
+        
+
+# def transform_points_DVF_(points_, M, image): # batch version
+#     # transform points using displacement field
+#     # DVF.shape = (B, 2, H, W)
+#     # points.shape = (B, 2, N)
+#     B, _, H, W = image.shape
+#     displacement_field = torch.zeros(B, 2, H, W)
+#     # TODO: reshape DVF to (B, 2, H, W), fix point indexing in for loop
+#     DVF = transform_to_displacement_field(
+#         displacement_field.view(B, 1, H, W), 
+#         M.clone().view(B, 2, 3))
+#     if isinstance(DVF, torch.Tensor):
+#         DVF = DVF.detach().numpy()
+#     # loop through each point and apply the transformation
+#     print("points_ shape:", points_.shape)
+#     points = points_.clone()
+#     points = points.detach().numpy()#.copy()
+#     print("points shape:", points.shape)
+#     for b in range(B):
+#         for i in range(points.shape[2]):
+#             try:
+#                 points[b, :, i] = points[b, :, i] - DVF[b, :, int(points[b, 1, i]), int(points[b, 0, i])]
+#             except IndexError:
+#                 # change int(points[b, 1, i]), int(points[b, 0, i]) to 255 if it is 257
+#                 if int(points[b, 1, i]) > 255:
+#                     points[b, 1, i] = 255
+#                 elif int(points[b, 1, i]) < 0:
+#                     points[b, 1, i] = 0
+#                 if int(points[b, 0, i]) > 255:
+#                     points[b, 0, i] = 255
+#                 elif int(points[b, 0, i]) < 0:
+#                     points[b, 0, i] = 0
+#                 points[b, :, i] = points[b, :, i] - DVF[b, :, int(points[b, 1, i]), int(points[b, 0, i])]
+#     return torch.tensor(points)
+
+def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, image3,
+                       matches1, matches2, matches3, desc1, desc2, affine_params_true=None, 
+                       affine_params_predict=None, heatmap1=None, heatmap2=None, plot=True):
+
+    # print("matches1 shape:", matches1.shape)
+    # print("matches2 shape:", matches2.shape)
+    # print("matches3 shape:", matches3.shape)
+    # print("desc1 shape:", desc1.shape)
+    # print("desc2 shape:", desc2.shape)
+
+    # MSE and TRE before transformation (points)
+    mse_before = mse(matches1, matches2)
+    tre_before = tre(matches1, matches2)
+    
+    # matches3 = cv2.transform(matches1.T[None, :, :], affine_params[0])
+    # matches3 = matches3[0].T
+
+    mse12 = mse(matches3, matches2)
+    tre12 = tre(matches3, matches2)
+
+    # calculate the MSE between image3 and image2
+    mse12_image_before = mse(image1, image2)
+    mse12_image = mse(image3, image2)
+
+    # calculate SSIM between image3 and image2
+    ssim12_image_before = ssim(image1, image2)
+    ssim12_image = ssim(image3, image2)
+
+    # Part 3 - Plotting
+    if plot:
+        try:
+            # Create a subplot with 2 rows and 2 columns
+            # fig, axes = plt.subplot_mosaic("AADE;BCFG", figsize=(20, 10))
+            fig, axes = plt.subplot_mosaic("BCFD;AGHE", figsize=(20, 10))
+
+            overlaid1 = overlay_points(image1.copy(), matches1, radius=1)
+            overlaid2 = overlay_points(image2.copy(), matches2, radius=1)
+            overlaid3 = overlay_points(image3.copy(), matches3, radius=1)
+
+            overlaidD = overlay_points(overlaid2.copy(), matches3, color=(155, 0, 0), radius=1)
+            overlaidD = overlay_points(overlaidD.copy(), matches1, color=(0, 0, 155), radius=1)
+
+            overlaidE = overlay_points(overlaid2.copy(), matches3, color=(0, 0, 155), radius=1)
+            overlaidH = overlay_points(overlaid2.copy(), matches1, color=(0, 0, 155), radius=1)
+
+            axes["F"].imshow(overlaid3, cmap='gray')
+            axes["F"].set_title(f"Warped, {affine_params_predict}")
+            axes["F"].axis('off')
+            axes['F'].grid(True)
+
+            # axe B shows source image
+            axes["B"].imshow(overlaid1, cmap='gray')
+            axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}\n{matches1.shape}, {matches2.shape}, {matches3.shape}") 
+            axes["B"].axis('off')
+            axes['B'].grid(True)
+
+            # axe C shows target image
+            axes["C"].imshow(overlaid2, cmap='gray')
+            if affine_params_true is not None:
+                axes["C"].set_title(f"Target, {affine_params_true[0]}")
+            else:
+                axes["C"].set_title(f"Target (unsupervised)")
+            axes["C"].axis('off')
+            axes['C'].grid(True)
+
+            # New subplot for the transformed points
+            # Blue: from original locations from image 2/1 to the affine-transformed locations
+            # Red: from affine-transformed locations of points from image 2/1 to 
+            # the locations they supposed to be in image 1/2
+            # Green: from affine-transformed locations of points from image 2/1 to
+            
+            try:
+                imgH = draw_lines_one_image(overlaidH, matches2, matches1, line_color=(155, 0, 0))
+                axes["H"].imshow(imgH)
+            except:
+                axes["H"].imshow(overlaidH)
+            axes["H"].set_title(f"Before, Error lines. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}")
+            axes["H"].axis('off')
+
+            try:
+                imgD = draw_lines_one_image(overlaidD, matches3, matches1, line_color=(0, 0, 155))
+                axes["D"].imshow(imgD)
+            except:
+                axes["D"].imshow(overlaidD)
+            # img2 = draw_lines_one_image(img2, matches2, matches3, line_color=(255, 0, 0))
+            axes["D"].set_title(f"Source -> Warped, Transformation. {mse(matches1, matches3):.4f}, {tre(matches1, matches3):.4f}")
+            axes["D"].axis('off')
+
+            # img2 = draw_lines_one_image(overlaid2, matches3, matches1, line_color=(0, 0, 155))
+            try:
+                imgE = draw_lines_one_image(overlaidE, matches2, matches3, line_color=(155, 0, 0))
+                axes["E"].imshow(imgE)
+            except:
+                axes["E"].imshow(overlaidE)
+            axes["E"].set_title(f"After, Error lines. MSE: {mse12:.4f}, TRE: {tre12:.4f}")
+            axes["E"].axis('off')
+
+            # Display the checkerboard image 1 original to 2
+            checkerboard = create_checkerboard(image1, image2)
+            axes["A"].imshow(checkerboard, cmap='gray')
+            axes["A"].set_title(f"Original - Target, MSE: {mse12_image_before:.4f}, SSIM: {ssim12_image_before:.4f}")
+            axes["A"].axis('off')
+
+            # Display the checkerboard image 1 transformed to 2
+            checkerboard = create_checkerboard(image3, image2)
+            axes["G"].imshow(checkerboard, cmap='gray')
+            axes["G"].set_title(f"Warped - Target, MSE: {mse12_image:.4f}, SSIM: {ssim12_image:.4f}")
+            axes["G"].axis('off')
+
+            # show also MSE and SSIM between the two images
+            # imgA = draw_lines(overlaid1, overlaid2, matches1, matches2, match=None)
+            # axes["A"].imshow(imgA)
+            # axes["A"].set_title(f"Pair {image1_name}. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}, {matches1.shape[1]} matches")
+            # axes["A"].axis('off')
+
+            # axes G shows edge of image 1 over image 2
+            # find the edges of the transformed image
+            '''kernel = np.ones((3, 3), np.uint8)
+            edges = cv2.Canny((image3*255).astype(np.uint8), 15, 200)
+            # edges = cv2.dilate(edges, kernel, iterations=1)
+            edge_overlay = blend_img(edges, image2)
+            print("E")
+            axes["E"].imshow(edge_overlay)
+            axes["E"].set_title(f"Edges of source over target")
+            axes["E"].axis('off')'''
+
+            
+            plt.tight_layout()  # Adjust the layout to leave space for the histogram
+            # if the directory does not exist, create it
+            # dir_name = f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}"
+            if not os.path.exists(dir_name):
+                os.makedirs(dir_name) 
+            save_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{image2_name}.png")
+            # Check if the file already exists
+            if os.path.exists(save_file_name):
+                suffix = 1
+                while True:
+                    # Add a suffix to the file name
+                    new_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{image2_name}_{suffix}.png")
+                    if not os.path.exists(new_file_name):
+                        save_file_name = new_file_name
+                        break
+                    suffix += 1
+
+            signaturebar_gray(fig, f"{name}, S: {image1_name}, T: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
+                    rect_kw={"facecolor": "gray", "edgecolor": None},
+                    text_kw={"color": "w"})
+            fig.savefig(save_file_name)
+            
+            # save images to output folder
+            '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image3*255)
+            cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_2.png", image2_transformed*255)'''
+            plt.close(fig)
+            
+        except TypeError:
+            print("TypeError in plotting")
+            pass
+
+    return matches3, mse_before, mse12, tre_before, tre12, \
+        mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
+
+def signaturebar(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
+                 rect_kw={"facecolor": None, "edgecolor": None},
+                 text_kw={"color": "w"}):
+
+    w, h = fig.get_size_inches()
+    height = ((fontsize + 2 * pad) / 72.) / h
+
+    # rect_kw_outer = {"facecolor": None, "edgecolor": "gray", "linewidth": 1}
+    # rect_outer = plt.Rectangle((0, 0), 1, 1, transform=fig.transFigure, clip_on=False, **rect_kw_outer)
+    # fig.axes[0].add_patch(rect_outer)
+
+    # create many rectangles to get the gradient effect with color from "#B163A3" to "#30D5C8"
+    nrect = 100
+    rect_kw_inner = {"facecolor": None, "edgecolor": None}
+    for i in range(nrect):
+        rect_kw_inner["facecolor"] = mcolors.to_hex(np.array(mcolors.to_rgb("#30D5C8")) * (nrect - i) / nrect + np.array(
+            mcolors.to_rgb("#B163A3")) * i / nrect)
+        rect_inner = plt.Rectangle((0, 0), (nrect-i)/nrect, height, transform=fig.transFigure, clip_on=False, **rect_kw_inner)
+        fig.axes[0].add_patch(rect_inner)
+    
+    # rect_inner = plt.Rectangle((0, 0), 1/2, height, transform=fig.transFigure, clip_on=False,
+    #                            **{"facecolor": "gray", "edgecolor": None})
+    # fig.axes[0].add_patch(rect_inner)
+
+    # text_kw["weight"] = "bold"  # Add this line to make the text bold
+    fig.text(xpos / 72. / h, ypos / 72. / h, text, fontsize=fontsize, **text_kw)
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom + height)
+    return fig
+    
+def signaturebar_gray(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
+                 rect_kw={"facecolor": "gray", "edgecolor": None},
+                 text_kw={"color": "w"}):
+    w, h = fig.get_size_inches()
+    height = ((fontsize + 2 * pad) / 72.) / h
+
+    # rect_kw_outer = {"facecolor": None, "edgecolor": "gray", "linewidth": 1}  # Define outer rectangle parameters
+    # rect_outer = plt.Rectangle((0, 0), 1, 1, transform=fig.transFigure, clip_on=False, **rect_kw_outer)  # Add outer rectangle
+    # fig.axes[0].add_patch(rect_outer)
+
+    rect_inner = plt.Rectangle((0, 0), 1, height, transform=fig.transFigure, clip_on=False, **rect_kw)  # Add inner rectangle
+    fig.axes[0].add_patch(rect_inner)
+    
+    fig.text(xpos / 72. / h, ypos / 72. / h, text, fontsize=fontsize, **text_kw)
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom + height)
+    return fig
+
+
+# def transform_points_DVF(points, M, image): # original version
+#     # transform points using displacement field
+#     # DVF.shape = (2, H, W)
+#     # points.shape = (2, N)
+#     displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
+#     DVF = transform_to_displacement_field(
+#         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
+#         M.clone().view(1, 2, 3))
+#     if isinstance(DVF, torch.Tensor):
+#         DVF = DVF.numpy()
+#     # loop through each point and apply the transformation
+#     for i in range(points.shape[1]):
+#         points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+#     return points
+
+# def transform_points_DVF(points, affine_params, image_size):
+#     # transform points using displacement field
+#     # DVF.shape = (2, H, W)
+#     # points.shape = (2, N)
+
+#     displacement_field = torch.zeros(image_size, image_size)
+#     DVF = transform_to_displacement_field(
+#         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
+#         torch.tensor(affine_params).view(1, 2, 3))
+
+#     # loop through each point and apply the transformation
+#     for i in range(points.shape[1]):
+#         points[:, i] = points[:, i] - DVF[:, int(points[0, i]), int(points[1, i])]
+
+#     return points
+
+'''def transform_points_DVF(points, M, image): # subtract version (translation only)
+    # transform points using displacement field
+    # DVF.shape = (2, H, W)
+    # points.shape = (2, N)
+    displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
+    DVF = transform_to_displacement_field(
+        displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
+        M.view(1, 2, 3))
+
+    print("M:", M)
+    # use torch.gather to take the last column of M
+    translate = M.gather(1, torch.tensor([[[0,  0, 1],
+         [0,  0, 1]]]))
+    print("translate:", translate)
+    print("points:", points.shape)
+    # Reshape tensor points to have dimensions [2, N]
+    points = points.t().long()
+
+    # Use torch.gather to select values from A using indices from points
+    result = DVF[:, points[:, 0], points[:, 1]]
+
+    # Reshape result to have dimensions [2, N]
+    # result = result.t()
+    # subtract the result from the original points
+    points = points.float()
+    result = torch.subtract(points, result)
+    return result
+
+def transform_points_DVF(points, M, image): # subtract version (all)
+    # transform points using displacement field
+    # DVF.shape = (2, H, W)
+    # points.shape = (2, N)
+    displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
+    DVF = transform_to_displacement_field(
+        displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
+        M.view(1, 2, 3))
+
+    # Reshape tensor points to have dimensions [2, N]
+    points = points.t().long()
+
+    # Use torch.gather to select values from A using indices from points
+    result = DVF[:, points[:, 0], points[:, 1]]
+
+    # Reshape result to have dimensions [2, N]
+    result = result.t()
+    # subtract the result from the original points
+    points = points.float()
+    result = torch.subtract(points, result)
+    return result'''
+
 
 # def RANSAC_affine_plot(name, dir_name, image1_name, image1, image2, 
 #                        points1, points2, desc1, desc2, heatmap1, heatmap2, plot=True):
@@ -868,381 +1263,3 @@ def load_images_from_folder(folder, img_size=(512, 512)):
 #         mse12_image, mse21_image, ssim12_image, ssim21_image, matches1_inliers_transformed.shape[-1], \
 #         mse12_RANSAC, mse21_RANSAC, tre12_RANSAC, tre21_RANSAC, mse12_image_RANSAC, mse21_image_RANSAC, \
 #             ssim12_image_RANSAC, ssim21_image_RANSAC
-
-
-def blend_img(edge, image):
-    """
-    Overlaying edges (contour) onto an image.
-    :param color:
-    :param edge: edges of fixed image
-    :param image: moving/warped image
-    :return: output image
-    """
-
-    edge_color = np.array((255, 255, 0)) / 255.  # now 0 = dark, 255 = light
-    # if the image is float, convert to uint8
-    if image.dtype == np.float32:
-        image = np.uint8(image * 255)
-    out = np.zeros((image.shape[0], image.shape[1], 3))
-    for i in range(image.shape[0]):
-        for j in range(image.shape[1]):
-            if edge[i, j] > 127:
-                out[i, j] = edge_color
-            else:
-                out[i, j] = np.array((image[i, j], image[i, j], image[i, j])) / 255.
-
-    # convert image to float
-    # out = np.float32(out)
-    return out
-
-# def transform_points_DVF(points, M, image): # subtract version (translation only)
-#     # transform points using displacement field
-#     # DVF.shape = (2, H, W)
-#     # points.shape = (2, N)
-#     displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
-#     DVF = transform_to_displacement_field(
-#         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
-#         M.view(1, 2, 3))
-
-#     print("M:", M)
-#     # use torch.gather to take the last column of M
-#     translate = M.gather(1, torch.tensor([[[0,  0, 1],
-#          [0,  0, 1]]]))
-#     print("translate:", translate)
-#     print("points:", points.shape)
-#     # Reshape tensor points to have dimensions [2, N]
-#     points = points.t().long()
-
-#     # Use torch.gather to select values from A using indices from points
-#     result = DVF[:, points[:, 0], points[:, 1]]
-
-#     # Reshape result to have dimensions [2, N]
-#     # result = result.t()
-#     # subtract the result from the original points
-#     points = points.float()
-#     result = torch.subtract(points, result)
-#     return result
-
-# def transform_points_DVF(points, M, image): # subtract version (all)
-#     # transform points using displacement field
-#     # DVF.shape = (2, H, W)
-#     # points.shape = (2, N)
-#     displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
-#     DVF = transform_to_displacement_field(
-#         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
-#         M.view(1, 2, 3))
-
-#     # Reshape tensor points to have dimensions [2, N]
-#     points = points.t().long()
-
-#     # Use torch.gather to select values from A using indices from points
-#     result = DVF[:, points[:, 0], points[:, 1]]
-
-#     # Reshape result to have dimensions [2, N]
-#     result = result.t()
-#     # subtract the result from the original points
-#     points = points.float()
-#     result = torch.subtract(points, result)
-#     return result
-
-def transform_points_DVF_original(points_, M, image): # original version
-    # transform points using displacement field
-    # DVF.shape = (2, H, W)
-    # points.shape = (2, N)
-    displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
-    DVF = transform_to_displacement_field(
-        displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
-        M.clone().view(1, 2, 3))
-    if isinstance(DVF, torch.Tensor):
-        DVF = DVF.detach().numpy()
-    # loop through each point and apply the transformation
-    points = points_.clone()
-    points = points.detach().numpy()#.copy()
-    # print("points shape:", points.shape)
-    for i in range(points.shape[1]):
-        try:
-            points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
-        except IndexError:
-            # change int(points[1, i]), int(points[0, i]) to 256 if it is 257
-            if int(points[1, i]) > 255:
-                points[1, i] = 255
-            elif int(points[1, i]) < 0:
-                points[1, i] = 0
-            if int(points[0, i]) > 255:
-                points[0, i] = 255
-            elif int(points[0, i]) < 0:
-                points[0, i] = 0
-            points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
-    return torch.tensor(points)
-
-def transform_points_DVF(points_, M, image): # batch version
-    # transform points using displacement field
-    # DVF.shape = (B, 2, H, W)
-    # points.shape = (B, 2, N)
-    B, _, H, W = image.shape
-    displacement_field = torch.zeros(B, H, W)
-    # TODO: reshape DVF to (B, 2, H, W), fix point indexing in for loop
-    DVF = transform_to_displacement_field(
-        displacement_field.view(B, 1, H, W), 
-        M.clone().view(B, 2, 3))
-    if isinstance(DVF, torch.Tensor):
-        DVF = DVF.detach().numpy()
-    # loop through each point and apply the transformation
-    points = points_.clone()
-    points = points.detach().numpy()#.copy()
-    # print("points shape:", points.shape)
-    for b in range(B):
-        for i in range(points.shape[2]):
-            try:
-                points[b, :, i] = points[b, :, i] - DVF[b, :, int(points[b, 1, i]), int(points[b, 0, i])]
-            except IndexError:
-                # change int(points[b, 1, i]), int(points[b, 0, i]) to 255 if it is 257
-                if int(points[b, 1, i]) > 255:
-                    points[b, 1, i] = 255
-                elif int(points[b, 1, i]) < 0:
-                    points[b, 1, i] = 0
-                if int(points[b, 0, i]) > 255:
-                    points[b, 0, i] = 255
-                elif int(points[b, 0, i]) < 0:
-                    points[b, 0, i] = 0
-                points[b, :, i] = points[b, :, i] - DVF[b, :, int(points[b, 1, i]), int(points[b, 0, i])]
-    return torch.tensor(points)
-
-# def transform_points_DVF(points, M, image): # original version
-#     # transform points using displacement field
-#     # DVF.shape = (2, H, W)
-#     # points.shape = (2, N)
-#     displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
-#     DVF = transform_to_displacement_field(
-#         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
-#         M.clone().view(1, 2, 3))
-#     if isinstance(DVF, torch.Tensor):
-#         DVF = DVF.numpy()
-#     # loop through each point and apply the transformation
-#     for i in range(points.shape[1]):
-#         points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
-#     return points
-
-# def transform_points_DVF(points, affine_params, image_size):
-#     # transform points using displacement field
-#     # DVF.shape = (2, H, W)
-#     # points.shape = (2, N)
-
-#     displacement_field = torch.zeros(image_size, image_size)
-#     DVF = transform_to_displacement_field(
-#         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
-#         torch.tensor(affine_params).view(1, 2, 3))
-
-#     # loop through each point and apply the transformation
-#     for i in range(points.shape[1]):
-#         points[:, i] = points[:, i] - DVF[:, int(points[0, i]), int(points[1, i])]
-
-#     return points
-
-
-def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, image3,
-                       matches1, matches2, matches3, desc1, desc2, affine_params_true=None, 
-                       affine_params_predict=None, heatmap1=None, heatmap2=None, plot=True):
-
-    # print("matches1 shape:", matches1.shape)
-    # print("matches2 shape:", matches2.shape)
-    # print("matches3 shape:", matches3.shape)
-    # print("desc1 shape:", desc1.shape)
-    # print("desc2 shape:", desc2.shape)
-
-    # MSE and TRE before transformation (points)
-    mse_before = mse(matches1, matches2)
-    tre_before = tre(matches1, matches2)
-    
-    # matches3 = cv2.transform(matches1.T[None, :, :], affine_params[0])
-    # matches3 = matches3[0].T
-
-    mse12 = mse(matches3, matches2)
-    tre12 = tre(matches3, matches2)
-
-    # calculate the MSE between image3 and image2
-    mse12_image_before = mse(image1, image2)
-    mse12_image = mse(image3, image2)
-
-    # calculate SSIM between image3 and image2
-    ssim12_image_before = ssim(image1, image2)
-    ssim12_image = ssim(image3, image2)
-
-    # Part 3 - Plotting
-    if plot:
-        try:
-            # Create a subplot with 2 rows and 2 columns
-            # fig, axes = plt.subplot_mosaic("AADE;BCFG", figsize=(20, 10))
-            fig, axes = plt.subplot_mosaic("BCFD;AGHE", figsize=(20, 10))
-
-            overlaid1 = overlay_points(image1.copy(), matches1, radius=1)
-            overlaid2 = overlay_points(image2.copy(), matches2, radius=1)
-            overlaid3 = overlay_points(image3.copy(), matches3, radius=1)
-
-            overlaidD = overlay_points(overlaid2.copy(), matches3, color=(155, 0, 0), radius=1)
-            overlaidD = overlay_points(overlaidD.copy(), matches1, color=(0, 0, 155), radius=1)
-
-            overlaidE = overlay_points(overlaid2.copy(), matches3, color=(0, 0, 155), radius=1)
-            overlaidH = overlay_points(overlaid2.copy(), matches1, color=(0, 0, 155), radius=1)
-
-            axes["F"].imshow(overlaid3, cmap='gray')
-            axes["F"].set_title(f"Warped, {affine_params_predict}")
-            axes["F"].axis('off')
-            axes['F'].grid(True)
-
-            # axe B shows source image
-            axes["B"].imshow(overlaid1, cmap='gray')
-            axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}\n{matches1.shape}, {matches2.shape}, {matches3.shape}") 
-            axes["B"].axis('off')
-            axes['B'].grid(True)
-
-            # axe C shows target image
-            axes["C"].imshow(overlaid2, cmap='gray')
-            if affine_params_true is not None:
-                axes["C"].set_title(f"Target, {affine_params_true[0]}")
-            else:
-                axes["C"].set_title(f"Target (unsupervised)")
-            axes["C"].axis('off')
-            axes['C'].grid(True)
-
-            # New subplot for the transformed points
-            # Blue: from original locations from image 2/1 to the affine-transformed locations
-            # Red: from affine-transformed locations of points from image 2/1 to 
-            # the locations they supposed to be in image 1/2
-            # Green: from affine-transformed locations of points from image 2/1 to
-            
-            try:
-                imgH = draw_lines_one_image(overlaidH, matches2, matches1, line_color=(155, 0, 0))
-                axes["H"].imshow(imgH)
-            except:
-                axes["H"].imshow(overlaidH)
-            axes["H"].set_title(f"Before, Error lines. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}")
-            axes["H"].axis('off')
-
-            try:
-                imgD = draw_lines_one_image(overlaidD, matches3, matches1, line_color=(0, 0, 155))
-                axes["D"].imshow(imgD)
-            except:
-                axes["D"].imshow(overlaidD)
-            # img2 = draw_lines_one_image(img2, matches2, matches3, line_color=(255, 0, 0))
-            axes["D"].set_title(f"Source -> Warped, Transformation. {mse(matches1, matches3):.4f}, {tre(matches1, matches3):.4f}")
-            axes["D"].axis('off')
-
-            # img2 = draw_lines_one_image(overlaid2, matches3, matches1, line_color=(0, 0, 155))
-            try:
-                imgE = draw_lines_one_image(overlaidE, matches2, matches3, line_color=(155, 0, 0))
-                axes["E"].imshow(imgE)
-            except:
-                axes["E"].imshow(overlaidE)
-            axes["E"].set_title(f"After, Error lines. MSE: {mse12:.4f}, TRE: {tre12:.4f}")
-            axes["E"].axis('off')
-
-            # Display the checkerboard image 1 original to 2
-            checkerboard = create_checkerboard(image1, image2)
-            axes["A"].imshow(checkerboard, cmap='gray')
-            axes["A"].set_title(f"Original - Target, MSE: {mse12_image_before:.4f}, SSIM: {ssim12_image_before:.4f}")
-            axes["A"].axis('off')
-
-            # Display the checkerboard image 1 transformed to 2
-            checkerboard = create_checkerboard(image3, image2)
-            axes["G"].imshow(checkerboard, cmap='gray')
-            axes["G"].set_title(f"Warped - Target, MSE: {mse12_image:.4f}, SSIM: {ssim12_image:.4f}")
-            axes["G"].axis('off')
-
-            # show also MSE and SSIM between the two images
-            # imgA = draw_lines(overlaid1, overlaid2, matches1, matches2, match=None)
-            # axes["A"].imshow(imgA)
-            # axes["A"].set_title(f"Pair {image1_name}. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}, {matches1.shape[1]} matches")
-            # axes["A"].axis('off')
-
-            # axes G shows edge of image 1 over image 2
-            # find the edges of the transformed image
-            '''kernel = np.ones((3, 3), np.uint8)
-            edges = cv2.Canny((image3*255).astype(np.uint8), 15, 200)
-            # edges = cv2.dilate(edges, kernel, iterations=1)
-            edge_overlay = blend_img(edges, image2)
-            print("E")
-            axes["E"].imshow(edge_overlay)
-            axes["E"].set_title(f"Edges of source over target")
-            axes["E"].axis('off')'''
-
-            
-            plt.tight_layout()  # Adjust the layout to leave space for the histogram
-            # if the directory does not exist, create it
-            # dir_name = f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}"
-            if not os.path.exists(dir_name):
-                os.makedirs(dir_name) 
-            save_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{image2_name}.png")
-            # Check if the file already exists
-            if os.path.exists(save_file_name):
-                suffix = 1
-                while True:
-                    # Add a suffix to the file name
-                    new_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{image2_name}_{suffix}.png")
-                    if not os.path.exists(new_file_name):
-                        save_file_name = new_file_name
-                        break
-                    suffix += 1
-
-            signaturebar_gray(fig, f"{name}, S: {image1_name}, T: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
-                    rect_kw={"facecolor": "gray", "edgecolor": None},
-                    text_kw={"color": "w"})
-            fig.savefig(save_file_name)
-            
-            # save images to output folder
-            '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image3*255)
-            cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_2.png", image2_transformed*255)'''
-            plt.close(fig)
-            
-        except TypeError:
-            print("TypeError in plotting")
-            pass
-
-    return matches3, mse_before, mse12, tre_before, tre12, \
-        mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
-
-def signaturebar(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
-                 rect_kw={"facecolor": None, "edgecolor": None},
-                 text_kw={"color": "w"}):
-
-    w, h = fig.get_size_inches()
-    height = ((fontsize + 2 * pad) / 72.) / h
-
-    # rect_kw_outer = {"facecolor": None, "edgecolor": "gray", "linewidth": 1}
-    # rect_outer = plt.Rectangle((0, 0), 1, 1, transform=fig.transFigure, clip_on=False, **rect_kw_outer)
-    # fig.axes[0].add_patch(rect_outer)
-
-    # create many rectangles to get the gradient effect with color from "#B163A3" to "#30D5C8"
-    nrect = 100
-    rect_kw_inner = {"facecolor": None, "edgecolor": None}
-    for i in range(nrect):
-        rect_kw_inner["facecolor"] = mcolors.to_hex(np.array(mcolors.to_rgb("#30D5C8")) * (nrect - i) / nrect + np.array(
-            mcolors.to_rgb("#B163A3")) * i / nrect)
-        rect_inner = plt.Rectangle((0, 0), (nrect-i)/nrect, height, transform=fig.transFigure, clip_on=False, **rect_kw_inner)
-        fig.axes[0].add_patch(rect_inner)
-    
-    # rect_inner = plt.Rectangle((0, 0), 1/2, height, transform=fig.transFigure, clip_on=False,
-    #                            **{"facecolor": "gray", "edgecolor": None})
-    # fig.axes[0].add_patch(rect_inner)
-
-    # text_kw["weight"] = "bold"  # Add this line to make the text bold
-    fig.text(xpos / 72. / h, ypos / 72. / h, text, fontsize=fontsize, **text_kw)
-    fig.subplots_adjust(bottom=fig.subplotpars.bottom + height)
-    return fig
-    
-def signaturebar_gray(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
-                 rect_kw={"facecolor": "gray", "edgecolor": None},
-                 text_kw={"color": "w"}):
-    w, h = fig.get_size_inches()
-    height = ((fontsize + 2 * pad) / 72.) / h
-
-    # rect_kw_outer = {"facecolor": None, "edgecolor": "gray", "linewidth": 1}  # Define outer rectangle parameters
-    # rect_outer = plt.Rectangle((0, 0), 1, 1, transform=fig.transFigure, clip_on=False, **rect_kw_outer)  # Add outer rectangle
-    # fig.axes[0].add_patch(rect_outer)
-
-    rect_inner = plt.Rectangle((0, 0), 1, height, transform=fig.transFigure, clip_on=False, **rect_kw)  # Add inner rectangle
-    fig.axes[0].add_patch(rect_inner)
-    
-    fig.text(xpos / 72. / h, ypos / 72. / h, text, fontsize=fontsize, **text_kw)
-    fig.subplots_adjust(bottom=fig.subplotpars.bottom + height)
-    return fig

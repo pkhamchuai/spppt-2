@@ -480,6 +480,7 @@ def transform_to_displacement_field(tensor, tensor_transform, device='cpu'):
     u_x = u_x / 2 * (x_size - 1)
     u_y = u_y / 2 * (y_size - 1)
     displacement_field = torch.cat((u_x.view(1, y_size, x_size), u_y.view(1, y_size, x_size)), dim=0)
+    # print(displacement_field.size())
     return displacement_field
 
 

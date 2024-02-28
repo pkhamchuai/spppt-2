@@ -45,8 +45,10 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.9, help='decay rate')
-    parser.add_argument('--model', type=str, default=None, help='which model to use')
+    parser.add_argument('--model', type=str, default="DHR", help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
+    parser.add_argument('--timestamp', type=str, default=None, help='timestamp')
+    parser.add_argument('--batch_size', type=int, default=1, help='batch size')
     args = parser.parse_args()
 
     if args.model_path is None:
@@ -54,14 +56,22 @@ if __name__ == '__main__':
     else:
       model_path = 'trained_models/' + args.model_path
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, points=args.points,
-                               loss_image=args.loss_image, num_epochs=args.num_epochs, 
-                               learning_rate=args.learning_rate, decay_rate=args.decay_rate)
-    model_params.print_explanation()
-
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    model, loss_list = train(args.model, model_path, model_params, timestamp)
+                              loss_image=args.loss_image, num_epochs=args.num_epochs, 
+                              learning_rate=args.learning_rate, decay_rate=args.decay_rate,
+                              model=args.model, batch_size=args.batch_size)
+    
+    if args.timestamp is not None:
+      timestamp = args.timestamp
+    else:
+      timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+      # print(f'Timestamp: {timestamp}')
+      model_params.timestamp = timestamp
+    # model_params.print_explanation()
+      
+    trained_model, loss_list = train(model_params.model, # model_params.model is a model name
+                             model_path, model_params, model_params.timestamp)
 
     print("\nTesting the trained model +++++++++++++++++++++++")
-    test(args.model, model, model_params, timestamp)
+    test(model_params.model, trained_model, model_params, model_params.timestamp)
     
     print("Test model finished +++++++++++++++++++++++++++++")
