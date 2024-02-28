@@ -276,7 +276,7 @@ def train(model_name, model_path, model_params, timestamp):
         plt.yscale('log')
         plt.grid(True)
         plt.tight_layout()
-        signaturebar_gray(fig, f'{model_params.get_model_code()} - {model_params.num_epochs} epochs - {timestamp}')
+        signaturebar_gray(fig, f'{model_params.get_model_code()} - batch {model_params.batch_size} - {model_params.num_epochs} epochs - {timestamp}')
         plt.savefig(save_plot_name)
         plt.close(fig)
 

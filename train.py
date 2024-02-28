@@ -13,7 +13,7 @@ runs = []
 # sigma = range(30, 100, 10)
 files = ['train_img_batch.py']
 # files = ['train_points_rigid_img', 'train_points_rigid_pt', 'train_img_batch.py', 'train_one_sample.py']
-batch_size = [2, 4, 5]
+batch_size = [2, 3, 4, 5]
 lr = 1e-3
 decay_rate = 0.96
 # generate run commands
@@ -68,11 +68,11 @@ for file in files:
 #                     '--image', str(1), '--points', str(0), '--loss_image', str(0),
 #                     ])
         
-dup_runs = 2
+dup_runs = 1
 for i in range(len(runs)):
     for j in range(dup_runs):
         print(runs[i])
-        # subprocess.run(runs[i])
+        subprocess.run(runs[i])
     print("\n")
 print("Total runs: ", len(runs)*dup_runs)
 

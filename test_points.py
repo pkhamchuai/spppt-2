@@ -106,7 +106,7 @@ def test(model_name, model_, model_params, timestamp):
                 else:
                     plot_ = False
 
-                print(points1_2_predicted.shape, points2.shape, points1.shape)
+                # print(points1_2_predicted.shape, points2.shape, points1.shape)
                 # for loop to plot each image, use the actual batch size from output
                 
                 for batch in range(points1_2_predicted.shape[0]):
