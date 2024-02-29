@@ -115,7 +115,7 @@ def test(model_name, model_, model_params, timestamp):
                         # points1_2_predicted[batch] = points1_2_predicted[batch].reshape(
                         #     points1_2_predicted[batch].shape[1], points1_2_predicted[batch].shape[0])
                         results = DL_affine_plot(f"test", output_dir,
-                            f"{(i*model_params.batch_size)+batch}", f"{model_params.batch_size}", 
+                            f"{i}", f"{model_params.batch_size}", 
                             source_image[batch, 0, :, :].cpu().numpy(), 
                             target_image[batch, 0, :, :].cpu().numpy(), 
                             transformed_source_affine[batch, 0, :, :].cpu().numpy(),
@@ -137,7 +137,7 @@ def test(model_name, model_, model_params, timestamp):
                         ssim12_image = results[8]
 
                         # append metrics to metrics list
-                        metrics.append([i*model_params.batch_size+batch, mse_before, mse12, tre_before, tre12, \
+                        metrics.append([i, mse_before, mse12, tre_before, tre12, \
                                         mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, np.max(points1_2_predicted[batch].shape)])
                     except:
                         # print(f"Error at {i*model_params.batch_size+batch}")
