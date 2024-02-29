@@ -178,11 +178,15 @@ def my_collate(batch):
     # Convert lists to tensors
     images1 = torch.stack(images1)
     images2 = torch.stack(images2)
-    points_sets_list = [torch.tensor(np.ndarray(padded_points_sets), dtype=torch.float32) for padded_points_sets in padded_points_sets_list]
+    # print("vvvvvvvvvvvvvvvvvv",padded_points_sets_list)
+    # points_sets_list = [torch.tensor(padded_points_sets, dtype=torch.float32) for padded_points_sets in padded_points_sets_list[]]
+    points_sets_list = torch.tensor(padded_points_sets_list)
+    # print('points_sets_list: ', points_sets_list.shape)
     matches1 = points_sets_list[0]
     matches2 = points_sets_list[1]
     matches1_2 = points_sets_list[2]
     affine_params = torch.tensor(affine_params, dtype=torch.float32)
+    # print(matches1.shape, matches2.shape, matches1_2.shape, affine_params.shape)
 
     return images1, images2, affine_params, matches1, matches2, matches1_2
         

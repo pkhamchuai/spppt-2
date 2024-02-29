@@ -115,7 +115,7 @@ def test(model_name, model_, model_params, timestamp):
                         # points1_2_predicted[batch] = points1_2_predicted[batch].reshape(
                         #     points1_2_predicted[batch].shape[1], points1_2_predicted[batch].shape[0])
                         results = DL_affine_plot(f"test", output_dir,
-                            f"{i*model_params.batch_size+batch}", f"{i*model_params.batch_size+batch+1}", 
+                            f"{(i*model_params.batch_size)+batch}", f"{model_params.batch_size}", 
                             source_image[batch, 0, :, :].cpu().numpy(), 
                             target_image[batch, 0, :, :].cpu().numpy(), 
                             transformed_source_affine[batch, 0, :, :].cpu().numpy(),

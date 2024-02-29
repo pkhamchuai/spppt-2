@@ -31,15 +31,15 @@ learning_rate = 1e-3
 # generate run commands
 for model in model_path:
     for dataset_ in range(len(dataset)):
-        # runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(1),
-        #                     '--model_path', str(os.path.join('without_groupnorm', model))
-                                # ])
+        runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(1),
+                        '--model_path', str(os.path.join('with_groupnorm', model))
+                                ])
         runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(1),
                         '--model_path', str(os.path.join('with_groupnorm', model))
                         ])
-        # runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(1),
-        #                 '--model_path', str(os.path.join('with_groupnorm', model))
-        #                 ])
+        runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(1),
+                        '--model_path', str(os.path.join('with_groupnorm', model))
+                        ])
 
 # sort runs by element 1, then 11, then 7
 # runs.sort(key=lambda x: x[3])
