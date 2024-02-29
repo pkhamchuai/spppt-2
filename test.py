@@ -16,10 +16,10 @@ files = os.listdir('trained_models/with_groupnorm/')
 # iterate through the files
 for file in files:
     # if the file starts with 'DHR_', but ont 'DHR_Rigid'
-    # if file.startswith('* DHR_'):
-    #     # append the file to model_path
-    # print(file)
-    model_path.append(file)
+    if file.startswith('40 DHR_'):
+        #     # append the file to model_path
+        # print(file)
+        model_path.append(file)
 # sort the model_path
 model_path.sort()
 # print the model_path
