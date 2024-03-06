@@ -190,7 +190,7 @@ def train(model_name, model_path, model_params, timestamp):
             running_loss += loss.item()
             running_loss_list.append([epoch+((i+1)/len(train_dataset)), loss.item()])
             train_bar.set_postfix({'loss': running_loss / (i+1)})
-            loss = 0.0
+            # loss = 0.0
 
         print(f'Training Epoch {epoch+1}/{model_params.num_epochs} loss: {running_loss / len(train_dataset)}')
         

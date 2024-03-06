@@ -1,14 +1,14 @@
 import subprocess
 import os
 
-dataset = [0]
+dataset = [2]
 sups = [1]
 models = ['DHR']
 # , 'AIRNet', 'SP_AffineNet4'
 
 # grab the model path in the folder 'trained_models'
 # take only files with 'DHR_*'
-model_path = ['DHR_51100_0.001_0_20_100_20240306-165453.pth'] #, 'DHR_41100_0.001_0_50_100_20240306-153459.pth']
+model_path = ['DHR_41100_0.001_0_50_40_20240306-144329.pth'] #, 'DHR_41100_0.001_0_50_100_20240306-153459.pth']
 # list all files in the folder
 files = os.listdir('trained_models/with_groupnorm/')
 # files = os.listdir('trained_models/without_groupnorm/')
@@ -30,14 +30,14 @@ learning_rate = 1e-3
 
 # generate run commands
 for model in model_path:
-    for dataset_ in range(len(dataset)):
-        runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(0),
+    for dataset_ in [dataset]:
+        runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(dataset_),
                         '--model_path', str(os.path.join('with_groupnorm', model))
                                 ])
-        runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(0),
+        runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(dataset_),
                         '--model_path', str(os.path.join('with_groupnorm', model))
                         ])
-        runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(0),
+        runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(dataset_),
                         '--model_path', str(os.path.join('with_groupnorm', model))
                         ])
         # runs.append(['python', 'test_rep3.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(1),
