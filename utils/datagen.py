@@ -242,12 +242,12 @@ def datagen(dataset, is_train, sup, batch_size=1):
         # new easy dataset
         if is_train:
             # synthetic eye dataset
-            dataset_path = 'Dataset/synth_eye_easy_2000_train'
-            df = pd.read_csv('Dataset/synth_eye_easy_2000_train.csv')
+            dataset_path = 'Dataset/synth_eye_easy_train_2000'
+            df = pd.read_csv('Dataset/synth_eye_easy_train_2000.csv')
         else:
             # synthetic eye dataset
-            dataset_path = 'Dataset/synthetic_eye_easy_2000_test'
-            df = pd.read_csv('Dataset/synth_eye_easy_2000_test.csv')
+            dataset_path = 'Dataset/synthetic_eye_easy_test'
+            df = pd.read_csv('Dataset/synth_eye_easy_test.csv')
 
     # elif dataset == 4:
     #     # synthetic shape dataset

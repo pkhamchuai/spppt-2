@@ -158,6 +158,30 @@ def test(model_name, model_, model_params, timestamp):
                 if j == 0:
                     mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
 
+                if tre12 < TRE_last and mse12 < MSE_last:
+                    points1 = points1_2_predicted.clone()
+                    source_image = transformed_source_affine.clone() # update the source image
+                    TRE_last = tre12
+                    MSE_last = mse12
+
+                else:
+                    # _ = DL_affine_plot(f"rep{j:02d}", output_dir,
+                    #     f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
+                    #     target_image[0, 0, :, :].cpu().numpy(), 
+                    #     transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                    #     points1[0].cpu().detach().numpy().T, 
+                    #     points2[0].cpu().detach().numpy().T, 
+                    #     points1_2_predicted.cpu().detach().numpy().T, None, None, 
+                    #     affine_params_true=affine_params_true,
+                    #     affine_params_predict=affine_params_predicted, 
+                    #     heatmap1=None, heatmap2=None, plot=True)
+                    tre12 = TRE_last
+                    mse12 = MSE_last
+
+                    # transform the image only 1/10 at a time until the metrics exceed the last metrics again, then stop
+                    
+
+                    break
             # choose the best metrics
             metrics_ij = np.array(metrics_ij)
             # index of min of mse12
