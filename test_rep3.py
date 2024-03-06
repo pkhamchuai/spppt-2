@@ -179,7 +179,10 @@ def test(model_name, model_, model_params, timestamp):
                     mse12 = MSE_last
 
                     # transform the image only 1/10 at a time until the metrics exceed the last metrics again, then stop
-                    
+                    for rep in range(1, 11):
+                        identity_affine = torch.tensor([1, 0, 0, 0, 1, 0], dtype=torch.float32).to(device)
+                        affine_params_predicted_ = (affine_params_predicted * (rep / 10)) + (identity_affine * (1 - rep / 10))
+                        transformed_source_affine_ = tensor_affine_transform(source_image, affine_params_predicted_)
 
                     break
             # choose the best metrics

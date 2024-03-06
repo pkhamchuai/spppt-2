@@ -1,6 +1,6 @@
 import subprocess
 
-dataset = [4]
+dataset = [5]
 model = 'DHR'
 # models = ['DHR_Attn']
 # models = ['DHR', 'AIRNet', 'SP_AffineNet4']
@@ -13,7 +13,7 @@ runs = []
 # sigma = range(30, 100, 10)
 files = ['train_img_batch.py']
 # files = ['train_points_rigid_img', 'train_points_rigid_pt', 'train_img_batch.py', 'train_one_sample.py']
-batch_size = [40] # 2, 3, 4, 5
+batch_size = [100] # 2, 3, 4, 5
 lr = 1e-3
 decay_rate = 0.96
 
@@ -21,8 +21,8 @@ decay_rate = 0.96
 for file in files:
     sup = 1
     for batch in batch_size:
-        runs.append(['python', str(file), '--dataset', str(4), 
-            '--model', str(model), '--num_epochs', str(50), 
+        runs.append(['python', str(file), '--dataset', str(5), 
+            '--model', str(model), '--num_epochs', str(20), 
             '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
             '--image', str(1), '--points', str(0), '--sup', str(sup),
             '--batch_size', str(batch)])  
