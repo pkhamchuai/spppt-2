@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-dataset = [3]
+dataset = [1]
 sups = [1]
 models = ['DHR']
 # , 'AIRNet', 'SP_AffineNet4'
@@ -17,7 +17,7 @@ files = os.listdir('trained_models/with_groupnorm/')
 model_path = []
 for file in files:
     # if the file starts with 'DHR_', but ont 'DHR_Rigid'
-    if file.startswith('DHR_'):
+    if file.startswith('DHR_5'):
         #     # append the file to model_path
         # print(file)
         model_path.append(file)

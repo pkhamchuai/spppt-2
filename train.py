@@ -25,7 +25,8 @@ for file in files:
             '--model', str(model), '--num_epochs', str(20), 
             '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
             '--image', str(1), '--points', str(0), '--sup', str(sup),
-            '--batch_size', str(batch)])  
+            '--batch_size', str(batch), '--model_path', str('with_groupnorm/DHR_41100_0.001_0_50_100_20240306-153459.pth')])
+
     # for data in dataset:
     #     # if model != 'AIRNet' and sup == 0:
     #     #         pass

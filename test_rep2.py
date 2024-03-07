@@ -99,7 +99,7 @@ def test(model_name, model_, model_params, timestamp):
             metrics_ij = []
             mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = 0, 0, 0, 0
 
-            for j in range(10):
+            for j in range(15):
                 # Forward + backward + optimize
                 outputs = model(source_image, target_image, points1)
                 # for i in range(len(outputs)):
