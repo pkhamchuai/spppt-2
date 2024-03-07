@@ -1,6 +1,6 @@
 import subprocess
 
-dataset = [5]
+dataset = [2]
 model = 'DHR'
 # models = ['DHR_Attn']
 # models = ['DHR', 'AIRNet', 'SP_AffineNet4']
@@ -13,19 +13,19 @@ runs = []
 # sigma = range(30, 100, 10)
 files = ['train_img_batch.py']
 # files = ['train_points_rigid_img', 'train_points_rigid_pt', 'train_img_batch.py', 'train_one_sample.py']
-batch_size = [100] # 2, 3, 4, 5
+batch_size = [50] # 2, 3, 4, 5
 lr = 1e-3
-decay_rate = 0.96
+decay_rate = 0.096
 
 # generate run commands
 for file in files:
     sup = 1
     for batch in batch_size:
         runs.append(['python', str(file), '--dataset', str(5), 
-            '--model', str(model), '--num_epochs', str(20), 
+            '--model', str(model), '--num_epochs', str(30), 
             '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
             '--image', str(1), '--points', str(0), '--sup', str(sup),
-            '--batch_size', str(batch), '--model_path', str('with_groupnorm/DHR_41100_0.001_0_50_100_20240306-153459.pth')])
+            '--batch_size', str(batch)])
 
     # for data in dataset:
     #     # if model != 'AIRNet' and sup == 0:
