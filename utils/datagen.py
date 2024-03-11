@@ -165,7 +165,13 @@ def my_collate(batch):
         padded_points_set = []
         for points in points_set:
             num_points_to_pad = max_num_points - len(points)
-            padded_points = np.pad(points, ((0, num_points_to_pad), (0, 0)), mode='constant', constant_values=0) if num_points_to_pad > 0 else points
+            
+            # padded_points = np.pad(points, ((0, num_points_to_pad), (0, 0)), mode='constant', constant_values=0) if num_points_to_pad > 0 else points
+            # pad with copy of points
+            padded_points = np.pad(points, ((0, num_points_to_pad), (0, 0)), mode='edge')
+            # show padded points
+            print(padded_points)
+
             padded_points = np.array(padded_points)
             padded_points_set.append(padded_points)
         padded_points_sets_list.append(padded_points_set)
