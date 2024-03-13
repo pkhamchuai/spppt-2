@@ -108,7 +108,7 @@ class AffineNet(nn.Module):
         # print(t.shape)
         t = self.fc1(t.flatten())
         # print(t.shape)
-        affine_params = t.view(1, 2, 3)
+        affine_params = t.view(-1, 2, 3)
         # print(t.shape)
 
         # transform the source image using the affine parameters

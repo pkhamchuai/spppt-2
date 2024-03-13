@@ -28,10 +28,11 @@ class SP_AffineNet(nn.Module):
         # source_image = source_image.to(device)
         # target_image = target_image.to(device)
 
-        if self.model_params.heatmaps == 0:
-            affine_params = self.affineNet(source_image, target_image)
-        elif self.model_params.heatmaps == 1:
-            print("This part is not yet implemented.")
+        affine_params = self.affineNet(source_image, target_image)
+        # if self.model_params.heatmaps == 0:
+        #     affine_params = self.affineNet(source_image, target_image)
+        # elif self.model_params.heatmaps == 1:
+        #     print("This part is not yet implemented.")
             # affine_params = self.affineNet(source_image, target_image, heatmap1, heatmap2)
 
         # transform the source image using the affine parameters
@@ -61,8 +62,10 @@ class AffineNet(nn.Module):
         self.conv2s = nn.Conv2d(self.conv2f, self.conv2f, 2, stride=2, padding_mode='zeros')
         self.conv3s = nn.Conv2d(self.conv3f, self.conv3f, 2, stride=2, padding_mode='zeros')
         self.conv4s = nn.Conv2d(self.conv4f, self.conv4f, 2, stride=2, padding_mode='zeros')
-        self.fc1 = nn.Linear(self.conv5f*2, 128)
-        self.fc2 = nn.Linear(128, 6)
+        self.fc1 = nn.Linear(self.conv5f*2, 256)
+        self.fc2 = nn.Linear(256, 6)
+        self.fc3 = nn.Linear(64, 32)
+        self.fc4 = nn.Linear(32, 6)
 
         self.aPooling = nn.AdaptiveAvgPool2d((1, 1))
         # self.ReLU = nn.PReLU()
@@ -107,9 +110,10 @@ class AffineNet(nn.Module):
         t = torch.cat((x, y), dim=1)
         # print(t.shape)
         t = self.ReLU(self.fc1(t.flatten()))
+        # t = self.fc4(self.ReLU(self.fc3(self.ReLU(self.fc2(t)))))
         # print(t.shape)
         t = self.fc2(t)
-        t = t.view(-1, 2, 3)
+        t = t.view(-1, 1, 2, 3)
         # print(t.shape)
         return t
 
