@@ -4,7 +4,7 @@ dataset = [4]
 # model = 'DHR'
 # models = ['DHR_Attn']
 # models = ['DHR', 'AIRNet', 'SP_AffineNet4']
-model = ['SP_AffineNet4']
+model = 'SP_AffineNet4'
 sups = [1, 0]
 runs = []
 # learning_rate = 1e-4
@@ -13,7 +13,7 @@ runs = []
 # sigma = range(30, 100, 10)
 files = ['train_img_batch.py']
 # files = ['train_points_rigid_img', 'train_points_rigid_pt', 'train_img_batch.py', 'train_one_sample.py']
-batch_size = [100] # 2, 3, 4, 5
+batch_size = [50] # 2, 3, 4, 5
 lr = 1e-3
 decay_rate = 0.096
 
@@ -24,7 +24,7 @@ for file in files:
         runs.append(['python', str(file), '--dataset', str(5), 
             '--model', str(model), '--num_epochs', str(20), 
             '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
-            '--image', str(1), '--points', str(0), '--sup', str(sup),
+            '--image', str(1), '--points', str(0), '--sup', str(sup), #'--model_path', 'with_groupnorm/DHR_41100_0.001_0_50_100_20240306-153459.pth',
             '--batch_size', str(batch)])
 
     # for data in dataset:

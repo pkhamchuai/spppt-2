@@ -24,7 +24,7 @@ class SP_AffineNet(nn.Module):
         inputs = torch.rand((1, 1, image_size, image_size)), torch.rand((1, 1, image_size, image_size))
         summary(self.affineNet, *inputs, show_input=True, show_hierarchical=True, print_summary=True)
 
-    def forward(self, source_image, target_image, matches1):
+    def forward(self, source_image, target_image, points):
         # source_image = source_image.to(device)
         # target_image = target_image.to(device)
 
@@ -36,19 +36,12 @@ class SP_AffineNet(nn.Module):
 
         # transform the source image using the affine parameters
         # using F.affine_grid and F.grid_sample
-        transformed_source_affine = tensor_affine_transform(source_image, affine_params)
+        transformed_source_image = tensor_affine_transform(source_image, affine_params)
+        transformed_points = points.clone()
+        transformed_points = transform_points_DVF(transformed_points.cpu().detach().T, 
+            affine_params.cpu().detach(), transformed_source_image.cpu().detach())
 
-
-        # try:
-        #     matches1_2 = points1_2[:2, matches[0, :].astype(int)]
-        # except:
-        # print(affine_params.cpu().detach().shape, transformed_source_affine.shape)
-        matches1_2 = transform_points_DVF(matches1[0].cpu().detach().T, 
-                        affine_params.cpu().detach(), transformed_source_affine.cpu().detach())
-
-        # transform the points using the affine parameters
-        # matches1_transformed = transform_points(matches1.T[None, :, :], affine_params.cpu().detach())
-        return transformed_source_affine, affine_params, matches1_2
+        return transformed_source_image, affine_params, transformed_points.T
 
 class AffineNet(nn.Module):
     def __init__(self):
@@ -69,9 +62,7 @@ class AffineNet(nn.Module):
         self.conv3s = nn.Conv2d(self.conv3f, self.conv3f, 2, stride=2, padding_mode='zeros')
         self.conv4s = nn.Conv2d(self.conv4f, self.conv4f, 2, stride=2, padding_mode='zeros')
         self.fc1 = nn.Linear(self.conv5f*2, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 32)
-        self.fc4 = nn.Linear(32, 6)
+        self.fc2 = nn.Linear(128, 6)
 
         self.aPooling = nn.AdaptiveAvgPool2d((1, 1))
         # self.ReLU = nn.PReLU()
@@ -117,7 +108,7 @@ class AffineNet(nn.Module):
         # print(t.shape)
         t = self.ReLU(self.fc1(t.flatten()))
         # print(t.shape)
-        t = self.fc4(self.ReLU(self.fc3(self.ReLU(self.fc2(t)))))
+        t = self.fc2(t)
         t = t.view(-1, 2, 3)
         # print(t.shape)
         return t

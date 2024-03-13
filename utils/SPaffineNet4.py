@@ -108,22 +108,16 @@ class AffineNet(nn.Module):
         # print(t.shape)
         t = self.fc1(t.flatten())
         # print(t.shape)
-        t = t.view(1, 2, 3)
+        affine_params = t.view(1, 2, 3)
         # print(t.shape)
 
         # transform the source image using the affine parameters
         # using F.affine_grid and F.grid_sample
-        transformed_source_image_affine = tensor_affine_transform(source_image, t)
-        # transformed_source_image_affine = transformed_source_image_affine.requires_grad_(True)
+        transformed_source_image = tensor_affine_transform(source_image, affine_params)
+        transformed_points = points.clone()
+        transformed_points = transform_points_DVF(transformed_points.cpu().detach().T, 
+            affine_params.cpu().detach(), transformed_source_image.cpu().detach())
 
-        transformed_points = transform_points_DVF(points[0].cpu().detach().T, 
-                        t.cpu().detach(), transformed_source_image_affine.cpu().detach())
-        transformed_points = transformed_points.requires_grad_(True)
-        
-        # points = points.requires_grad_(True)
-        # transformed_points = self.affine_layer(points[0], t[0])
-        # transformed_points = transformed_points.requires_grad_(True)
-
-        return t,  transformed_source_image_affine, transformed_points.T
+        return transformed_source_image, affine_params, transformed_points.T
 
     
