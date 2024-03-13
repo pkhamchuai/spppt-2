@@ -170,7 +170,7 @@ def my_collate(batch):
             # pad with copy of points
             padded_points = np.pad(points, ((0, num_points_to_pad), (0, 0)), mode='edge')
             # show padded points
-            print(padded_points)
+            # print(padded_points)
 
             padded_points = np.array(padded_points)
             padded_points_set.append(padded_points)
@@ -282,7 +282,7 @@ def datagen(dataset, is_train, sup, batch_size=1):
     #     return dataloader
 
     else:
-        raise ValueError('Input dataset parameter 0-4')
+        raise ValueError('Input dataset parameter 0-5')
 
     if batch_size == 1:
         dataset = MyDataset(dataset_path, df, is_train, sup)
