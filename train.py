@@ -1,10 +1,10 @@
 import subprocess
 
-dataset = [5]
-model = 'DHR'
+dataset = [4]
+# model = 'DHR'
 # models = ['DHR_Attn']
 # models = ['DHR', 'AIRNet', 'SP_AffineNet4']
-# models = ['SP_AffineNet4', 'DHR']
+model = ['SP_AffineNet4']
 sups = [1, 0]
 runs = []
 # learning_rate = 1e-4
@@ -13,8 +13,8 @@ runs = []
 # sigma = range(30, 100, 10)
 files = ['train_img_batch.py']
 # files = ['train_points_rigid_img', 'train_points_rigid_pt', 'train_img_batch.py', 'train_one_sample.py']
-batch_size = [50] # 2, 3, 4, 5
-lr = 1e-4
+batch_size = [100] # 2, 3, 4, 5
+lr = 1e-3
 decay_rate = 0.096
 
 # generate run commands
