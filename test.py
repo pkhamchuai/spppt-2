@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-dataset = [0, 1, 2, 3]
+dataset = [5]
 sups = [1]
 models = ['DHR']
 # , 'AIRNet', 'SP_AffineNet4'
