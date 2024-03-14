@@ -678,6 +678,18 @@ def transform_points_DVF_unbatched(points_, M, image): # original version
             elif int(points[0, i]) < 0:
                 points[:, i] = points[:, i] - DVF[:, int(points[1, i]), 0]
             # print("points:", points[0, i], points[1, i])
+                
+                        # change int(points[1, i]), int(points[0, i]) to 256 if it is 257
+            '''if int(points[1, i]) > 255:
+                points[1, i] = 255
+            elif int(points[1, i]) < 0:
+                points[1, i] = 0
+            if int(points[0, i]) > 255:
+                points[0, i] = 255
+            elif int(points[0, i]) < 0:
+                points[0, i] = 0
+            points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]'''
+
         # print("points shape:", points.shape)
     return torch.tensor(points)
 
