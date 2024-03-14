@@ -259,6 +259,14 @@ def train(model_name, model_path, model_params, timestamp):
                     #     points1 = points1.T
                     # if points2.shape[-1] != 2:
                     #     points2 = points2.T
+                    # if the points are not torch tensors, convert them to torch tensors
+                    if not isinstance(points1, torch.Tensor):
+                        points1 = torch.tensor(points1)
+                    if not isinstance(points2, torch.Tensor):
+                        points2 = torch.tensor(points2)
+                    if not isinstance(points1_2_predicted, torch.Tensor):
+                        points1_2_predicted = torch.tensor(points1_2_predicted)
+                        
                     DL_affine_plot(f"epoch{epoch+1}_valid", output_dir, f"{i}", f"{i+1}", 
                         source_image[0, 0, :, :].cpu().numpy(), 
                         target_image[0, 0, :, :].cpu().numpy(), 
