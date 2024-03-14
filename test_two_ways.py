@@ -106,57 +106,44 @@ def test(model_name, model_, model_params, timestamp):
             else:
                 plot_ = False
 
-            # print(points1_2_predicted.shape, points2.shape, points1.shape)
-            # for loop to plot each image, use the actual batch size from output
-            
+            batch = 0
 
-            # # if dimensions > 2, squeeze the first dimension
-            # if points1_2_predicted.shape[0] == 1:
-            #     points1_2_predicted = points1_2_predicted.squeeze(0)
-            # if points1_2_predicted.shape[-1] != 2:
-            #     points1_2_predicted = points1_2_predicted.T
+            try: 
+                # points1_2_predicted[batch] = points1_2_predicted[batch].reshape(
+                #     points1_2_predicted[batch].shape[1], points1_2_predicted[batch].shape[0])
+                results = DL_affine_plot(f"test", output_dir,
+                    f"{i}", f"fw", 
+                    source_image[batch, 0, :, :].cpu().numpy(), 
+                    target_image[batch, 0, :, :].cpu().numpy(), 
+                    transformed_source_affine[batch, 0, :, :].cpu().numpy(),
+                    points1[batch].cpu().detach().numpy().T, 
+                    points2[batch].cpu().detach().numpy().T, 
+                    points1_2_predicted[batch].cpu().detach().numpy().T, None, None, 
+                    affine_params_true[batch], affine_params_predicted[batch], 
+                    heatmap1=None, heatmap2=None, plot=plot_)
 
-            # if points1.shape[0] == 1:
-            #     points1 = points1.squeeze(0)
-            # if points1.shape[-1] != 2:
-            #     points1 = points1.T
+                # calculate metrics
+                # matches1_transformed = results[0]
+                mse_before = results[1]
+                mse12 = results[2]
+                tre_before = results[3]
+                tre12 = results[4]
+                mse12_image_before = results[5]
+                mse12_image = results[6]
+                ssim12_image_before = results[7]
+                ssim12_image = results[8]
 
-            # if points2.shape[0] == 1:
-            #     points2 = points2.squeeze(0)
-            # if points2.shape[-1] != 2:
-            #     points2 = points2.T
-            # # print(points1_2_predicted.shape, points2.shape, points1.shape)
-
-            results = DL_affine_plot(f"test", output_dir,
-                f"{i}", "fw", source_image[0, 0, :, :].cpu().numpy(), 
-                target_image[0, 0, :, :].cpu().numpy(), 
-                transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                points1.cpu().detach().numpy().T, 
-                points2.cpu().detach().numpy().T, 
-                points1_2_predicted.cpu().detach().numpy().T, None, None, 
-                affine_params_true=affine_params_true,
-                affine_params_predict=affine_params_predicted, 
-                heatmap1=None, heatmap2=None, plot=plot_)
-
-            # calculate metrics
-            # matches1_transformed = results[0]
-            mse_before = results[1]
-            mse12 = results[2]
-            tre_before = results[3]
-            tre12 = results[4]
-            mse12_image_before = results[5]
-            mse12_image = results[6]
-            ssim12_image_before = results[7]
-            ssim12_image = results[8]
-
-            # append metrics to metrics list
-            metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, 
-                            ssim12_image_before, ssim12_image, np.max(points1_2_predicted.shape)])
+                # append metrics to metrics list
+                metrics.append([i, mse_before, mse12, tre_before, tre12, \
+                                mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, np.max(points1_2_predicted[batch].shape)])
+            except:
+                # print(f"Error at {i*model_params.batch_size+batch}")
+                pass
             
             
             # target -> source +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             # Forward 
-            outputs = model(source_image, target_image, points1)
+            outputs = model(target_image, source_image, points2)
             # for i in range(len(outputs)):
             #     print(i, outputs[i].shape)
             transformed_source_affine = outputs[0]
@@ -174,52 +161,39 @@ def test(model_name, model_, model_params, timestamp):
             else:
                 plot_ = False
 
-            # print(points1_2_predicted.shape, points2.shape, points1.shape)
-            # for loop to plot each image, use the actual batch size from output
-            
+            batch = 0
 
-            # # if dimensions > 2, squeeze the first dimension
-            # if points1_2_predicted.shape[0] == 1:
-            #     points1_2_predicted = points1_2_predicted.squeeze(0)
-            # if points1_2_predicted.shape[-1] != 2:
-            #     points1_2_predicted = points1_2_predicted.T
+            try: 
+                # points1_2_predicted[batch] = points1_2_predicted[batch].reshape(
+                #     points1_2_predicted[batch].shape[1], points1_2_predicted[batch].shape[0])
+                results = DL_affine_plot(f"test", output_dir,
+                    f"{i}", f"rv", 
+                    target_image[batch, 0, :, :].cpu().numpy(),
+                    source_image[batch, 0, :, :].cpu().numpy(),
+                    transformed_source_affine[batch, 0, :, :].cpu().numpy(),
+                    points2[batch].cpu().detach().numpy().T,
+                    points1[batch].cpu().detach().numpy().T,
+                    points1_2_predicted[batch].cpu().detach().numpy().T, None, None, 
+                    affine_params_true[batch], affine_params_predicted[batch], 
+                    heatmap1=None, heatmap2=None, plot=plot_)
 
-            # if points1.shape[0] == 1:
-            #     points1 = points1.squeeze(0)
-            # if points1.shape[-1] != 2:
-            #     points1 = points1.T
+                # calculate metrics
+                # matches1_transformed = results[0]
+                mse_before = results[1]
+                mse12 = results[2]
+                tre_before = results[3]
+                tre12 = results[4]
+                mse12_image_before = results[5]
+                mse12_image = results[6]
+                ssim12_image_before = results[7]
+                ssim12_image = results[8]
 
-            # if points2.shape[0] == 1:
-            #     points2 = points2.squeeze(0)
-            # if points2.shape[-1] != 2:
-            #     points2 = points2.T
-            # # print(points1_2_predicted.shape, points2.shape, points1.shape)
-
-            results = DL_affine_plot(f"test", output_dir,
-                f"{i}", "rv", source_image[0, 0, :, :].cpu().numpy(), 
-                target_image[0, 0, :, :].cpu().numpy(), 
-                transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                points1.cpu().detach().numpy().T, 
-                points2.cpu().detach().numpy().T, 
-                points1_2_predicted.cpu().detach().numpy().T, None, None, 
-                affine_params_true=affine_params_true,
-                affine_params_predict=affine_params_predicted, 
-                heatmap1=None, heatmap2=None, plot=plot_)
-
-            # calculate metrics
-            # matches1_transformed = results[0]
-            mse_before = results[1]
-            mse12 = results[2]
-            tre_before = results[3]
-            tre12 = results[4]
-            mse12_image_before = results[5]
-            mse12_image = results[6]
-            ssim12_image_before = results[7]
-            ssim12_image = results[8]
-
-            # append metrics to metrics list
-            metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, 
-                            ssim12_image_before, ssim12_image, np.max(points1_2_predicted.shape)])
+                # append metrics to metrics list
+                metrics.append([i, mse_before, mse12, tre_before, tre12, \
+                                mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, np.max(points1_2_predicted[batch].shape)])
+            except:
+                # print(f"Error at {i*model_params.batch_size+batch}")
+                pass
 
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
