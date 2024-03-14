@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-dataset = [2]
+dataset = [1, 2, 3, 0]
 sups = [1]
 models = ['DHR']
 # , 'AIRNet', 'SP_AffineNet4'
@@ -24,7 +24,7 @@ files = os.listdir('trained_models/with_groupnorm/')
 # # sort the model_path
 # model_path.sort()
 # print the model_path
-model_path = ['DHR_41100_0.001_0_50_100_20240306-153459.pth']
+model_path = ['DHR_41100_0.001_0_50_100_20240306-153459.pth', 'DHR_51100_0.001_100_120_50_20240313-170255.pth']
 print(model_path)
 
 runs = []
