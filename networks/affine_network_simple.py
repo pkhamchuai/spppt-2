@@ -106,6 +106,7 @@ class Feature_Extractor(nn.Module):
 def load_network(device, path=None):
     model = Affine_Network(device)
     model = model.to(device)
+    batch_size = 2
     # summary(model, [(batch_size, 1, 256, 256), (batch_size, 1, 256, 256)])
     if path is not None:
         model.load_state_dict(torch.load(path))

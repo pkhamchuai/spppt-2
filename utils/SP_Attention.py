@@ -1,65 +1,143 @@
-import torch
-import torch.nn as nn
-# import torch.nn.functional as F
 import numpy as np
-from utils.SuperPoint import SuperPointFrontend
-from utils.utils0 import *
-from utils.utils1 import *
-from utils.utils1 import transform_points_DVF
-from pytorch_model_summary import summary
+import matplotlib.pyplot as plt
+import math
 
-image_size = 256
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+import torch
+from torch import nn
+from torch.nn import functional as F
+from torchsummary import summary
 
-from networks import affine_network_attention as an
-from utils.SuperPoint import SuperPointFrontend
-from utils.utils1 import transform_points_DVF
+class Affine_Network(nn.Module):
+    def __init__(self, device):
+        super(Affine_Network, self).__init__()
+        self.device = device
 
-class MultiheadAttention(nn.Module):
-    def __init__(self, model_params):
-        super(MultiheadAttention, self).__init__()
-        
+        self.feature_extractor = Feature_Extractor(self.device)
+        self.regression_network = Regression_Network()
 
+    def forward(self, source, target):
+        source_features = self.feature_extractor(source)
+        target_features = self.feature_extractor(target)
+        # print(source_features.size(), target_features.size())
+        x = torch.cat((source_features, target_features), dim=1)
+        # print(x.size())
+        x = x.squeeze()
+        x = self.regression_network(x)
+        return x
 
-class SP_Attention(nn.Module):
-    def __init__(self, model_params):
-        super(SP_Attention, self).__init__()
+class Regression_Network(nn.Module):
+    def __init__(self):
+        super(Regression_Network, self).__init__()
 
-        self.conv1f = 64
-        self.conv2f = 128
-        self.conv3f = 256
-        self.conv4f = 512
-        self.conv1 = nn.Conv2d(1, self.conv1f, 3, padding=1, padding_mode='zeros')
-        self.conv2 = nn.Conv2d(self.conv1f, self.conv2f, 3, padding=1, padding_mode='zeros')
-        self.conv3 = nn.Conv2d(self.conv2f, self.conv3f, 3, padding=1, padding_mode='zeros')
-        self.conv4 = nn.Conv2d(self.conv3f, self.conv4f, 3, padding=1, padding_mode='zeros')
+        self.multihead_attention = nn.MultiheadAttention(embed_dim=256, num_heads=2)
+        self.final_layer = nn.Linear(256, 2 * 3)  # Project to (batch_size, 2, 3)
 
-        self.conv1s = nn.Conv2d(self.conv1f, self.conv1f, 2, stride=2, padding_mode='zeros')
-        self.conv2s = nn.Conv2d(self.conv2f, self.conv2f, 2, stride=2, padding_mode='zeros')
-        self.conv3s = nn.Conv2d(self.conv3f, self.conv3f, 2, stride=2, padding_mode='zeros')
+    def forward(self, x):
+        print('Before self.regression', x.size())
+        x = x.view(x.size(0), -1, 256)  # Reshape tensor to 3D
+        x = self.multihead_attention(x, x, x)[0]  # Apply multihead attention
+        print('Before self.final', x.size())
+        x = self.final_layer(x)  # Project to final shape
+        print('Before self.final', x.size())
+        return x.view(-1, 2, 3)
 
+class Forward_Layer(nn.Module):
+    def __init__(self, channels, pool=False):
+        super(Forward_Layer, self).__init__()
+        self.pool = pool
+        if self.pool:
+            self.pool_layer = nn.Sequential(
+                nn.Conv2d(channels, 2*channels, 3, stride=2, padding=3)
+            )
+            self.layer = nn.Sequential(
+                nn.Conv2d(channels, 2*channels, 3, stride=2, padding=3),
+                nn.GroupNorm(2*channels, 2*channels),
+                nn.PReLU(),
+                nn.Conv2d(2*channels, 2*channels, 3, stride=1, padding=1),
+                nn.GroupNorm(2*channels, 2*channels),
+                nn.PReLU(),
+            )
+        else:
+            self.layer = nn.Sequential(
+                nn.Conv2d(channels, channels, 3, stride=1, padding=1),
+                nn.GroupNorm(channels, channels),
+                nn.PReLU(),
+                nn.Conv2d(channels, channels, 3, stride=1, padding=1),
+                nn.GroupNorm(channels, channels),
+                nn.PReLU(),
+            )
 
+    def forward(self, x):
+        if self.pool:
+            return self.pool_layer(x) + self.layer(x)
+        else:
+            return x + self.layer(x)
 
-        self.dropout = nn.Dropout(p=0.7)
-        self.aPooling = nn.AdaptiveAvgPool2d((1, 1))
-        # self.ReLU = nn.PReLU()
-        self.ReLU = nn.LeakyReLU()
-        self.Act1 = nn.GroupNorm(int(self.conv1f/2), self.conv1f, eps=1e-05, affine=True)
-        self.Act2 = nn.GroupNorm(int(self.conv2f/2), self.conv2f, eps=1e-05, affine=True)
-        self.Act3 = nn.GroupNorm(int(self.conv3f/2), self.conv3f, eps=1e-05, affine=True)
-        self.Act4 = nn.GroupNorm(int(self.conv4f/2), self.conv4f, eps=1e-05, affine=True)
+class Feature_Extractor(nn.Module):
+    def __init__(self, device):
+        super(Feature_Extractor, self).__init__()
+        self.device = device
+        self.input_layer = nn.Sequential(
+            nn.Conv2d(1, 64, 7, stride=2, padding=3),
+        )
+        self.layer_1 = Forward_Layer(64, pool=True)
+        self.layer_2 = Forward_Layer(128, pool=False)
+        self.layer_3 = Forward_Layer(128, pool=True)
+        self.layer_4 = Forward_Layer(256, pool=False)
+        self.layer_5 = Forward_Layer(256, pool=True)
+        self.layer_6 = Forward_Layer(512, pool=True)
 
-    def forward(self, source_image, target_image, points):
-        # if self.model_params.points == 1:
-        affine_params = self.affineNet(source_image, target_image)
-        
-        # elif self.model_params.heatmaps == 1:
-        #     print("This part is not yet implemented.")
-            # affine_params = self.affineNet(source_image, target_image, heatmap1, heatmap2)
-        transformed_source_image = tensor_affine_transform(source_image, affine_params)
-        transformed_points = points.clone()
-        transformed_points = transform_points_DVF(transformed_points[0].cpu().detach().T, 
-            affine_params.cpu().detach(), transformed_source_image.cpu().detach())
+        self.last_layer = nn.Sequential(
+            nn.Conv2d(1024, 512, 3, stride=2, padding=1),
+            nn.GroupNorm(512, 512),
+            nn.PReLU(),
+            nn.Conv2d(512, 256, 3, stride=2, padding=1),
+            nn.GroupNorm(256, 256),
+            nn.PReLU(),
+            # nn.AdaptiveAvgPool2d((1, 1))
+        )
 
-        return transformed_source_image, affine_params, transformed_points.T
+    def forward(self, x):
+        x = self.input_layer(x)
+        x = self.layer_1(x)
+        x = self.layer_2(x)
+        x = self.layer_3(x)
+        x = self.layer_4(x)
+        x = self.layer_5(x)
+        x = self.layer_6(x)
+        x = self.last_layer(x)
+        return x
+
+def load_network(device, path=None):
+    model = Affine_Network(device)
+    model = model.to(device)
+    if path is not None:
+        model.load_state_dict(torch.load(path))
+        model.eval()
+    return model
+
+def test_forward_pass():
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = load_network(device)
+    y_size = 256
+    x_size = 256
+    no_channels = 1
+    batch_size = 2
+
+    summary(model, [(no_channels, y_size, x_size), (no_channels, y_size, x_size)])
     
+    example_source = torch.rand((batch_size, no_channels, y_size, x_size)).to(device)
+    example_target = torch.rand((batch_size, no_channels, y_size, x_size)).to(device)
+
+    # example_source[:, :, 200:500, 50:450] = 1
+    # example_target[:, :, 100:600, 200:400] = 1
+
+    result = model(example_source, example_target)
+    print('Final:', result.size())
+
+
+def run():
+    test_forward_pass()
+
+if __name__ == "__main__":
+    run()
