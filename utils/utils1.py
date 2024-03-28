@@ -74,9 +74,9 @@ def model_loader(model_name, model_params):
         elif model_name == 'RigidIRNet':
             from utils.SP_RigidIRNet import SP_RigidIRNet
             model = SP_RigidIRNet().to(device)
-        elif model_name == 'DHR_Attn':
-            from utils.SP_Attention import SP_DHR_Net
-            model = SP_DHR_Net(model_params).to(device)
+        elif model_name == 'Attention':
+            from utils.SP_Attention import SP_Attention
+            model = SP_Attention(model_params).to(device)
         elif model_name == 'DHR_5blocks':
             from utils.DHR_5blocks import SP_DHR_Net
             model = SP_DHR_Net(model_params).to(device)

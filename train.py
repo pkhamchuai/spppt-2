@@ -1,8 +1,8 @@
 import subprocess
 
-dataset = [5]
-model = 'DHR'
-# models = ['DHR_Attn']
+dataset = [1]
+# model = 'DHR'
+model = 'Attention'
 # models = ['DHR', 'AIRNet', 'SP_AffineNet4']
 # model = 'SP_AffineNet4'
 sups = [1, 0]
@@ -21,7 +21,7 @@ decay_rate = 0.096
 for file in files:
     sup = 1
     for batch in batch_size:
-        runs.append(['python', str(file), '--dataset', str(5), 
+        runs.append(['python', str(file), '--dataset', str(4), 
             '--model', str(model), '--num_epochs', str(20), 
             '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
             '--image', str(1), '--points', str(1), '--sup', str(sup), #'--model_path', 'with_groupnorm/DHR_41100_0.001_0_50_100_20240306-153459.pth',
