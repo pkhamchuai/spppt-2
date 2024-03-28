@@ -170,22 +170,40 @@ def train(model_name, model_path, model_params, timestamp):
 
             # if i % batch_size == 0:
                 
-                # if points1_2_predicted.shape[-1] != 2:
-                #     points1_2_predicted = points1_2_predicted.T
-                # if points1.shape[-1] != 2:
-                #     points1 = points1.T
-                # if points2.shape[-1] != 2:
-                #     points2 = points2.T
-                # DL_affine_plot(f"{i+1}", output_dir, f"epoch{epoch+1}_train", f"{i}", 
-                #     source_image[0, 0, :, :].detach().cpu().numpy(), 
-                #     target_image[0, 0, :, :].detach().cpu().numpy(), 
-                #     transformed_source_affine[0, 0, :, :].detach().cpu().numpy(),
-                #     points1[0].cpu().detach().numpy(), 
-                #     points2[0].cpu().detach().numpy(), 
-                #     points1_2_predicted.cpu().detach().numpy(), None, None, 
-                #     affine_params_true=affine_params_true,
-                #     affine_params_predict=affine_params_predicted, 
-                #     heatmap1=None, heatmap2=None, plot=True)
+            #     if points1_2_predicted.shape[-1] != 2:
+            #         points1_2_predicted = points1_2_predicted.T
+            #     if points1.shape[-1] != 2:
+            #         points1 = points1.T
+            #     if points2.shape[-1] != 2:
+            #         points2 = points2.T
+
+            #     for j in range(4):
+            #         # if points1_2_predicted.shape[-1] != 2:
+            #         #     points1_2_predicted = points1_2_predicted.T
+            #         # if points1.shape[-1] != 2:
+            #         #     points1 = points1.T
+            #         # if points2.shape[-1] != 2:
+            #         #     points2 = points2.T
+            #         # if the points are not torch tensors, convert them to torch tensors
+            #         if not isinstance(points1, torch.Tensor):
+            #             points1 = torch.tensor(points1)
+            #         if not isinstance(points2, torch.Tensor):
+            #             points2 = torch.tensor(points2)
+            #         if not isinstance(points1_2_predicted, torch.Tensor):
+            #             points1_2_predicted = torch.tensor(points1_2_predicted)
+
+            #         print(f"points1_2_predicted: {points1_2_predicted.shape}, points1_2_true: {points1_2_true.shape}")
+                        
+            #         DL_affine_plot(f"epoch{epoch+1}_train", output_dir, f"{j}", f"{j+1}", 
+            #             source_image[j, 0, :, :].cpu().numpy(), 
+            #             target_image[j, 0, :, :].cpu().numpy(), 
+            #             transformed_source_affine[0, 0, :, :].cpu().detach().numpy(),
+            #             points1[j].cpu().detach().numpy().T, 
+            #             points2[j].cpu().detach().numpy().T, 
+            #             points1_2_predicted[j].T, None, None, 
+            #             affine_params_true=affine_params_true[j],
+            #             affine_params_predict=affine_params_predicted[j], 
+            #             heatmap1=None, heatmap2=None, plot=True)
 
             # Print statistics
             running_loss += loss.item()
@@ -266,6 +284,9 @@ def train(model_name, model_path, model_params, timestamp):
                         points2 = torch.tensor(points2)
                     if not isinstance(points1_2_predicted, torch.Tensor):
                         points1_2_predicted = torch.tensor(points1_2_predicted)
+
+                    print(f"points1_2_predicted: {points1_2_predicted.shape}, points1_2_true: {points1_2_true.shape}")
+                    
                         
                     DL_affine_plot(f"epoch{epoch+1}_valid", output_dir, f"{i}", f"{i+1}", 
                         source_image[0, 0, :, :].cpu().numpy(), 
