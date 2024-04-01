@@ -761,6 +761,8 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
     
     # matches3 = cv2.transform(matches1.T[None, :, :], affine_params[0])
     # matches3 = matches3[0].T
+    # print("matches3 shape:", matches3.shape)
+    # print("matches2 shape:", matches2.shape)
 
     mse12 = mse(matches3, matches2)
     tre12 = tre(matches3, matches2)
@@ -780,15 +782,19 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # fig, axes = plt.subplot_mosaic("AADE;BCFG", figsize=(20, 10))
             fig, axes = plt.subplot_mosaic("BCFD;AGHE", figsize=(20, 10))
 
-            overlaid1 = overlay_points(image1.copy(), matches1, radius=1)
-            overlaid2 = overlay_points(image2.copy(), matches2, radius=1)
-            overlaid3 = overlay_points(image3.copy(), matches3, radius=1)
+            red = (255, 0, 0)
+            green = (0, 255, 0)
+            orange = (255, 165, 0)
+            blue = (0, 0, 155)
+            overlaid1 = overlay_points(image1.copy(), matches1, color=red, radius=1)
+            overlaid2 = overlay_points(image2.copy(), matches2, color=green, radius=1)
+            overlaid3 = overlay_points(image3.copy(), matches3, color=orange, radius=1)
 
-            overlaidD = overlay_points(overlaid2.copy(), matches3, color=(155, 0, 0), radius=1)
-            overlaidD = overlay_points(overlaidD.copy(), matches1, color=(0, 0, 155), radius=1)
+            overlaidD = overlay_points(overlaid2.copy(), matches3, color=orange, radius=1)
+            overlaidD = overlay_points(overlaidD.copy(), matches1, color=red, radius=1)
 
-            overlaidE = overlay_points(overlaid2.copy(), matches3, color=(0, 0, 155), radius=1)
-            overlaidH = overlay_points(overlaid2.copy(), matches1, color=(0, 0, 155), radius=1)
+            overlaidE = overlay_points(overlaid2.copy(), matches3, color=orange, radius=1)
+            overlaidH = overlay_points(overlaid2.copy(), matches1, color=red, radius=1)
 
             axes["F"].imshow(overlaid3, cmap='gray')
             axes["F"].set_title(f"Warped, {affine_params_predict}")
@@ -817,7 +823,7 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # Green: from affine-transformed locations of points from image 2/1 to
             
             try:
-                imgH = draw_lines_one_image(overlaidH, matches2, matches1, line_color=(155, 0, 0))
+                imgH = draw_lines_one_image(overlaidH, matches2, matches1, line_color=blue)
                 axes["H"].imshow(imgH)
             except:
                 axes["H"].imshow(overlaidH)
@@ -825,7 +831,7 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             axes["H"].axis('off')
 
             try:
-                imgD = draw_lines_one_image(overlaidD, matches3, matches1, line_color=(0, 0, 155))
+                imgD = draw_lines_one_image(overlaidD, matches3, matches1, line_color=blue)
                 axes["D"].imshow(imgD)
             except:
                 axes["D"].imshow(overlaidD)
@@ -835,7 +841,7 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
 
             # img2 = draw_lines_one_image(overlaid2, matches3, matches1, line_color=(0, 0, 155))
             try:
-                imgE = draw_lines_one_image(overlaidE, matches2, matches3, line_color=(155, 0, 0))
+                imgE = draw_lines_one_image(overlaidE, matches2, matches3, line_color=blue)
                 axes["E"].imshow(imgE)
             except:
                 axes["E"].imshow(overlaidE)

@@ -24,7 +24,7 @@ for file in files:
         runs.append(['python', str(file), '--dataset', str(4), 
             '--model', str(model), '--num_epochs', str(20), 
             '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
-            '--image', str(1), '--points', str(1), '--sup', str(sup), #'--model_path', 'with_groupnorm/DHR_41100_0.001_0_50_100_20240306-153459.pth',
+            '--image', str(1), '--points', str(0), '--sup', str(sup), #'--model_path', 'with_groupnorm/DHR_41100_0.001_0_50_100_20240306-153459.pth',
             '--batch_size', str(batch)])
 
     # for data in dataset:
