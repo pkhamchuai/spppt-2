@@ -32,7 +32,7 @@ class Regression_Network(nn.Module):
 
         self.multihead_attention = nn.MultiheadAttention(embed_dim=256, 
                                                          num_heads=8, batch_first=True)
-        self.final_layer = nn.Linear(9*256, 2 * 3)  # Project to (batch_size, 2, 3)
+        self.final_layer = nn.Linear(1*256, 2 * 3)  # Project to (batch_size, 2, 3)
         
 
     def forward(self, x, y):
@@ -42,6 +42,7 @@ class Regression_Network(nn.Module):
         y = y.reshape(batch_size, filter_size, h*w)
         y = y.permute(0, 2, 1)
         x = self.multihead_attention(x, y, y)[0]  # Apply multihead attention
+        # print('Multihead:', x.size())
         batch_size, seq_length, embed_size = x.size()
         x = x.reshape(batch_size, seq_length*embed_size)
         x = self.final_layer(x)  # Project to final shape
@@ -100,7 +101,7 @@ class Feature_Extractor(nn.Module):
             nn.Conv2d(512, 256, 3, stride=2, padding=1),
             nn.GroupNorm(256, 256),
             nn.PReLU(),
-            # nn.AdaptiveAvgPool2d((1, 1))
+            nn.AdaptiveAvgPool2d((1, 1))
         )
 
     def forward(self, x):
@@ -112,6 +113,7 @@ class Feature_Extractor(nn.Module):
         x = self.layer_5(x)
         x = self.layer_6(x)
         x = self.last_layer(x)
+        # print('Feature:', x.size())
         return x
 
 def load_network(device, path=None):
