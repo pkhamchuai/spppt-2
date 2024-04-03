@@ -13,7 +13,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # from networks import affine_network_simple_test_size as an
 # from networks import affine_network_simple as an
-from utils.Attention2 import Affine_Network
+from utils.Attention import Affine_Network
 from utils.SuperPoint import SuperPointFrontend
 from utils.utils1 import transform_points_DVF
 

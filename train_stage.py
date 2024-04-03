@@ -81,7 +81,7 @@ def train(model_name, model_path, model_params, timestamp):
         model_params.start_epoch = 0
         print('No model loaded, starting from scratch')
     
-    datasets = [4, 5, 3, 0]
+    datasets = [1, 2, 3, 0]
     epochs = np.linspace(0, 4*model_params.num_epochs, 5).astype(int)
     print('Training for epochs:', epochs)
     # epochs = [0, 25, 50, 75, 100]
