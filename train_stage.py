@@ -19,7 +19,7 @@ from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams
 from train_points_rigid import train
-# from test_points import test
+from test_two_ways import test
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f'Device: {device}')
@@ -82,7 +82,8 @@ def train(model_name, model_path, model_params, timestamp):
         print('No model loaded, starting from scratch')
     
     datasets = [4, 5, 3, 0]
-    epochs = [0, 2, 4, 6, 8]
+    epochs = np.linspace(0, 4*model_params.num_epochs, 5).astype(int)
+    print('Training for epochs:', epochs)
     # epochs = [0, 25, 50, 75, 100]
     sups = [1, 1, 1, 0]
     stage_loss_list = [0]*4
@@ -99,6 +100,13 @@ def train(model_name, model_path, model_params, timestamp):
         model_params.sup = sups[idx]
         model_params.start_epoch = epochs[idx]
         model_params.num_epochs = epochs[idx+1]
+
+        if datasets[idx] == 0:
+            model_params.batch_size = 1
+        elif datasets[idx] == 1 or datasets[idx] == 2 or datasets[idx] == 3:
+            model_params.batch_size = 10
+        elif datasets[idx] == 4 or datasets[idx] == 5:
+            model_params.batch_size = 50
 
         print('Train:', model_name, model_params, timestamp)
 
@@ -308,25 +316,35 @@ def train(model_name, model_path, model_params, timestamp):
                     # Add to validation loss
                     validation_loss += loss.item()
 
-                    # Plot images if i < 5
-                    # if i % 25 == 0:
-                    #     if points1_2_predicted.shape[-1] != 2:
-                    #         points1_2_predicted = points1_2_predicted.T
-                    #     if points1.shape[-1] != 2:
-                    #         points1 = points1.T
-                    #     if points2.shape[-1] != 2:
-                    #         points2 = points2.T
-                    #     DL_affine_plot(f"epoch{epoch+1}_valid", output_dir,
-                    #         f"{i}", model_params.get_model_code(), 
-                    #         source_image[0, 0, :, :].cpu().numpy(), 
-                    #         target_image[0, 0, :, :].cpu().numpy(), 
-                    #         transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    #         points1[0].cpu().detach().numpy().T, 
-                    #         points2[0].cpu().detach().numpy().T, 
-                    #         points1_2_predicted.cpu().detach().numpy().T, None, None, 
-                    #         affine_params_true=affine_params_true,
-                    #         affine_params_predict=affine_params_predicted, 
-                    #         heatmap1=None, heatmap2=None, plot=True)
+                    if i < 10:
+                        # if points1_2_predicted.shape[-1] != 2:
+                        #     points1_2_predicted = points1_2_predicted.T
+                        # if points1.shape[-1] != 2:
+                        #     points1 = points1.T
+                        # if points2.shape[-1] != 2:
+                        #     points2 = points2.T
+                        # if the points are not torch tensors, convert them to torch tensors
+                        if not isinstance(points1, torch.Tensor):
+                            points1 = torch.tensor(points1)
+                        if not isinstance(points2, torch.Tensor):
+                            points2 = torch.tensor(points2)
+                        if not isinstance(points1_2_predicted, torch.Tensor):
+                            points1_2_predicted = torch.tensor(points1_2_predicted)
+
+                        # print(f"points1_2_predicted: {points1_2_predicted.shape}, points1_2_true: {points1_2_true.shape}")
+                        # print(f"points1: {points1.shape}, points2: {points2.shape}")
+                        
+                            
+                        DL_affine_plot(f"epoch{epoch+1}_valid", output_dir, f"{i}", f"{i+1}", 
+                            source_image[0, 0, :, :].cpu().numpy(), 
+                            target_image[0, 0, :, :].cpu().numpy(), 
+                            transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                            points1[0].cpu().detach().numpy().T, 
+                            points2[0].cpu().detach().numpy().T, 
+                            points1_2_predicted[0].numpy().T, None, None, 
+                            affine_params_true=affine_params_true[0],
+                            affine_params_predict=affine_params_predicted[0], 
+                            heatmap1=None, heatmap2=None, plot=True)
                         
             # Print validation statistics
             validation_loss /= len(test_dataset)
@@ -401,142 +419,194 @@ def train(model_name, model_path, model_params, timestamp):
     # Return epoch_loss_list
     return model, stage_loss_list
 
-def test(model_name, model_, model_params, timestamp, stage=0):
+# def test(model_name, model_, model_params, timestamp, stage=0):
 
-    # print('Model:', model_)
+#     # print('Model:', model_)
 
-    # if model is a string, load the model
-    # if model is a loaded model, use the model
-    # if isinstance(model_, str):
-    #     model = model_loader(model_name, model_params)
-    #     buffer = io.BytesIO()
-    #     torch.save(model.state_dict(), buffer)
-    #     buffer.seek(0)
-    #     model.load_state_dict(torch.load(model_))
-    #     print(f'Loaded model from {model_}')
-    # elif isinstance(model_, nn.Module):
-    #     print(f'Using model {model_name}')
+#     # if model is a string, load the model
+#     # if model is a loaded model, use the model
+#     # if isinstance(model_, str):
+#     #     model = model_loader(model_name, model_params)
+#     #     buffer = io.BytesIO()
+#     #     torch.save(model.state_dict(), buffer)
+#     #     buffer.seek(0)
+#     #     model.load_state_dict(torch.load(model_))
+#     #     print(f'Loaded model from {model_}')
+#     # elif isinstance(model_, nn.Module):
+#     #     print(f'Using model {model_name}')
 
-    model = model_
-    datasets = [1, 2, 3, 0]
-    sups = [1, 1, 1, 0]
+#     model = model_
+#     datasets = [1, 2, 3, 0]
+#     sups = [1, 1, 1, 0]
 
-    for idx in range(4):
-        model_params.dataset = datasets[idx]
-        model_params.sup = sups[idx]
-        # model_params.num_epochs = epochs[idx+1]
-        # model_params.start_epoch = epochs[idx]
+#     for idx in range(4):
+#         model_params.dataset = datasets[idx]
+#         model_params.sup = sups[idx]
+#         # model_params.num_epochs = epochs[idx+1]
+#         # model_params.start_epoch = epochs[idx]
 
-        print('Test:', model_name, model_params, timestamp)
+#         print('Test:', model_name, model_params, timestamp)
 
-        # Set model to training mode
-        model.eval()
-        test_dataset = datagen(model_params.dataset, False, model_params.sup)
-        print(f'\nDataset: {idx+1}')
+#         # Set model to training mode
+#         model.eval()
+#         test_dataset = datagen(model_params.dataset, False, model_params.sup)
+#         print(f'\nDataset: {idx+1}')
 
-        # Create output directory
-        output_dir = f"output/{timestamp}_stage{stage+1}_dataset{idx+1}_{model_name}_{model_params.get_model_code()}_test"
-        # output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_test"
-        os.makedirs(output_dir, exist_ok=True)
+#         # Create output directory
+#         output_dir = f"output/{timestamp}_stage{stage+1}_dataset{idx+1}_{model_name}_{model_params.get_model_code()}_test"
+#         # output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_test"
+#         os.makedirs(output_dir, exist_ok=True)
 
-        # Validate model
-        # validation_loss = 0.0
+#         # Validate model
+#         # validation_loss = 0.0
 
-        metrics = []
-        # create a csv file to store the metrics
-        csv_file = f"{output_dir}/metrics.csv"
+#         metrics = []
+#         # create a csv file to store the metrics
+#         csv_file = f"{output_dir}/metrics.csv"
 
-        with torch.no_grad():
-            testbar = tqdm(test_dataset, desc=f'Testing:')
-            for i, data in enumerate(testbar, 0):
-                # Get images and affine parameters
-                source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
+#         with torch.no_grad():
+#             testbar = tqdm(test_dataset, desc=f'Test:')
+#             for i, data in enumerate(testbar, 0):
+#                 # Get images and affine parameters
+#                 source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
 
-                source_image = source_image.requires_grad_(True).to(device)
-                target_image = target_image.requires_grad_(True).to(device)
-                # add gradient to the matches
-                points1 = points1.requires_grad_(True).to(device)
-                points2 = points2.requires_grad_(True).to(device)
+#                 source_image = source_image.requires_grad_(True).to(device)
+#                 target_image = target_image.requires_grad_(True).to(device)
+#                 # add gradient to the matches
+#                 points1 = points1.requires_grad_(True).to(device)
+#                 points2 = points2.requires_grad_(True).to(device)
 
-                # for j in range(1):
-                # Forward + backward + optimize
-                outputs = model(source_image, target_image, points1)
-                # for i in range(len(outputs)):
-                #     print(i, outputs[i].shape)
-                transformed_source_affine = outputs[0]
-                affine_params_predicted = outputs[1]
-                points1_2_predicted = outputs[2]
+#                 # for j in range(1):
+#                 # Forward + backward + optimize
+#                 outputs = model(source_image, target_image, points1)
+#                 # for i in range(len(outputs)):
+#                 #     print(i, outputs[i].shape)
+#                 transformed_source_affine = outputs[0]
+#                 affine_params_predicted = outputs[1]
+#                 points1_2_predicted = outputs[2]
 
-                try:
-                    points1_2_predicted = points1_2_predicted.reshape(
-                    points1_2_predicted.shape[2], points1_2_predicted.shape[1])
-                except:
-                    pass
+#                 try:
+#                     points1_2_predicted = points1_2_predicted.reshape(
+#                     points1_2_predicted.shape[2], points1_2_predicted.shape[1])
+#                 except:
+#                     pass
 
-                # if i < 100:
-                if i % 4 == 0:
-                    plot_ = True
-                else:
-                    plot_ = False
+#                 # if i < 100:
+#                 if i % 4 == 0:
+#                     plot_ = True
+#                 else:
+#                     plot_ = False
 
-                if points1_2_predicted.shape[-1] != 2:
-                    points1_2_predicted = points1_2_predicted.T
-                if points1.shape[-1] != 2:
-                    points1 = points1.T
-                if points2.shape[-1] != 2:
-                    points2 = points2.T
+#                 if points1_2_predicted.shape[-1] != 2:
+#                     points1_2_predicted = points1_2_predicted.T
+#                 if points1.shape[-1] != 2:
+#                     points1 = points1.T
+#                 if points2.shape[-1] != 2:
+#                     points2 = points2.T
 
-                results = DL_affine_plot(f"test", output_dir,
-                    f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
-                    target_image[0, 0, :, :].cpu().numpy(), 
-                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    points1[0].cpu().detach().numpy().T, 
-                    points2[0].cpu().detach().numpy().T, 
-                    points1_2_predicted.cpu().detach().numpy().T, None, None, 
-                    affine_params_true=affine_params_true,
-                    affine_params_predict=affine_params_predicted, 
-                    heatmap1=None, heatmap2=None, plot=plot_)
+#                 results = DL_affine_plot(f"test", output_dir,
+#                     f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
+#                     target_image[0, 0, :, :].cpu().numpy(), 
+#                     transformed_source_affine[0, 0, :, :].cpu().numpy(),
+#                     points1[0].cpu().detach().numpy().T, 
+#                     points2[0].cpu().detach().numpy().T, 
+#                     points1_2_predicted.cpu().detach().numpy().T, None, None, 
+#                     affine_params_true=affine_params_true,
+#                     affine_params_predict=affine_params_predicted, 
+#                     heatmap1=None, heatmap2=None, plot=plot_)
 
-                # calculate metrics
-                # matches1_transformed = results[0]
-                mse_before = results[1]
-                mse12 = results[2]
-                tre_before = results[3]
-                tre12 = results[4]
-                mse12_image_before = results[5]
-                mse12_image = results[6]
-                ssim12_image_before = results[7]
-                ssim12_image = results[8]
+#                 # calculate metrics
+#                 # matches1_transformed = results[0]
+#                 mse_before = results[1]
+#                 mse12 = results[2]
+#                 tre_before = results[3]
+#                 tre12 = results[4]
+#                 mse12_image_before = results[5]
+#                 mse12_image = results[6]
+#                 ssim12_image_before = results[7]
+#                 ssim12_image = results[8]
 
-                # append metrics to metrics list
-                metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, np.max(points1_2_predicted.shape)])
+#                 # append metrics to metrics list
+#                 metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, np.max(points1_2_predicted.shape)])
 
-        with open(csv_file, 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", "ssim12_image_before", "ssim12_image", "num_points"])
-            for i in range(len(metrics)):
-                writer.writerow(metrics[i])
-            # write the average and std of the metrics
-            metrics = np.array(metrics)
-            nan_mask = np.isnan(metrics).any(axis=1)
-            metrics = metrics[~nan_mask]
-            avg = ["average", np.mean(metrics[:, 1]), np.mean(metrics[:, 2]), np.mean(metrics[:, 3]), np.mean(metrics[:, 4]), 
-                np.mean(metrics[:, 5]), np.mean(metrics[:, 6]), np.mean(metrics[:, 7]), np.mean(metrics[:, 8])]
-            std = ["std", np.std(metrics[:, 1]), np.std(metrics[:, 2]), np.std(metrics[:, 3]), np.std(metrics[:, 4]), 
-                np.std(metrics[:, 5]), np.std(metrics[:, 6]), np.std(metrics[:, 7]), np.std(metrics[:, 8])]
-            writer.writerow(avg)
-            writer.writerow(std)
+#                 # reverse the transformation
+#                 outputs = model(target_image, source_image, points2)
+#                 # for i in range(len(outputs)):
+#                 #     print(i, outputs[i].shape)
+#                 transformed_source_affine = outputs[0]
+#                 affine_params_predicted = outputs[1]
+#                 points1_2_predicted = outputs[2]
 
-        print(f"The test results are saved in {csv_file}")
+#                 try:
+#                     points1_2_predicted = points1_2_predicted.reshape(
+#                     points1_2_predicted.shape[2], points1_2_predicted.shape[1])
+#                 except:
+#                     pass
 
-        # delete all txt files in output_dir
-        # for file in os.listdir(output_dir):
-        #     if file.endswith(".txt"):
-        #         os.remove(os.path.join(output_dir, file))
+#                 # if i < 100:
+#                 if i % 4 == 0:
+#                     plot_ = True
+#                 else:
+#                     plot_ = False
 
-        extra_text = f"Test model {model_name} at {model_} with dataset {model_params.dataset}. "
-        print_summary(model_name, model_, model_params, 
-                    None, timestamp, output_dir=output_dir, test=True, extra=extra_text)
+#                 if points1_2_predicted.shape[-1] != 2:
+#                     points1_2_predicted = points1_2_predicted.T
+#                 if points1.shape[-1] != 2:
+#                     points1 = points1.T
+#                 if points2.shape[-1] != 2:
+#                     points2 = points2.T
+
+#                 results = DL_affine_plot(f"test", output_dir,
+#                     f"{i}", f"{i+1}", target_image[0, 0, :, :].cpu().numpy(),
+#                     source_image[0, 0, :, :].cpu().numpy(),
+#                     transformed_source_affine[0, 0, :, :].cpu().numpy(),
+#                     points2[0].cpu().detach().numpy().T,
+#                     points1[0].cpu().detach().numpy().T,
+#                     points1_2_predicted.cpu().detach().numpy().T, None, None, 
+#                     affine_params_true=affine_params_true,
+#                     affine_params_predict=affine_params_predicted, 
+#                     heatmap1=None, heatmap2=None, plot=plot_)
+
+#                 # calculate metrics
+#                 # matches1_transformed = results[0]
+#                 mse_before = results[1]
+#                 mse12 = results[2]
+#                 tre_before = results[3]
+#                 tre12 = results[4]
+#                 mse12_image_before = results[5]
+#                 mse12_image = results[6]
+#                 ssim12_image_before = results[7]
+#                 ssim12_image = results[8]
+
+#                 # append metrics to metrics list
+#                 metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image, np.max(points1_2_predicted.shape)])
+
+#         with open(csv_file, 'w', newline='') as file:
+#             writer = csv.writer(file)
+#             writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", "ssim12_image_before", "ssim12_image", "num_points"])
+#             for i in range(len(metrics)):
+#                 writer.writerow(metrics[i])
+#             # write the average and std of the metrics
+#             metrics = np.array(metrics)
+#             nan_mask = np.isnan(metrics).any(axis=1)
+#             metrics = metrics[~nan_mask]
+#             avg = ["average", np.mean(metrics[:, 1]), np.mean(metrics[:, 2]), np.mean(metrics[:, 3]), np.mean(metrics[:, 4]), 
+#                 np.mean(metrics[:, 5]), np.mean(metrics[:, 6]), np.mean(metrics[:, 7]), np.mean(metrics[:, 8])]
+#             std = ["std", np.std(metrics[:, 1]), np.std(metrics[:, 2]), np.std(metrics[:, 3]), np.std(metrics[:, 4]), 
+#                 np.std(metrics[:, 5]), np.std(metrics[:, 6]), np.std(metrics[:, 7]), np.std(metrics[:, 8])]
+#             writer.writerow(avg)
+#             writer.writerow(std)
+
+#         print(f"The test results are saved in {csv_file}")
+
+#         # delete all txt files in output_dir
+#         # for file in os.listdir(output_dir):
+#         #     if file.endswith(".txt"):
+#         #         os.remove(os.path.join(output_dir, file))
+
+#         extra_text = f"Test model {model_name} at {model_} with dataset {model_params.dataset}. "
+#         print_summary(model_name, model_, model_params, 
+#                     None, timestamp, output_dir=output_dir, test=True, extra=extra_text)
 
 if __name__ == '__main__':
     # get the arguments
@@ -546,14 +616,14 @@ if __name__ == '__main__':
     parser.add_argument('--image', type=int, default=1, help='loss image used for training')
     parser.add_argument('--points', type=int, default=0, help='use loss points (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
+    parser.add_argument('--num_epochs', type=int, default=5, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default='DHR', help='which model to use')
+    parser.add_argument('--model', type=str, default='Attention', help='which model to use')
     # parser.add_argument('--model', type=str, default='SP_Rigid', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--timestamp', type=str, default=None, help='timestamp')
-    parser.add_argument('--batch_size', type=int, default=40, help='batch size')
+    parser.add_argument('--batch_size', type=int, default=50, help='batch size')
     args = parser.parse_args()
 
     if args.model_path is None:
@@ -565,26 +635,28 @@ if __name__ == '__main__':
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
     model_params = ModelParams(image=args.image, 
-                              loss_image=args.loss_image, start_epoch=0,  
+                              loss_image=args.loss_image, start_epoch=0, num_epochs=args.num_epochs,
                               learning_rate=args.learning_rate, decay_rate=args.decay_rate,
                                 model=args.model, batch_size=args.batch_size)
     model_params.print_explanation()
     
-    _, _ = train(args.model, model_path, model_params, timestamp)
+    trained_model, _ = train(args.model, model_path, model_params, timestamp)
     
-    # print("\nTesting the trained model +++++++++++++++++++++++")
+    print("\nTesting the trained model +++++++++++++++++++++++")
     # test(args.model, trained_model, model_params, timestamp)
     # print("Test model finished +++++++++++++++++++++++++++++")
-    
-    # for i in range(1, 4):
-    #   print(datasets[i], sups[i], epochs[i])
-    #   model_params = ModelParams(dataset=datasets[i], sup=sups[i], image=args.image, heatmaps=args.heatmaps, 
-    #                             loss_image=args.loss_image, start_epoch=epochs[i-1], num_epochs=epochs[i], 
-    #                             learning_rate=args.learning_rate, decay_rate=args.decay_rate)
-    #   model_params.print_explanation()
-      
-    #   trained_model, loss_list = train(args.model, trained_model, model_params, timestamp)
 
-    # print("\nTesting the trained model +++++++++++++++++++++++")
-    # test(args.model, trained_model, model_params, timestamp)
-    # print("Test model finished +++++++++++++++++++++++++++++")
+    datasets = [1, 2, 3, 4, 5, 0]
+    sups = [1, 1, 1, 1, 1, 0]
+    for i in range(len(datasets)):
+        print(datasets[i], sups[i])
+        model_params = ModelParams(dataset=datasets[i], sup=sups[i], image=args.image, 
+                                loss_image=args.loss_image, start_epoch=0, num_epochs=args.num_epochs, 
+                                learning_rate=args.learning_rate, decay_rate=args.decay_rate)
+        model_params.print_explanation()
+      
+        #   trained_model, loss_list = train(args.model, trained_model, model_params, timestamp)
+
+        # print("\nTesting the trained model +++++++++++++++++++++++")
+        test(args.model, trained_model, model_params, timestamp)
+        # print("Test model finished +++++++++++++++++++++++++++++")
