@@ -1,16 +1,16 @@
 import subprocess
 import os
 
-dataset = [4, 5]
-sups = [1]
-models = ['DHR']
+dataset = range(0, 6)
+sups = [1, 1, 1, 1, 1, 0]
+# models = ['DHR']
 # , 'AIRNet', 'SP_AffineNet4'
 
 # grab the model path in the folder 'trained_models'
 # take only files with 'DHR_*'
 # model_path = ['DHR_41100_0.001_0_50_40_20240306-144329.pth'] #, 'DHR_41100_0.001_0_50_100_20240306-153459.pth']
 # list all files in the folder
-files = os.listdir('trained_models/with_groupnorm/')
+files = os.listdir('trained_models/')
 # files = os.listdir('trained_models/without_groupnorm/')
 
 # iterate through the files
@@ -24,7 +24,7 @@ files = os.listdir('trained_models/with_groupnorm/')
 # # sort the model_path
 # model_path.sort()
 # print the model_path
-model_path = ['DHR_51100_0.001_100_120_50_20240313-170255.pth']
+model_path = ['20240403-231356_Attention_stage4_00100_0.001_15_20_1.pth']
 print(model_path)
 
 runs = []
@@ -32,9 +32,10 @@ learning_rate = 1e-3
 
 # generate run commands
 for model in model_path:
-    for dataset_ in dataset:
-        runs.append(['python', 'test_two_ways.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(dataset_),
-                        '--model_path', str(os.path.join('with_groupnorm', model))
+    for dataset_, sup in zip(dataset, sups):
+        runs.append(['python', 'test_points.py', '--model', str('Attention'), '--sup', str(sup),
+                     '--dataset', str(dataset_),
+                    '--model_path', str(model)
                                 ])
         # runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(dataset_),
         #                 '--model_path', str(os.path.join('with_groupnorm', model))
