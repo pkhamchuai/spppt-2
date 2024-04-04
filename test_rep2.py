@@ -152,7 +152,8 @@ def test(model_name, model_, model_params, timestamp):
                 points1 = points1_2_predicted.clone()
                 source_image = transformed_source_affine.clone() # update the source image    
 
-                metrics_ij.append([mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image])
+                metrics_ij.append([mse_before, mse12, tre_before, tre12, mse12_image_before, 
+                                mse12_image, ssim12_image_before, ssim12_image])
 
                 if j == 0:
                     mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
