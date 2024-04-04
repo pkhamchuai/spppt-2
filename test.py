@@ -24,8 +24,9 @@ files = os.listdir('trained_models/')
 # # sort the model_path
 # model_path.sort()
 # print the model_path
-model_path = ['20240403-164754_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 1230
-              '20240403-172755_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 4530
+# '20240403-164754_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 1230
+#               '20240403-172755_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 4530
+model_path = [
               '20240403-221614_Attention_stage4_00100_0.001_15_20_1.pth', # w Avg 1230
               '20240403-231356_Attention_stage4_00100_0.001_15_20_1.pth' # w Avg 4530
               ]
