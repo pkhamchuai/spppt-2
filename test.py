@@ -1,9 +1,11 @@
 import subprocess
 import os
 
-dataset = range(0, 6)
-sups = [1, 1, 1, 1, 1, 0]
-# models = ['DHR']
+# dataset = range(0, 6)
+# sups = [1, 1, 1, 1, 1, 0]
+dataset = [1]
+sups = [1]
+models = ['DHR']
 # , 'AIRNet', 'SP_AffineNet4'
 
 # grab the model path in the folder 'trained_models'
@@ -26,10 +28,11 @@ files = os.listdir('trained_models/')
 # print the model_path
 # '20240403-164754_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 1230
 #               '20240403-172755_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 4530
-model_path = [
-              '20240403-221614_Attention_stage4_00100_0.001_15_20_1.pth', # w Avg 1230
-              '20240403-231356_Attention_stage4_00100_0.001_15_20_1.pth' # w Avg 4530
-              ]
+# model_path = [
+#               '20240403-221614_Attention_stage4_00100_0.001_15_20_1.pth', # w Avg 1230
+#               '20240403-231356_Attention_stage4_00100_0.001_15_20_1.pth' # w Avg 4530
+#               ]
+model_path = ['DHR_11100_0.001_0_20_50_20240408-150736.pth']
 print(model_path)
 
 runs = []
@@ -49,10 +52,11 @@ for model in model_path:
         #              '--dataset', str(dataset_),
         #             '--model_path', str(model)
         #                         ])
-        runs.append(['python', 'test_rep2.py', '--model', str('Attention'), '--sup', str(sup),
+        runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(sup),
                      '--dataset', str(dataset_),
                     '--model_path', str(model)
                                 ])
+        
 # sort runs by element 1, then 11, then 7
 # runs.sort(key=lambda x: x[3])
 
