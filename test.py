@@ -32,7 +32,7 @@ files = os.listdir('trained_models/')
 #               '20240403-221614_Attention_stage4_00100_0.001_15_20_1.pth', # w Avg 1230
 #               '20240403-231356_Attention_stage4_00100_0.001_15_20_1.pth' # w Avg 4530
 #               ]
-model_path = ['DHR_11100_0.001_0_20_50_20240408-150736.pth']
+model_path = ['DHR_21100_0.001_0_10_50_20240408-165326.pth']
 print(model_path)
 
 runs = []

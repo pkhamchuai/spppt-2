@@ -81,7 +81,7 @@ def train(model_name, model_path, model_params, timestamp):
         model_params.start_epoch = 0
         print('No model loaded, starting from scratch')
     
-    datasets = [4, 5, 3, 0]
+    datasets = [1, 2, 3, 0]
     epochs = np.linspace(0, 4*model_params.num_epochs, 5).astype(int)
     print('Training for epochs:', epochs)
     # epochs = [0, 25, 50, 75, 100]
@@ -619,7 +619,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=5, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default='Attention', help='which model to use')
+    parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     # parser.add_argument('--model', type=str, default='SP_Rigid', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--timestamp', type=str, default=None, help='timestamp')
