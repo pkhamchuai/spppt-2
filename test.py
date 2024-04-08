@@ -3,7 +3,7 @@ import os
 
 # dataset = range(0, 6)
 # sups = [1, 1, 1, 1, 1, 0]
-dataset = [1]
+dataset = [2]
 sups = [1]
 models = ['DHR']
 # , 'AIRNet', 'SP_AffineNet4'
@@ -41,17 +41,17 @@ learning_rate = 1e-3
 # generate run commands
 for model in model_path:
     for dataset_, sup in zip(dataset, sups):
-        # runs.append(['python', 'test_points.py', '--model', str('Attention'), '--sup', str(sup),
-        #              '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
+        runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(sup),
+                     '--dataset', str(dataset_),
+                    '--model_path', str(model)
+                                ])
         # runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(1), '--dataset', str(dataset_),
         #                 '--model_path', str(os.path.join('with_groupnorm', model))
         #                 ])
-        # runs.append(['python', 'test_rep1.py', '--model', str('Attention'), '--sup', str(sup),
-        #              '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
+        runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(sup),
+                     '--dataset', str(dataset_),
+                    '--model_path', str(model)
+                                ])
         runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(sup),
                      '--dataset', str(dataset_),
                     '--model_path', str(model)
