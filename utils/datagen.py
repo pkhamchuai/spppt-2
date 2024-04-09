@@ -263,8 +263,8 @@ def datagen(dataset, is_train, sup, batch_size=1):
             dataset_path = 'Dataset/synth_eye_medium_train_scaling'
             df = pd.read_csv('Dataset/synth_eye_medium_train_scaling.csv')
         else:
-            dataset_path = 'Dataset/synthetic_eye_medium_test_scaling'
-            df = pd.read_csv('Dataset/synth_eye_medium_test_scaling.csv')
+            dataset_path = 'Dataset/synthetic_eye_medium_test'
+            df = pd.read_csv('Dataset/synth_eye_medium_test.csv')
 
     # elif dataset == 4:
     #     # synthetic shape dataset
