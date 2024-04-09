@@ -3,9 +3,10 @@ import os
 
 # dataset = range(0, 6)
 # sups = [1, 1, 1, 1, 1, 0]
-dataset = [2]
+dataset = [1]
 sups = [1]
 models = ['DHR']
+# models = ['Attention']
 # , 'AIRNet', 'SP_AffineNet4'
 
 # grab the model path in the folder 'trained_models'
@@ -28,31 +29,32 @@ files = os.listdir('trained_models/')
 # print the model_path
 # '20240403-164754_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 1230
 #               '20240403-172755_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 4530
-# model_path = [
-#               '20240403-221614_Attention_stage4_00100_0.001_15_20_1.pth', # w Avg 1230
-#               '20240403-231356_Attention_stage4_00100_0.001_15_20_1.pth' # w Avg 4530
-#               ]
-model_path = ['DHR_21100_0.001_0_10_50_20240409-045518.pth']
+# model_path = ['Attention_11100_0.001_0_10_50_20240409-053141.pth',
+#               'Attention_21100_0.001_0_10_50_20240409-054404.pth']
+model_path = ['DHR_11100_0.001_0_20_50_20240408-150736.pth']
 print(model_path)
 
 runs = []
 learning_rate = 1e-3
 
 # generate run commands
-for model in model_path:
-    for dataset_, sup in zip(dataset, sups):
-        runs.append(['python', 'test_two_ways.py', '--model', str('DHR'), '--sup', str(sup),
+for model, dataset_ in zip(model_path, dataset):
+        runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(1),
                      '--dataset', str(dataset_),
                     '--model_path', str(model)
                                 ])
-        runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(sup),
-                     '--dataset', str(dataset_),
-                    '--model_path', str(model)
-                                ])
-        runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(sup),
-                     '--dataset', str(dataset_),
-                    '--model_path', str(model)
-                                ])
+        # runs.append(['python', 'test_two_ways.py', '--model', str('Attention'), '--sup', str(1),
+        #              '--dataset', str(dataset_),
+        #             '--model_path', str(model)
+        #                         ])
+        # runs.append(['python', 'test_rep1.py', '--model', str('Attention'), '--sup', str(1),
+        #              '--dataset', str(dataset_),
+        #             '--model_path', str(model)
+        #                         ])
+        # runs.append(['python', 'test_rep2.py', '--model', str('Attention'), '--sup', str(1),
+        #              '--dataset', str(dataset_),
+        #             '--model_path', str(model)
+        #                         ])
         
 # sort runs by element 1, then 11, then 7
 # runs.sort(key=lambda x: x[3])
