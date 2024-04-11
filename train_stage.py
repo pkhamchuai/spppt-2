@@ -37,6 +37,7 @@ class TRE_loss(nn.Module):
         super(TRE_loss, self).__init__()
 
     def __call__(self, points1, points2):
+        # print(f"points1: {points1.shape}, points2: {points2.shape}")
         return torch.mean(torch.sqrt(torch.sum((points1 - points2)**2, dim=0)))
 
 
@@ -81,11 +82,11 @@ def train(model_name, model_path, model_params, timestamp):
         model_params.start_epoch = 0
         print('No model loaded, starting from scratch')
     
-    datasets = [1, 2, 3, 0]
+    datasets = [4, 5, 3, 0]
     epochs = np.linspace(0, 4*model_params.num_epochs, 5).astype(int)
     print('Training for epochs:', epochs)
     # epochs = [0, 25, 50, 75, 100]
-    sups = [1, 1, 1, 0]
+    sups = [1, 1, 1, 1]
     stage_loss_list = [0]*4
     stage_running_loss = [0]*4
     
@@ -102,11 +103,11 @@ def train(model_name, model_path, model_params, timestamp):
         model_params.num_epochs = epochs[idx+1]
 
         if datasets[idx] == 0:
-            model_params.batch_size = 1
+            model_params.batch_size = 20
         elif datasets[idx] == 1 or datasets[idx] == 2 or datasets[idx] == 3:
             model_params.batch_size = 10
         elif datasets[idx] == 4 or datasets[idx] == 5:
-            model_params.batch_size = 50
+            pass
 
         print('Train:', model_name, model_params, timestamp)
 
@@ -204,8 +205,14 @@ def train(model_name, model_path, model_params, timestamp):
                     if not isinstance(points1_2_true, torch.Tensor):
                             points1_2_true = torch.tensor(points1_2_true)
                     # print(f"points1_2_predicted: {points1_2_predicted.shape}, points1_2_true: {points1_2_true.shape}")
-                    loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                                        torch.flatten(points1_2_true, start_dim=1).cpu().detach())
+                    # change the shape of points1_2_predicted
+                    try:
+                        points1_2_predicted = points1_2_predicted.reshape(
+                            points1_2_predicted.shape[2], points1_2_predicted.shape[1], points1_2_predicted.shape[0])
+                    except:
+                        pass
+                    loss += criterion_points(points1_2_predicted.cpu().detach(), 
+                                        points1_2_true.cpu().detach())
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -309,9 +316,15 @@ def train(model_name, model_path, model_params, timestamp):
                             points1_2_predicted = torch.tensor(points1_2_predicted)
                         if not isinstance(points1_2_true, torch.Tensor):
                             points1_2_true = torch.tensor(points1_2_true)
-                        # print(f"points1_2_predicted: {points1_2_predicted}, points1_2_true: {points1_2_true}")
-                        loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                                        torch.flatten(points1_2_true, start_dim=1).cpu().detach())
+                        # print(f"points1_2_predicted: {points1_2_predicted.shape}, points1_2_true: {points1_2_true.shape}")
+                        # change the shape of points1_2_predicted
+                        # try:
+                        #     points1_2_predicted = points1_2_predicted.reshape(
+                        #         points1_2_predicted.shape[2], points1_2_predicted.shape[1], points1_2_predicted.shape[0])
+                        # except:
+                        #     pass
+                        loss += criterion_points(points1_2_predicted.cpu().detach(), 
+                                            points1_2_true.cpu().detach())
 
                     # Add to validation loss
                     validation_loss += loss.item()
@@ -634,7 +647,7 @@ if __name__ == '__main__':
     
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    model_params = ModelParams(image=args.image, 
+    model_params = ModelParams(image=args.image, points=args.points, dataset=args.dataset, sup=args.sup,
                               loss_image=args.loss_image, start_epoch=0, num_epochs=args.num_epochs,
                               learning_rate=args.learning_rate, decay_rate=args.decay_rate,
                                 model=args.model, batch_size=args.batch_size)
@@ -646,8 +659,8 @@ if __name__ == '__main__':
     # test(args.model, trained_model, model_params, timestamp)
     # print("Test model finished +++++++++++++++++++++++++++++")
 
-    datasets = [1, 2, 3, 4, 5, 0]
-    sups = [1, 1, 1, 1, 1, 0]
+    datasets = [4, 5, 3, 0]
+    sups = [1, 1, 1, 0]
     for i in range(len(datasets)):
         print(datasets[i], sups[i])
         model_params = ModelParams(dataset=datasets[i], sup=sups[i], image=args.image, 
