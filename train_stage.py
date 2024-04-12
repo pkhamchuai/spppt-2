@@ -86,7 +86,7 @@ def train(model_name, model_path, model_params, timestamp):
     epochs = np.linspace(0, 4*model_params.num_epochs, 5).astype(int)
     print('Training for epochs:', epochs)
     # epochs = [0, 25, 50, 75, 100]
-    sups = [1, 1, 1, 1]
+    sups = [1, 1, 1, 0]
     stage_loss_list = [0]*4
     stage_running_loss = [0]*4
     
@@ -103,7 +103,7 @@ def train(model_name, model_path, model_params, timestamp):
         model_params.num_epochs = epochs[idx+1]
 
         if datasets[idx] == 0:
-            model_params.batch_size = 20
+            model_params.batch_size = 1
         elif datasets[idx] == 1 or datasets[idx] == 2 or datasets[idx] == 3:
             model_params.batch_size = 10
         elif datasets[idx] == 4 or datasets[idx] == 5:
