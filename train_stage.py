@@ -19,7 +19,7 @@ from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams
 from train_points_rigid import train
-from test_two_ways import test
+from test_points import test
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f'Device: {device}')
@@ -82,7 +82,7 @@ def train(model_name, model_path, model_params, timestamp):
         model_params.start_epoch = 0
         print('No model loaded, starting from scratch')
     
-    datasets = [4, 5, 3, 0]
+    datasets = [5, 4, 3, 0]
     epochs = np.linspace(0, 4*model_params.num_epochs, 5).astype(int)
     print('Training for epochs:', epochs)
     # epochs = [0, 25, 50, 75, 100]
@@ -636,7 +636,7 @@ if __name__ == '__main__':
     # parser.add_argument('--model', type=str, default='SP_Rigid', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--timestamp', type=str, default=None, help='timestamp')
-    parser.add_argument('--batch_size', type=int, default=50, help='batch size')
+    parser.add_argument('--batch_size', type=int, default=100, help='batch size')
     args = parser.parse_args()
 
     if args.model_path is None:
