@@ -220,51 +220,48 @@ def datagen(dataset, is_train, sup, batch_size=1):
 
     elif dataset == 1:
         if is_train:
-            # synthetic eye dataset
-            dataset_path = 'Dataset/synth_eye_easy_train'
-            df = pd.read_csv('Dataset/synth_eye_easy_train.csv')
+            # tranlation
+            dataset_path = 'Dataset/synth_eye_translate_train'
+            df = pd.read_csv('Dataset/synth_eye_translate_train.csv')
         else:
-            # synthetic eye dataset
-            dataset_path = 'Dataset/synthetic_eye_easy_test'
-            df = pd.read_csv('Dataset/synth_eye_easy_test.csv')
+            dataset_path = 'Dataset/synthetic_eye_translate_test'
+            df = pd.read_csv('Dataset/synth_eye_translate_test.csv')
             
     elif dataset == 2:
         if is_train:
-            # synthetic eye dataset medium
-            dataset_path = 'Dataset/synthetic_eye_medium_train'
-            df = pd.read_csv('Dataset/synth_eye_medium_train.csv')
+            # scaling
+            dataset_path = 'Dataset/synth_eye_scaling_train'
+            df = pd.read_csv('Dataset/synth_eye_scaling_train.csv')
         else:
-            # synthetic eye dataset medium
-            dataset_path = 'Dataset/synthetic_eye_medium_test'
-            df = pd.read_csv('Dataset/synth_eye_medium_test.csv')
+            dataset_path = 'Dataset/synthetic_eye_scaling_test'
+            df = pd.read_csv('Dataset/synth_eye_scaling_test.csv')
 
     elif dataset == 3:
         if is_train:
-            # synthetic eye dataset hard
-            dataset_path = 'Dataset/synthetic_eye_hard_train'
-            df = pd.read_csv('Dataset/synth_eye_hard_train.csv')
+            # rotation
+            dataset_path = 'Dataset/synth_eye_rotate_train'
+            df = pd.read_csv('Dataset/synth_eye_rotate_train.csv')
         else:
-            # synthetic eye dataset hard
-            dataset_path = 'Dataset/synthetic_eye_hard_test'
-            df = pd.read_csv('Dataset/synth_eye_hard_test.csv')
+            dataset_path = 'Dataset/synthetic_eye_rotate_test'
+            df = pd.read_csv('Dataset/synth_eye_rotate_test.csv')
 
     elif dataset == 4:
         # new easy dataset
         if is_train:
-            dataset_path = 'Dataset/synth_eye_easy_train_2000'
-            df = pd.read_csv('Dataset/synth_eye_easy_train_2000.csv')
+            dataset_path = 'Dataset/synth_eye_sheer_train'
+            df = pd.read_csv('Dataset/synth_eye_sheer_train.csv')
         else:
-            dataset_path = 'Dataset/synthetic_eye_easy_test'
-            df = pd.read_csv('Dataset/synth_eye_easy_test.csv')
+            dataset_path = 'Dataset/synthetic_eye_sheer_test'
+            df = pd.read_csv('Dataset/synth_eye_sheer_test.csv')
 
     elif dataset == 5:
         # new medium dataset
         if is_train:
-            dataset_path = 'Dataset/synth_eye_medium_train_scaling'
-            df = pd.read_csv('Dataset/synth_eye_medium_train_scaling.csv')
+            dataset_path = 'Dataset/synth_eye_mixed_train'
+            df = pd.read_csv('Dataset/synth_eye_mixed_train.csv')
         else:
-            dataset_path = 'Dataset/synthetic_eye_medium_test'
-            df = pd.read_csv('Dataset/synth_eye_medium_test.csv')
+            dataset_path = 'Dataset/synthetic_eye_mixed_test'
+            df = pd.read_csv('Dataset/synth_eye_mixed_test.csv')
 
     # elif dataset == 4:
     #     # synthetic shape dataset
