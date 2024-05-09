@@ -1,6 +1,6 @@
 import subprocess
 
-dataset = [5]
+dataset = [2]
 model = 'DHR'
 # model = 'Attention'
 # models = ['DHR', 'AIRNet', 'SP_AffineNet4']
