@@ -1,10 +1,10 @@
 import subprocess
 import os
 
-dataset = range(1, 4)
-sups = [1, 1, 1]
-# dataset = [3]
-# sups = [1]
+# dataset = range(1, 4)
+# sups = [1, 1, 1]
+dataset = [1]
+sups = [1]
 models = ['DHR']
 # models = ['Attention']
 # , 'AIRNet', 'SP_AffineNet4'
@@ -31,7 +31,7 @@ files = os.listdir('trained_models/')
 #               '20240403-172755_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 4530
 # model_path = ['Attention_11100_0.001_0_10_50_20240409-053141.pth',
 #               'Attention_21100_0.001_0_10_50_20240409-054404.pth']
-model_path = ['DHR_41100_0.001_0_10_100_20240508-140506.pth']
+model_path = ['DHR_31100_0.001_0_10_100_20240508-120807.pth']
 print(model_path)
 
 runs = []
@@ -40,18 +40,18 @@ learning_rate = 1e-3
 # generate run commands
 for dataset_, sup in zip(dataset, sups):
     for model in model_path:
-        # runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(sup),
-        #              '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
-        # runs.append(['python', 'test_two_ways.py', '--model', str('DHR'), '--sup', str(sup),
-        #             '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
-        # runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(sup),
-        #             '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
+        runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(sup),
+                     '--dataset', str(dataset_),
+                    '--model_path', str(model)
+                                ])
+        runs.append(['python', 'test_two_ways.py', '--model', str('DHR'), '--sup', str(sup),
+                    '--dataset', str(dataset_),
+                    '--model_path', str(model)
+                                ])
+        runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(sup),
+                    '--dataset', str(dataset_),
+                    '--model_path', str(model)
+                                ])
         runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(sup),
                      '--dataset', str(dataset_),
                     '--model_path', str(model)
