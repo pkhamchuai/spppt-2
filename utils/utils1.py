@@ -372,8 +372,9 @@ class ModelParams:
                 'Synthetic eye scaling' if self.dataset == 2 else \
                 'Synthetic eye rotation' if self.dataset == 3 else \
                 'Synthetic eye shear' if self.dataset == 4 else \
-                'Synthetic eye mix' if self.dataset == 5 else \
-                'there is only dataset 0-5')
+                'Synthetic eye mix 1-4' if self.dataset == 5 else \
+                'Synthetic eye mix 1-4 + new images' if self.dataset == 6 else \
+                'there is only dataset 0-6')
         print('Supervised or unsupervised model: ', 'Supervised' if self.sup else 'Unsupervised')
         print('Loss image type: ', 'Loss image not used' if self.image == 0 else \
                 'Image used')

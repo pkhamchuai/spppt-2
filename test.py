@@ -3,7 +3,7 @@ import os
 
 dataset = range(0, 6)
 sups = [0, 1, 1, 1, 1, 1]
-# dataset = [1]
+# dataset = [0]
 # sups = [1]
 models = ['DHR']
 # models = ['Attention']
@@ -31,7 +31,7 @@ files = os.listdir('trained_models/')
 #               '20240403-172755_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 4530
 # model_path = ['Attention_11100_0.001_0_10_50_20240409-053141.pth',
 #               'Attention_21100_0.001_0_10_50_20240409-054404.pth']
-model_path = ['DHR_51100_0.001_0_5_200_20240509-125228.pth']
+model_path = ['DHR_51100_0.001_0_5_100_20240509-140837.pth']
 print(model_path)
 
 runs = []
@@ -52,10 +52,10 @@ for dataset_, sup in zip(dataset, sups):
                     '--dataset', str(dataset_),
                     '--model_path', str(model)
                                 ])
-        # runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(sup),
-        #              '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
+        runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(sup),
+                     '--dataset', str(dataset_),
+                    '--model_path', str(model)
+                                ])
         
 # sort runs by element 1, then 11, then 7
 # runs.sort(key=lambda x: x[3])

@@ -257,6 +257,15 @@ def datagen(dataset, is_train, sup, batch_size=1):
     elif dataset == 5:
         # new medium dataset
         if is_train:
+            dataset_path = 'Dataset/synth_eye_mix0_train'
+            df = pd.read_csv('Dataset/synth_eye_mix0_train.csv')
+        else:
+            dataset_path = 'Dataset/synthetic_eye_mix0_test'
+            df = pd.read_csv('Dataset/synth_eye_mix0_test.csv')
+
+    elif dataset == 6:
+        # new medium dataset
+        if is_train:
             dataset_path = 'Dataset/synth_eye_mix_train'
             df = pd.read_csv('Dataset/synth_eye_mix_train.csv')
         else:
