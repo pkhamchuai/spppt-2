@@ -248,11 +248,11 @@ def datagen(dataset, is_train, sup, batch_size=1):
     elif dataset == 4:
         # new easy dataset
         if is_train:
-            dataset_path = 'Dataset/synth_eye_sheer_train'
-            df = pd.read_csv('Dataset/synth_eye_sheer_train.csv')
+            dataset_path = 'Dataset/synth_eye_shear_train'
+            df = pd.read_csv('Dataset/synth_eye_shear_train.csv')
         else:
-            dataset_path = 'Dataset/synthetic_eye_sheer_test'
-            df = pd.read_csv('Dataset/synth_eye_sheer_test.csv')
+            dataset_path = 'Dataset/synthetic_eye_shear_test'
+            df = pd.read_csv('Dataset/synth_eye_shear_test.csv')
 
     elif dataset == 5:
         # new medium dataset

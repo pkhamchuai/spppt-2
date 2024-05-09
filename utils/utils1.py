@@ -368,11 +368,11 @@ class ModelParams:
         print('\nModel name: ', self.model_name)
         print('Model code: ', self.model_code)
         print('Dataset used: ', 'Actual eye' if self.dataset == 0 else \
-                'Synthetic eye easy' if self.dataset == 1 else \
-                'Synthetic eye medium' if self.dataset == 2 else \
-                'Synthetic eye hard' if self.dataset == 3 else \
-                'Synthetic eye easy (2000)' if self.dataset == 4 else \
-                'Synthetic eye medium (2000)' if self.dataset == 5 else \
+                'Synthetic eye translate' if self.dataset == 1 else \
+                'Synthetic eye scaling' if self.dataset == 2 else \
+                'Synthetic eye rotation' if self.dataset == 3 else \
+                'Synthetic eye shear' if self.dataset == 4 else \
+                'Synthetic eye mix' if self.dataset == 5 else \
                 'there is only dataset 0-5')
         print('Supervised or unsupervised model: ', 'Supervised' if self.sup else 'Unsupervised')
         print('Loss image type: ', 'Loss image not used' if self.image == 0 else \
