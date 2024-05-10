@@ -107,8 +107,10 @@ def test(model_name, models, model_params, timestamp):
 
             best_model_index = np.argmin([mse12, tre12])  # Find the index of the model with the best results
             best_model = models[best_model_index]  # Get the best model
-            votes = [0] * len(models)  # Initialize a list to store the votes for each model
-            for j in range(5):
+            rep = 10
+            votes = [0] * rep  # Initialize a list to store the votes for each model
+            for j in range(rep):
+                no_improve = 0
                 for k in range(len(models)):
                     # Forward + backward + optimize
                     outputs = model[k](source_image, target_image, points1)
@@ -116,7 +118,8 @@ def test(model_name, models, model_params, timestamp):
                     affine_params_predicted = outputs[1]
                     points1_2_predicted = outputs[2]
 
-                    if i < 100:
+                    # if i is an odd number
+                    if i % 2 == 1 and i < 50:
                         plot_ = True
                     else:
                         plot_ = False
@@ -152,16 +155,22 @@ def test(model_name, models, model_params, timestamp):
                         TRE_last = tre12
                         MSE_last = mse12
                         best_model_index = k  # Update the index of the best model
+                        votes[j] = k
+                        no_improve = 0
                     else:
                         tre12 = TRE_last
                         mse12 = MSE_last
+                        no_improve += 1
+                        # if there is no improvement for 2 reps, stop the iteration
+                        if no_improve > 10:
+                            break
 
-                    votes[k] += 1  # Increment the vote for the current model
+                    # votes[k] += 1  # Increment the vote for the current model
 
-            print(f'End register pair {i}, ')
-            print(f'Votes: {votes}')
-            best_model_votes = votes[best_model_index]  # Get the number of votes for the best model
-            print(f'Best Model: {best_model}, Votes: {best_model_votes}')
+            # print(f'\nEnd register pair {i}')
+            # print(f'Votes: {votes}')
+            # best_model_votes = votes[best_model_index]  # Get the number of votes for the best model
+            # print(f'Best Model: {best_model}, Votes: {best_model_votes}')
             # break
 
             # append metrics to metrics list
@@ -170,16 +179,18 @@ def test(model_name, models, model_params, timestamp):
 
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", "ssim12_image_before", "ssim12_image", "num_points", "votes"])
+        writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", 
+                         "ssim12_image_before", "ssim12_image", "num_points", "votes"])
         for i in range(len(metrics)):
             writer.writerow(metrics[i])
         # write the average and std of the metrics
-        metrics = np.array(metrics)
+        metrics = np.array(metrics).astype(float)  # Convert metrics to float type
+        metrics = metrics[:, :-1]
         nan_mask = np.isnan(metrics).any(axis=1)
         metrics = metrics[~nan_mask]
         avg = ["average", np.mean(metrics[:, 1]), np.mean(metrics[:, 2]), np.mean(metrics[:, 3]), np.mean(metrics[:, 4]), 
             np.mean(metrics[:, 5]), np.mean(metrics[:, 6]), np.mean(metrics[:, 7]), np.mean(metrics[:, 8])]
-        std = ["std", np.std(metrics[:, 1]), np.std(metrics[:, 2]), np.std(metrics[:, 3]), np.std(metrics[:, 4]), 
+        std = ["std", np.std(metrics[:, 1]), np.std(metrics[:, 2]), np.std(metrics[:, 3]), np.std(metrics[:, 4]),
             np.std(metrics[:, 5]), np.std(metrics[:, 6]), np.std(metrics[:, 7]), np.std(metrics[:, 8])]
         writer.writerow(avg)
         writer.writerow(std)

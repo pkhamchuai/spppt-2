@@ -29,7 +29,7 @@ files = os.listdir('trained_models/')
 # print the model_path
 # '20240403-164754_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 1230
 #               '20240403-172755_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 4530
-model_path = ['DHR_31100_0.001_0_10_100_20240508-120807.pth']
+model_path = ['']
 # model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
 #               'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
 #               'DHR_51100_0.001_0_5_100_20240509-140837.pth']
@@ -41,21 +41,25 @@ learning_rate = 1e-3
 # generate run commands
 for dataset_, sup in zip(dataset, sups):
     for model in model_path:
-        runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(sup),
+        # runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(sup),
+        #              '--dataset', str(dataset_),
+        #             '--model_path', str(model)
+        #                         ])
+        # runs.append(['python', 'test_two_ways.py', '--model', str('DHR'), '--sup', str(sup),
+        #             '--dataset', str(dataset_),
+        #             '--model_path', str(model)
+        #                         ])
+        # runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(sup),
+        #             '--dataset', str(dataset_),
+        #             '--model_path', str(model)
+        #                         ])
+        # runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(sup),
+        #              '--dataset', str(dataset_),
+        #             '--model_path', str(model)
+        #                         ])
+        runs.append(['python', 'test_ensemble.py', '--model', str('DHR'), '--sup', str(sup),
                      '--dataset', str(dataset_),
-                    '--model_path', str(model)
-                                ])
-        runs.append(['python', 'test_two_ways.py', '--model', str('DHR'), '--sup', str(sup),
-                    '--dataset', str(dataset_),
-                    '--model_path', str(model)
-                                ])
-        runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(sup),
-                    '--dataset', str(dataset_),
-                    '--model_path', str(model)
-                                ])
-        runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(sup),
-                     '--dataset', str(dataset_),
-                    '--model_path', str(model)
+                    '--model_path', str(None)
                                 ])
         
 # sort runs by element 1, then 11, then 7
