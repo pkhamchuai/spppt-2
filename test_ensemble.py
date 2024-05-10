@@ -37,33 +37,37 @@ image_size = 256
 
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
-def test(model_name, model_, model_params, timestamp):
+def test(model_name, models, model_params, timestamp):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
     # timestamp: timestamp of the model
-    print('Test function input:', model_name, model_, model_params, timestamp)
+    print('Test function input:', model_name, models, model_params, timestamp)
 
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
-    # if model is a string, load the model
-    # if model is a loaded model, use the model
-    if isinstance(model_, str):
-        model = model_loader(model_name, model_params)
-        buffer = io.BytesIO()
-        torch.save(model.state_dict(), buffer)
-        buffer.seek(0)
-        model.load_state_dict(torch.load(model_))
-        print(f'Loaded model from {model_}')
-    elif isinstance(model_, nn.Module):
-        print(f'Using model {model_name}')
-        model = model_
+    model = [0]*len(models)
+    # load the models one-by-one
+    for i in range(len(models)):
+        # if model is a string, load the model
+        # if model is a loaded model, use the model
+        if isinstance(models[i], str):
+            print(f"Loading model: {models[i]}")
+            model[i] = model_loader(model_name, model_params)
+            buffer = io.BytesIO()
+            torch.save(model[i].state_dict(), buffer)
+            buffer.seek(0)
+            model[i].load_state_dict(torch.load(models[i]))
+            # print(f'Loaded model from {model[i]}')
+        elif isinstance(models[i], nn.Module):
+            print(f'Using model {model_name}')
+            model[i] = models[i]
 
-    # Set model to training mode
-    model.eval()
+        # Set model to training mode
+        model[i].eval()
 
     # Create output directory
-    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_test"
+    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_ensemble_test"
     os.makedirs(output_dir, exist_ok=True)
 
     # Validate model
@@ -93,85 +97,80 @@ def test(model_name, model_, model_params, timestamp):
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
-            # TRE_last = 1e10
-            # MSE_last = 1e10
-            # collect the metrics for every repeat j iteration
-            metrics_ij = []
+            TRE_last = 1e10
+            mse12 = 0
+            tre12 = 0
+
+            MSE_last = 1e10
+
             mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = 0, 0, 0, 0
 
-            for j in range(10):
-                # Forward + backward + optimize
-                outputs = model(source_image, target_image, points1)
-                # for i in range(len(outputs)):
-                #     print(i, outputs[i].shape)
-                transformed_source_affine = outputs[0]
-                affine_params_predicted = outputs[1]
-                points1_2_predicted = outputs[2]
+            best_model_index = np.argmin([mse12, tre12])  # Find the index of the model with the best results
+            best_model = models[best_model_index]  # Get the best model
+            votes = [0] * len(models)  # Initialize a list to store the votes for each model
+            for j in range(5):
+                for k in range(len(models)):
+                    # Forward + backward + optimize
+                    outputs = model[k](source_image, target_image, points1)
+                    transformed_source_affine = outputs[0]
+                    affine_params_predicted = outputs[1]
+                    points1_2_predicted = outputs[2]
 
-                # try:
-                #     points1_2_predicted = points1_2_predicted.reshape(
-                #     points1_2_predicted.shape[2], points1_2_predicted.shape[1])
-                # except:
-                #     pass
+                    if i < 100:
+                        plot_ = True
+                    else:
+                        plot_ = False
 
-                if i < 50:
-                    plot_ = True
-                else:
-                    plot_ = False
+                    results = DL_affine_plot(f"test_{i}", output_dir,
+                        f"{i+1}", f"rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
+                        target_image[0, 0, :, :].cpu().numpy(), 
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1[0].cpu().detach().numpy().T, 
+                        points2[0].cpu().detach().numpy().T, 
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=affine_params_predicted, 
+                        heatmap1=None, heatmap2=None, plot=plot_)
 
-                # if points1_2_predicted.shape[-1] != 2:
-                #     points1_2_predicted = points1_2_predicted.T
-                # if points1.shape[-1] != 2:
-                #     points1 = points1.T
-                # if points2.shape[-1] != 2:
-                #     points2 = points2.T
-                # print(points1_2_predicted.shape, points2.shape, points1.shape)
+                    mse_before = results[1]
+                    mse12 = results[2]
+                    tre_before = results[3]
+                    tre12 = results[4]
+                    mse12_image_before = results[5]
+                    mse12_image = results[6]
+                    ssim12_image_before = results[7]
+                    ssim12_image = results[8]
 
-                results = DL_affine_plot(f"test_{i}", output_dir,
-                    f"{i+1}", f"rep{j:02d}", source_image[0, 0, :, :].cpu().numpy(), 
-                    target_image[0, 0, :, :].cpu().numpy(), 
-                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    points1[0].cpu().detach().numpy().T, 
-                    points2[0].cpu().detach().numpy().T, 
-                    points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
-                    affine_params_true=affine_params_true,
-                    affine_params_predict=affine_params_predicted, 
-                    heatmap1=None, heatmap2=None, plot=plot_)
+                    # print(f"Pair {i}, Model {k}: {mse12}, {tre12}, {mse12_image}, {ssim12_image}")
 
-                # calculate metrics
-                # matches1_transformed = results[0]
-                mse_before = results[1]
-                mse12 = results[2]
-                tre_before = results[3]
-                tre12 = results[4]
-                mse12_image_before = results[5]
-                mse12_image = results[6]
-                ssim12_image_before = results[7]
-                ssim12_image = results[8]
+                    if j == 0 and k == 0:
+                        mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
 
-                points1 = points1_2_predicted.clone()
-                source_image = transformed_source_affine.clone() # update the source image    
+                    if tre12 < TRE_last and mse12 < MSE_last:
+                        points1 = points1_2_predicted.clone()
+                        source_image = transformed_source_affine.clone() # update the source image
+                        TRE_last = tre12
+                        MSE_last = mse12
+                        best_model_index = k  # Update the index of the best model
+                    else:
+                        tre12 = TRE_last
+                        mse12 = MSE_last
 
-                metrics_ij.append([mse_before, mse12, tre_before, tre12, mse12_image_before, 
-                                mse12_image, ssim12_image_before, ssim12_image])
+                    votes[k] += 1  # Increment the vote for the current model
 
-                if j == 0:
-                    mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
-
-            # choose the best metrics
-            metrics_ij = np.array(metrics_ij)
-            # index of min of mse12
-            min_mse12_index = np.argmin(metrics_ij[:, 1])
-            # append the best metrics to metrics
-            mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, ssim12_image_before, ssim12_image = metrics_ij[min_mse12_index]
+            print(f'End register pair {i}, ')
+            print(f'Votes: {votes}')
+            best_model_votes = votes[best_model_index]  # Get the number of votes for the best model
+            print(f'Best Model: {best_model}, Votes: {best_model_votes}')
+            # break
 
             # append metrics to metrics list
             metrics.append([i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
-                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), min_mse12_index])
+                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes])
 
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", "ssim12_image_before", "ssim12_image", "num_points", "best_repeat"])
+        writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", "ssim12_image_before", "ssim12_image", "num_points", "votes"])
         for i in range(len(metrics)):
             writer.writerow(metrics[i])
         # write the average and std of the metrics
@@ -193,13 +192,13 @@ def test(model_name, model_, model_params, timestamp):
     #         os.remove(os.path.join(output_dir, file))
 
     # extra_text = f"Test model {model_name} at {model_} with dataset {model_params.dataset}. "
-    print_summary(model_name, model_, model_params, 
-                  None, timestamp, test=True)
+    # print_summary(model_name, model_, model_params, 
+    #               None, timestamp, test=True)
 
 if __name__ == '__main__':
     # get the arguments
     parser = argparse.ArgumentParser(description='Deep Learning for Image Registration')    
-    parser.add_argument('--dataset', type=int, default=1, help='dataset number')
+    parser.add_argument('--dataset', type=int, default=0, help='dataset number')
     parser.add_argument('--sup', type=int, default=1, help='supervised learning (1) or unsupervised learning (0)')
     parser.add_argument('--image', type=int, default=1, help='image used for training')
     parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
@@ -207,11 +206,17 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=1, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default=None, help='which model to use')
+    parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     args = parser.parse_args()
 
-    model_path = 'trained_models/' + args.model_path
+    # model_path = 'trained_models/' + args.model_path
+    model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
+              'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
+              'DHR_51100_0.001_0_5_100_20240509-140837.pth']
+    # add 'trained_models/' in front of each element of model_path
+    model_path = ['trained_models/' + path for path in model_path]
+    
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
                                learning_rate=args.learning_rate, decay_rate=args.decay_rate)

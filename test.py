@@ -1,10 +1,10 @@
 import subprocess
 import os
 
-dataset = range(0, 6)
-sups = [0, 1, 1, 1, 1, 1]
-# dataset = [0]
-# sups = [1]
+# dataset = range(0, 6)
+# sups = [0, 1, 1, 1, 1, 1]
+dataset = [4, 5]
+sups = [1, 1]
 models = ['DHR']
 # models = ['Attention']
 # , 'AIRNet', 'SP_AffineNet4'
@@ -29,11 +29,10 @@ files = os.listdir('trained_models/')
 # print the model_path
 # '20240403-164754_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 1230
 #               '20240403-172755_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 4530
-# model_path = ['Attention_11100_0.001_0_10_50_20240409-053141.pth',
-#               'Attention_21100_0.001_0_10_50_20240409-054404.pth']
-model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
-              'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
-              'DHR_51100_0.001_0_5_100_20240509-140837.pth']
+model_path = ['DHR_31100_0.001_0_10_100_20240508-120807.pth']
+# model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
+#               'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
+#               'DHR_51100_0.001_0_5_100_20240509-140837.pth']
 print(model_path)
 
 runs = []
