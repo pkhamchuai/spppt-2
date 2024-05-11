@@ -25,7 +25,7 @@ class SP_DHR_Net(nn.Module):
         super(SP_DHR_Net, self).__init__()
         self.affineNet = load_network(device)
         self.model_params = model_params
-        print("\nRunning new version (not run SP on source image)")
+        # print("\nRunning new version (not run SP on source image)")
 
         # inputs = torch.rand((1, 1, image_size, image_size)), torch.rand((1, 1, image_size, image_size))
         # summary(self.affineNet, *inputs, show_input=True, show_hierarchical=True, print_summary=True)

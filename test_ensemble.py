@@ -52,7 +52,7 @@ def test(model_name, models, model_params, timestamp):
         # if model is a string, load the model
         # if model is a loaded model, use the model
         if isinstance(models[i], str):
-            print(f"Loading model: {models[i]}")
+            print(f"\nLoading model: {models[i]}")
             model[i] = model_loader(model_name, model_params)
             buffer = io.BytesIO()
             torch.save(model[i].state_dict(), buffer)
@@ -97,23 +97,21 @@ def test(model_name, models, model_params, timestamp):
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
-            TRE_last = 1e10
+            TRE_last = np.inf
+            MSE_last = np.inf
             mse12 = 0
             tre12 = 0
 
-            MSE_last = 1e10
+            mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
+            mse_before, tre_before, mse12_image, ssim12_image = np.inf, np.inf, np.inf, np.inf
 
-            mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = 0, 0, 0, 0
-
-            best_model_index = np.argmin([mse12, tre12])  # Find the index of the model with the best results
-            best_model = models[best_model_index]  # Get the best model
             rep = 10
-            votes = [0] * rep  # Initialize a list to store the votes for each model
-            result_list = [0] * rep
+            votes = [np.inf] * rep  # Initialize a list to store the votes for each model
+            mse_list = [np.inf] * 5
+            tre_list = [np.inf] * 5
+            no_improve = 0
 
             for j in range(rep):
-                no_improve = 0
-
                 for k in range(len(models)):
                     # Forward + backward + optimize
                     outputs = model[k](source_image, target_image, points1)
@@ -138,89 +136,120 @@ def test(model_name, models, model_params, timestamp):
                         affine_params_predict=affine_params_predicted, 
                         heatmap1=None, heatmap2=None, plot=plot_)
 
-                    mse_before = results[1]
+                    if j == 0 and k == 0:
+                        mse_before_first = results[1]
+                        tre_before_first = results[3]
+                        mse12_image_before_first = results[5]
+                        ssim12_image_before_first = results[7]
+
+                    # mse_before = results[1]
+                    # tre_before = results[3]
+                    # mse12_image_before = results[5]
+                    # ssim12_image_before = results[7]
+
                     mse12 = results[2]
-                    tre_before = results[3]
                     tre12 = results[4]
-                    mse12_image_before = results[5]
                     mse12_image = results[6]
-                    ssim12_image_before = results[7]
                     ssim12_image = results[8]
 
-                    result_list[j] = [mse12, tre12]
+                    mse_list[k] = mse12
+                    tre_list[k] = tre12
 
-                    # print(f"Pair {i}, Model {k}: {mse12}, {tre12}, {mse12_image}, {ssim12_image}")
+                # print(f"Pair {i}, Rep {j}: {mse_list}, {tre_list}")
+                # the lowset mse12 and tre12 and its index
+                mse12, tre12 = np.min(mse_list), np.min(tre_list)
+                best_mse = np.argmin([mse_list])  # Find the index of the model with the best results
+                best_tre = np.argmin([tre_list])  # Find the index of the model with the best results
 
-                    # if j == 0 and k == 0:
-                    #     mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = \
-                    #         mse_before, tre_before, mse12_image_before, ssim12_image_before
+                # print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_mse}, {best_tre}")
+                
+                # if any element in tre_list is nan, use the model with the lowest mse
+                if np.isnan(tre12):
+                    votes[j] = best_tre
+                else:
+                    votes[j] = best_mse
+                    best_tre = best_mse
+                    tre12 = mse12
+                    TRE_last = MSE_last
 
-                    # if tre12 < TRE_last and mse12 < MSE_last:
-                    #     points1 = points1_2_predicted.clone()
-                    #     source_image = transformed_source_affine.clone() # update the source image
-                    #     TRE_last = tre12
-                    #     MSE_last = mse12
-                    #     best_model_index = k  # Update the index of the best model
-                    #     votes[j] = k
-                    #     no_improve = 0
+                # print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_tre} {best_mse}")
 
-                    #     if model_params.plot == 1:
-                    #         results = DL_affine_plot(f"test_{i}", output_dir,
-                    #             f"{i+1}", f"rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
-                    #             target_image[0, 0, :, :].cpu().numpy(), 
-                    #             transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    #             points1[0].cpu().detach().numpy().T, 
-                    #             points2[0].cpu().detach().numpy().T, 
-                    #             points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
-                    #             affine_params_true=affine_params_true,
-                    #             affine_params_predict=affine_params_predicted, 
-                    #             heatmap1=None, heatmap2=None, plot=True)
-                            
-                    #         mse_before = results[1]
-                    #         mse12 = results[2]
-                    #         tre_before = results[3]
-                    #         tre12 = results[4]
-                    #         mse12_image_before = results[5]
-                    #         mse12_image = results[6]
-                    #         ssim12_image_before = results[7]
-                    #         ssim12_image = results[8]
+                outputs = model[best_tre](source_image, target_image, points1)
+                transformed_source_affine = outputs[0]
+                affine_params_predicted = outputs[1]
+                points1_2_predicted = outputs[2]
+                
+                if model_params.plot == 1 and i < 50:
+                    plot_ = True
+                else:
+                    plot_ = False
 
-                    # else:
-                    #     tre12 = TRE_last
-                    #     mse12 = MSE_last
-                    #     no_improve += 1
-                    #     # if there is no improvement for 2 reps, stop the iteration
-                    #     if no_improve > 10:
-                    #         break
+                results = DL_affine_plot(f"test_{i}", output_dir,
+                    f"{i+1}", f"rep{j:02d}_{best_tre}", source_image[0, 0, :, :].cpu().numpy(),
+                    target_image[0, 0, :, :].cpu().numpy(),
+                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                    points1[0].cpu().detach().numpy().T,
+                    points2[0].cpu().detach().numpy().T,
+                    points1_2_predicted[0].cpu().detach().numpy().T, None, None,
+                    affine_params_true=affine_params_true,
+                    affine_params_predict=affine_params_predicted,
+                    heatmap1=None, heatmap2=None, plot=plot_)
+                    
+                # mse_before = results[1]
+                # tre_before = results[3]
+                # mse12_image_before = results[5]
+                # ssim12_image_before = results[7]
 
-                    # votes[k] += 1  # Increment the vote for the current model
+                mse12 = results[2]
+                tre12 = results[4]
+                mse12_image = results[6]
+                ssim12_image = results[8]
 
-                print(f"Pair {i}, Rep {j}: {result_list}")
-                break
+                points1 = points1_2_predicted.clone()
+                source_image = transformed_source_affine.clone()
+
+                # apply the best model to this pair
+                # if tre12 < TRE_last and mse12 < MSE_last:
+                if tre12 < TRE_last:
+                    TRE_last = tre12
+                    MSE_last = mse12
+                    no_improve -= 1
+                
+                else:
+                    # tre12 = TRE_last
+                    # mse12 = MSE_last
+                    no_improve += 1
+
+                # if there is no improvement for 2 reps, stop the iteration
+                if no_improve > 2:
+                    break
 
             # print(f'\nEnd register pair {i}')
-            # print(f'Votes: {votes}')
-            # best_model_votes = votes[best_model_index]  # Get the number of votes for the best model
-            # print(f'Best Model: {best_model}, Votes: {best_model_votes}')
+            # print(f'Votes: {votes}\n')
             # break
 
             # append metrics to metrics list
             metrics.append([i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
                             ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes])
+            # break
 
     with open(csv_file, 'w', newline='') as file:
+
         writer = csv.writer(file)
         writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", 
                          "ssim12_image_before", "ssim12_image", "num_points", "votes"])
         for i in range(len(metrics)):
             writer.writerow(metrics[i])
         
-        # drop the last column of the list 'metrics'
-        metrics = metrics[:, :-1]
+        # drop the last column of the array 'metrics'
+        metrics = [metrics[i][1:-1] for i in range(len(metrics))]
+        metrics = np.array(metrics)
 
         # metrics = metrics[:, :8]
-        nan_mask = np.isnan(metrics).any(axis=1)
-        metrics = metrics[~nan_mask]
+        inf_mask = np.isinf(metrics).any(axis=1)
+
+        metrics = metrics[~inf_mask]
+
         avg = ["average", np.mean(metrics[:, 1]), np.mean(metrics[:, 2]), np.mean(metrics[:, 3]), np.mean(metrics[:, 4]), 
             np.mean(metrics[:, 5]), np.mean(metrics[:, 6]), np.mean(metrics[:, 7]), np.mean(metrics[:, 8])]
         std = ["std", np.std(metrics[:, 1]), np.std(metrics[:, 2]), np.std(metrics[:, 3]), np.std(metrics[:, 4]),
