@@ -109,8 +109,11 @@ def test(model_name, models, model_params, timestamp):
             best_model = models[best_model_index]  # Get the best model
             rep = 10
             votes = [0] * rep  # Initialize a list to store the votes for each model
+            result_list = [0] * rep
+
             for j in range(rep):
                 no_improve = 0
+
                 for k in range(len(models)):
                     # Forward + backward + optimize
                     outputs = model[k](source_image, target_image, points1)
@@ -144,50 +147,56 @@ def test(model_name, models, model_params, timestamp):
                     ssim12_image_before = results[7]
                     ssim12_image = results[8]
 
+                    result_list[j] = [mse12, tre12]
+
                     # print(f"Pair {i}, Model {k}: {mse12}, {tre12}, {mse12_image}, {ssim12_image}")
 
-                    if j == 0 and k == 0:
-                        mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
+                    # if j == 0 and k == 0:
+                    #     mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = \
+                    #         mse_before, tre_before, mse12_image_before, ssim12_image_before
 
-                    if tre12 < TRE_last and mse12 < MSE_last:
-                        points1 = points1_2_predicted.clone()
-                        source_image = transformed_source_affine.clone() # update the source image
-                        TRE_last = tre12
-                        MSE_last = mse12
-                        best_model_index = k  # Update the index of the best model
-                        votes[j] = k
-                        no_improve = 0
+                    # if tre12 < TRE_last and mse12 < MSE_last:
+                    #     points1 = points1_2_predicted.clone()
+                    #     source_image = transformed_source_affine.clone() # update the source image
+                    #     TRE_last = tre12
+                    #     MSE_last = mse12
+                    #     best_model_index = k  # Update the index of the best model
+                    #     votes[j] = k
+                    #     no_improve = 0
 
-                        if model_params.plot == 1:
-                            results = DL_affine_plot(f"test_{i}", output_dir,
-                                f"{i+1}", f"rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
-                                target_image[0, 0, :, :].cpu().numpy(), 
-                                transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                                points1[0].cpu().detach().numpy().T, 
-                                points2[0].cpu().detach().numpy().T, 
-                                points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
-                                affine_params_true=affine_params_true,
-                                affine_params_predict=affine_params_predicted, 
-                                heatmap1=None, heatmap2=None, plot=True)
+                    #     if model_params.plot == 1:
+                    #         results = DL_affine_plot(f"test_{i}", output_dir,
+                    #             f"{i+1}", f"rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
+                    #             target_image[0, 0, :, :].cpu().numpy(), 
+                    #             transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                    #             points1[0].cpu().detach().numpy().T, 
+                    #             points2[0].cpu().detach().numpy().T, 
+                    #             points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
+                    #             affine_params_true=affine_params_true,
+                    #             affine_params_predict=affine_params_predicted, 
+                    #             heatmap1=None, heatmap2=None, plot=True)
                             
-                            mse_before = results[1]
-                            mse12 = results[2]
-                            tre_before = results[3]
-                            tre12 = results[4]
-                            mse12_image_before = results[5]
-                            mse12_image = results[6]
-                            ssim12_image_before = results[7]
-                            ssim12_image = results[8]
+                    #         mse_before = results[1]
+                    #         mse12 = results[2]
+                    #         tre_before = results[3]
+                    #         tre12 = results[4]
+                    #         mse12_image_before = results[5]
+                    #         mse12_image = results[6]
+                    #         ssim12_image_before = results[7]
+                    #         ssim12_image = results[8]
 
-                    else:
-                        tre12 = TRE_last
-                        mse12 = MSE_last
-                        no_improve += 1
-                        # if there is no improvement for 2 reps, stop the iteration
-                        if no_improve > 10:
-                            break
+                    # else:
+                    #     tre12 = TRE_last
+                    #     mse12 = MSE_last
+                    #     no_improve += 1
+                    #     # if there is no improvement for 2 reps, stop the iteration
+                    #     if no_improve > 10:
+                    #         break
 
                     # votes[k] += 1  # Increment the vote for the current model
+
+                print(f"Pair {i}, Rep {j}: {result_list}")
+                break
 
             # print(f'\nEnd register pair {i}')
             # print(f'Votes: {votes}')
