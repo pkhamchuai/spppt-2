@@ -119,7 +119,7 @@ def test(model_name, models, model_params, timestamp):
                     points1_2_predicted = outputs[2]
 
                     # if i is an odd number
-                    if i % 2 == 1 and i < 50:
+                    if i % 2 == 1 and i < 10 and model_params.plot == 0:
                         plot_ = True
                     else:
                         plot_ = False
@@ -157,6 +157,28 @@ def test(model_name, models, model_params, timestamp):
                         best_model_index = k  # Update the index of the best model
                         votes[j] = k
                         no_improve = 0
+
+                        if model_params.plot == 1:
+                            results = DL_affine_plot(f"test_{i}", output_dir,
+                                f"{i+1}", f"rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
+                                target_image[0, 0, :, :].cpu().numpy(), 
+                                transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                                points1[0].cpu().detach().numpy().T, 
+                                points2[0].cpu().detach().numpy().T, 
+                                points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
+                                affine_params_true=affine_params_true,
+                                affine_params_predict=affine_params_predicted, 
+                                heatmap1=None, heatmap2=None, plot=True)
+                            
+                            mse_before = results[1]
+                            mse12 = results[2]
+                            tre_before = results[3]
+                            tre12 = results[4]
+                            mse12_image_before = results[5]
+                            mse12_image = results[6]
+                            ssim12_image_before = results[7]
+                            ssim12_image = results[8]
+
                     else:
                         tre12 = TRE_last
                         mse12 = MSE_last
@@ -183,9 +205,11 @@ def test(model_name, models, model_params, timestamp):
                          "ssim12_image_before", "ssim12_image", "num_points", "votes"])
         for i in range(len(metrics)):
             writer.writerow(metrics[i])
-        # write the average and std of the metrics
-        metrics = np.array(metrics).astype(float)  # Convert metrics to float type
+        
+        # drop the last column of the list 'metrics'
         metrics = metrics[:, :-1]
+
+        # metrics = metrics[:, :8]
         nan_mask = np.isnan(metrics).any(axis=1)
         metrics = metrics[~nan_mask]
         avg = ["average", np.mean(metrics[:, 1]), np.mean(metrics[:, 2]), np.mean(metrics[:, 3]), np.mean(metrics[:, 4]), 
@@ -219,6 +243,7 @@ if __name__ == '__main__':
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
+    parser.add_argument('--plot', type=int, default=1, help='plot the results')
     args = parser.parse_args()
 
     # model_path = 'trained_models/' + args.model_path
@@ -230,7 +255,7 @@ if __name__ == '__main__':
     
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
-                               learning_rate=args.learning_rate, decay_rate=args.decay_rate)
+                               learning_rate=args.learning_rate, decay_rate=args.decay_rate, plot=args.plot)
     model_params.print_explanation()
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
