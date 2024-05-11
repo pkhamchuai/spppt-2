@@ -1,8 +1,8 @@
 import subprocess
 import os
 
-dataset = range(1, 6)
-sups = [1, 1, 1, 1, 1]
+dataset = range(0, 6)
+sups = [0, 1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
 models = ['DHR']

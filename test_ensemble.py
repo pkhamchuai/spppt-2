@@ -102,8 +102,9 @@ def test(model_name, models, model_params, timestamp):
             mse12 = 0
             tre12 = 0
 
-            mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
-            mse_before, tre_before, mse12_image, ssim12_image = np.inf, np.inf, np.inf, np.inf
+            mse_before_first, tre_before_first, mse12_image_before_first, \
+                ssim12_image_before_first = 0, 0, 0, 0
+            mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
             rep = 10
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
@@ -136,16 +137,10 @@ def test(model_name, models, model_params, timestamp):
                         affine_params_predict=affine_params_predicted, 
                         heatmap1=None, heatmap2=None, plot=plot_)
 
-                    if j == 0 and k == 0:
-                        mse_before_first = results[1]
-                        tre_before_first = results[3]
-                        mse12_image_before_first = results[5]
-                        ssim12_image_before_first = results[7]
-
-                    # mse_before = results[1]
-                    # tre_before = results[3]
-                    # mse12_image_before = results[5]
-                    # ssim12_image_before = results[7]
+                    mse_before = results[1]
+                    tre_before = results[3]
+                    mse12_image_before = results[5]
+                    ssim12_image_before = results[7]
 
                     mse12 = results[2]
                     tre12 = results[4]
@@ -155,6 +150,11 @@ def test(model_name, models, model_params, timestamp):
                     mse_list[k] = mse12
                     tre_list[k] = tre12
 
+                    if j == 0 and k == 0:
+                        mse_before_first, tre_before_first, mse12_image_before_first, \
+                            ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
+                        # print(mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first)
+                
                 # print(f"Pair {i}, Rep {j}: {mse_list}, {tre_list}")
                 # the lowset mse12 and tre12 and its index
                 mse12, tre12 = np.min(mse_list), np.min(tre_list)
@@ -229,8 +229,10 @@ def test(model_name, models, model_params, timestamp):
             # break
 
             # append metrics to metrics list
-            metrics.append([i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
-                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes])
+            new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
+                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes]
+            metrics.append(new_entry)
+            # print(f"Pair {i}: {new_entry}")
             # break
 
     with open(csv_file, 'w', newline='') as file:
@@ -246,9 +248,8 @@ def test(model_name, models, model_params, timestamp):
         metrics = np.array(metrics)
 
         # metrics = metrics[:, :8]
-        inf_mask = np.isinf(metrics).any(axis=1)
-
-        metrics = metrics[~inf_mask]
+        nan_mask = np.isnan(metrics).any(axis=1)
+        metrics = metrics[~nan_mask]
 
         avg = ["average", np.mean(metrics[:, 1]), np.mean(metrics[:, 2]), np.mean(metrics[:, 3]), np.mean(metrics[:, 4]), 
             np.mean(metrics[:, 5]), np.mean(metrics[:, 6]), np.mean(metrics[:, 7]), np.mean(metrics[:, 8])]

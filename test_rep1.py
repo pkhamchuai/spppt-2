@@ -96,7 +96,8 @@ def test(model_name, model_, model_params, timestamp):
             TRE_last = 1e10
             MSE_last = 1e10
 
-            mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = 0, 0, 0, 0
+            mse_before_first, tre_before_first, mse12_image_before_first, \
+                ssim12_image_before_first = 0, 0, 0, 0
 
             for j in range(10):
                 # Forward + backward + optimize
@@ -155,7 +156,8 @@ def test(model_name, model_, model_params, timestamp):
                 ssim12_image = results[8]
 
                 if j == 0:
-                    mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
+                    mse_before_first, tre_before_first, mse12_image_before_first, \
+                        ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
 
                 # check if the mse and affine parameters are not change anymore
                 # print(np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()),

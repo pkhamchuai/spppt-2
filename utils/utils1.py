@@ -51,7 +51,6 @@ def model_loader(model_name, model_params):
             from utils.SPaffineNet4 import SP_AffineNet4
             model = SP_AffineNet4(model_params).to(device)
         elif model_name == 'DHR':
-            print('Loading DHR model (networks/affine_network_simple.py)')
             from utils.SP_DHR import SP_DHR_Net
             model = SP_DHR_Net(model_params).to(device)
         # elif model_name == 'DHR_Rep':
