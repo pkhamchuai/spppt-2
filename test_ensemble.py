@@ -106,7 +106,7 @@ def test(model_name, models, model_params, timestamp):
                 ssim12_image_before_first = 0, 0, 0, 0
             mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 10
+            rep = 20
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
             mse_list = [np.inf] * 5
             tre_list = [np.inf] * 5
