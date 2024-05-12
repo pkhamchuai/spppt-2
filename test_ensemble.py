@@ -244,7 +244,7 @@ def test(model_name, models, model_params, timestamp):
             writer.writerow(metrics[i])
         
         # drop the last column of the array 'metrics'
-        metrics = [metrics[i][1:-1] for i in range(len(metrics))]
+        metrics = [metrics[i][0:-1] for i in range(len(metrics))]
         metrics = np.array(metrics)
 
         # metrics = metrics[:, :8]
