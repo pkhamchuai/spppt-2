@@ -210,14 +210,14 @@ def test(model_name, models, model_params, timestamp):
 
                 # apply the best model to this pair
                 # if tre12 < TRE_last and mse12 < MSE_last:
-                if tre12 < TRE_last:
+                if mse12 < MSE_last:
                     TRE_last = tre12
                     MSE_last = mse12
                     no_improve -= 1
                 
                 else:
-                    # tre12 = TRE_last
-                    # mse12 = MSE_last
+                    tre12 = TRE_last
+                    mse12 = MSE_last
                     no_improve += 1
 
                 # if there is no improvement for 2 reps, stop the iteration

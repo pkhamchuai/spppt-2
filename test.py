@@ -59,7 +59,7 @@ for dataset_, sup in zip(dataset, sups):
         #                         ])
         runs.append(['python', 'test_ensemble.py', '--model', str('DHR'), '--sup', str(sup),
                      '--dataset', str(dataset_),
-                    '--model_path', str(None)
+                    '--model_path', str(None), '--plot', '1'
                                 ])
         
 # sort runs by element 1, then 11, then 7
