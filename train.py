@@ -1,8 +1,8 @@
 import subprocess
 
-dataset = [5]
-model = 'DHR2x'
-# model = 'Attention'
+dataset = range(1, 6)
+# model = 'DHR2x'
+model = 'Attention'
 # models = ['DHR', 'AIRNet', 'SP_AffineNet4']
 # model = 'SP_AffineNet4'
 sups = [1]

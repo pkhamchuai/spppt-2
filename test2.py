@@ -1,12 +1,12 @@
 import subprocess
 import os
 
-dataset = range(1, 6)
-sups = [1, 1, 1, 1, 1]
+dataset = range(0, 6)
+sups = [0, 1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
-models = ['DHR']
-# models = ['Attention']
+# models = ['DHR']
+models = ['Attention']
 # , 'AIRNet', 'SP_AffineNet4'
 
 # grab the model path in the folder 'trained_models'
@@ -57,7 +57,7 @@ for dataset_, sup in zip(dataset, sups):
         #              '--dataset', str(dataset_),
         #             '--model_path', str(model)
         #                         ])
-        runs.append(['python', 'test_ensemble.py', '--model', str('DHR'), '--sup', str(sup),
+        runs.append(['python', 'test_ensemble_Attention.py', '--model', str('DHR'), '--sup', str(sup),
                      '--dataset', str(dataset_),
                     '--model_path', str(None), '--plot', '1'
                                 ])

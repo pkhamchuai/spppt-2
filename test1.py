@@ -1,10 +1,10 @@
 import subprocess
 import os
 
-dataset = range(0, 5)
-sups = [0, 1, 1, 1, 1]
-# dataset = [4, 5]
-# sups = [1, 1]
+dataset = range(0, 6)
+sups = [0, 1, 1, 1, 1, 1]
+# dataset = [5]
+# sups = [1]
 model_name = 'DHR2x'
 # models = ['Attention']
 # , 'AIRNet', 'SP_AffineNet4'
@@ -45,18 +45,18 @@ for dataset_, sup in zip(dataset, sups):
         #              '--dataset', str(dataset_),
         #             '--model_path', str(model)
         #                         ])
-        # runs.append(['python', 'test_two_ways.py', '--model', str(model_name), '--sup', str(sup),
-        #             '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
-        # runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
-        #             '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
-        runs.append(['python', 'test_rep2.py', '--model', str(model_name), '--sup', str(sup),
-                     '--dataset', str(dataset_),
+        runs.append(['python', 'test_two_ways.py', '--model', str(model_name), '--sup', str(sup),
+                    '--dataset', str(dataset_),
                     '--model_path', str(model)
                                 ])
+        runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
+                    '--dataset', str(dataset_),
+                    '--model_path', str(model)
+                                ])
+        # runs.append(['python', 'test_rep2.py', '--model', str(model_name), '--sup', str(sup),
+        #              '--dataset', str(dataset_),
+        #             '--model_path', str(model)
+        #                         ])
         # runs.append(['python', 'test_ensemble.py', '--model', str(model_name), '--sup', str(sup),
         #              '--dataset', str(dataset_),
         #             '--model_path', str(None), '--plot', '1'
