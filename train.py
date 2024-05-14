@@ -1,8 +1,8 @@
 import subprocess
 
-dataset = range(1, 6)
-# model = 'DHR2x'
-model = 'Attention'
+dataset = [1]
+model = 'DHR2x'
+# model = 'Attention_no_pooling'
 # models = ['DHR', 'AIRNet', 'SP_AffineNet4']
 # model = 'SP_AffineNet4'
 sups = [1]
@@ -22,7 +22,7 @@ for file in files:
     sup = 1
     for dataset in dataset:
         runs.append(['python', str(file), '--dataset', str(dataset),
-            '--model', str(model), '--num_epochs', str(5), 
+            '--model', str(model), '--num_epochs', str(10), 
             '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
             '--image', str(1), '--points', str(0), '--sup', str(sup), #'--model_path', 'with_groupnorm/DHR_41100_0.001_0_50_100_20240306-153459.pth',
             '--batch_size', str(batch_size)])

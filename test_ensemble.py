@@ -57,7 +57,7 @@ for dataset_, sup in zip(dataset, sups):
         #              '--dataset', str(dataset_),
         #             '--model_path', str(model)
         #                         ])
-        runs.append(['python', 'test_ensemble_Attention.py', '--model', str('DHR'), '--sup', str(sup),
+        runs.append(['python', 'test_ensemble_Attention.py', '--model', str('Attention'), '--sup', str(sup),
                      '--dataset', str(dataset_),
                     '--model_path', str(None), '--plot', '1'
                                 ])

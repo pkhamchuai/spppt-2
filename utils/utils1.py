@@ -79,6 +79,9 @@ def model_loader(model_name, model_params):
         elif model_name == 'Attention':
             from utils.SP_Attention import SP_Attention
             model = SP_Attention(model_params).to(device)
+        elif model_name == 'Attention_no_pooling':
+            from utils.SP_Attention_no_pooling import SP_Attention
+            model = SP_Attention(model_params).to(device)
         elif model_name == 'DHR_5blocks':
             from utils.DHR_5blocks import SP_DHR_Net
             model = SP_DHR_Net(model_params).to(device)
