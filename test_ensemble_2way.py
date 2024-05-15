@@ -247,7 +247,6 @@ def test(model_name, models, model_params, timestamp):
             points1 = points1.requires_grad_(True).to(device)
             points2 = points2.requires_grad_(True).to(device)
 
-            rep = 10
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
             mse_list = [np.inf] * 5
             tre_list = [np.inf] * 5
