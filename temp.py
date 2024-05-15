@@ -34,8 +34,7 @@ model_path = ['Attention_11100_0.001_0_5_100_20240513-152019.pth', 'Attention_21
               'Attention_51100_0.001_0_5_100_20240513-153734.pth']
 
 # model_path = ['Attention_no_pooling_11100_0.001_0_5_100_20240514-095754.pth', 'Attention_no_pooling_21100_0.001_0_5_100_20240514-100109.pth',
-#               'Attention_no_pooling_31100_0.001_0_5_100_20240514-100721', 
-# model_path = ['Attention_no_pooling_41100_0.001_0_5_100_20240514-100950.pth',
+#               'Attention_no_pooling_31100_0.001_0_5_100_20240514-100721', 'Attention_no_pooling_41100_0.001_0_5_100_20240514-100950.pth',
 #               'Attention_no_pooling_51100_0.001_0_5_100_20240514-101458.pth']
               
 # model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',

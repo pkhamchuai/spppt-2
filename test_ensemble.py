@@ -5,8 +5,10 @@ dataset = range(0, 6)
 sups = [0, 1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
-# models = ['DHR']
-models = ['Attention']
+# dataset = [0]
+# sups = [0]
+
+# models = ['Attention']
 # , 'AIRNet', 'SP_AffineNet4'
 
 # grab the model path in the folder 'trained_models'
@@ -29,10 +31,33 @@ files = os.listdir('trained_models/')
 # print the model_path
 # '20240403-164754_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 1230
 #               '20240403-172755_Attention_stage4_00100_0.001_15_20_1.pth', # wo Avg 4530
-model_path = ['']
+# model_path = ['']
+# model_path = 'trained_models/' + args.model_path
+
+# DHR normal
+# models = 'DHR
 # model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
-#               'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
-#               'DHR_51100_0.001_0_5_100_20240509-140837.pth']
+#             'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
+#             'DHR_51100_0.001_0_5_100_20240509-140837.pth']
+
+# DHR 2x
+models = 'DHR2x'
+model_path = ['DHR2x_11100_0.001_0_10_100_20240515-130704.pth', 'DHR2x_21100_0.001_0_5_100_20240514-131741.pth',
+              'DHR2x_31100_0.001_0_5_100_20240514-132527.pth', 'DHR2x_41100_0.001_0_5_100_20240514-132814.pth',
+              'DHR2x_51100_0.001_0_5_100_20240513-112002.pth']
+
+# Attention
+# models = 'Attention'
+# model_path = ['Attention_11100_0.001_0_5_100_20240513-152019.pth', 'Attention_21100_0.001_0_5_100_20240513-152334.pth',
+#               'Attention_31100_0.001_0_5_100_20240513-152949.pth', 'Attention_41100_0.001_0_5_100_20240513-153219.pth',
+#               'Attention_51100_0.001_0_5_100_20240513-153734.pth']
+    
+# Attention without pooling
+# models = 'Attention_no_pooling'
+# model_path = ['Attention_no_pooling_11100_0.001_0_5_100_20240514-095754.pth', 'Attention_no_pooling_21100_0.001_0_5_100_20240514-100109.pth',
+#               'Attention_no_pooling_31100_0.001_0_5_100_20240514-100721.pth', 'Attention_no_pooling_41100_0.001_0_5_100_20240514-100950.pth',
+#               'Attention_no_pooling_51100_0.001_0_5_100_20240514-101458.pth']
+
 print(model_path)
 
 runs = []
@@ -40,26 +65,9 @@ learning_rate = 1e-3
 
 # generate run commands
 for dataset_, sup in zip(dataset, sups):
-    for model in model_path:
-        # runs.append(['python', 'test_points.py', '--model', str('DHR'), '--sup', str(sup),
-        #              '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
-        # runs.append(['python', 'test_two_ways.py', '--model', str('DHR'), '--sup', str(sup),
-        #             '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
-        # runs.append(['python', 'test_rep1.py', '--model', str('DHR'), '--sup', str(sup),
-        #             '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
-        # runs.append(['python', 'test_rep2.py', '--model', str('DHR'), '--sup', str(sup),
-        #              '--dataset', str(dataset_),
-        #             '--model_path', str(model)
-        #                         ])
-        runs.append(['python', 'test_ensemble_Attention.py', '--model', str('Attention'), '--sup', str(sup),
+    runs.append(['python', 'test_ensemble_1way.py', '--model', str(models), '--sup', str(sup),
                      '--dataset', str(dataset_),
-                    '--model_path', str(None), '--plot', '1'
+                    '--model_path', str(model_path), '--plot', '1'
                                 ])
         
 # sort runs by element 1, then 11, then 7

@@ -106,7 +106,7 @@ def test(model_name, models, model_params, timestamp):
                 ssim12_image_before_first = 0, 0, 0, 0
             mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 20
+            rep = 10
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
             mse_list = [np.inf] * 5
             tre_list = [np.inf] * 5
@@ -210,10 +210,10 @@ def test(model_name, models, model_params, timestamp):
 
                 # apply the best model to this pair
                 # if tre12 < TRE_last and mse12 < MSE_last:
-                if tre12 < TRE_last:
+                if mse12 < MSE_last:
                     TRE_last = tre12
                     MSE_last = mse12
-                    no_improve = 0
+                    no_improve -= 1
                 
                 else:
                     tre12 = TRE_last
@@ -221,7 +221,7 @@ def test(model_name, models, model_params, timestamp):
                     no_improve += 1
 
                 # if there is no improvement for 2 reps, stop the iteration
-                if no_improve >= 2:
+                if no_improve > 2:
                     break
 
             # print(f'\nEnd register pair {i}')
@@ -280,16 +280,15 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=1, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default='Attention', help='which model to use')
+    parser.add_argument('--model', type=str, default='DHR2x', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--plot', type=int, default=1, help='plot the results')
     args = parser.parse_args()
 
     # model_path = 'trained_models/' + args.model_path
-    model_path = ['Attention_11100_0.001_0_5_100_20240513-152019.pth', 'Attention_21100_0.001_0_5_100_20240513-152334.pth',
-              'Attention_31100_0.001_0_5_100_20240513-152949.pth', 'Attention_41100_0.001_0_5_100_20240513-153219.pth',
-              'Attention_51100_0.001_0_5_100_20240513-153734.pth']
-    
+    model_path = ['DHR2x_11100_0.001_0_10_100_20240515-130704.pth', 'DHR2x_21100_0.001_0_5_100_20240514-131741.pth',
+              'DHR2x_31100_0.001_0_5_100_20240514-132527.pth', 'DHR2x_41100_0.001_0_5_100_20240514-132814.pth',
+              'DHR2x_51100_0.001_0_5_100_20240513-112002.pth']
     # add 'trained_models/' in front of each element of model_path
     model_path = ['trained_models/' + path for path in model_path]
     
