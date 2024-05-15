@@ -73,7 +73,7 @@ def test(model_name, models, model_params, timestamp):
         for i, data in enumerate(testbar, 0):
 
             # source -> target +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+            
             # Get images and affine parameters
             source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
 
@@ -82,7 +82,7 @@ def test(model_name, models, model_params, timestamp):
             # add gradient to the matches
             points1 = points1.requires_grad_(True).to(device)
             points2 = points2.requires_grad_(True).to(device)
-
+            '''
             # TODO: how to repeat the test?
             # 1. until the affine parameters are not change anymore
             # 2. until the mse is not change anymore
@@ -100,7 +100,7 @@ def test(model_name, models, model_params, timestamp):
                 ssim12_image_before_first = 0, 0, 0, 0
             mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 20
+            rep = 10
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
             mse_list = [np.inf] * 5
             tre_list = [np.inf] * 5
@@ -227,7 +227,7 @@ def test(model_name, models, model_params, timestamp):
                             ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes]
             metrics.append(new_entry)
             # print(f"Pair {i}: {new_entry}")
-            # break
+            # break'''
 
             # target -> source +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             TRE_last = np.inf
@@ -238,14 +238,6 @@ def test(model_name, models, model_params, timestamp):
             mse_before_first, tre_before_first, mse12_image_before_first, \
                 ssim12_image_before_first = 0, 0, 0, 0
             mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
-
-            source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
-
-            source_image = source_image.requires_grad_(True).to(device)
-            target_image = target_image.requires_grad_(True).to(device)
-            # add gradient to the matches
-            points1 = points1.requires_grad_(True).to(device)
-            points2 = points2.requires_grad_(True).to(device)
 
             rep = 10
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
@@ -346,8 +338,8 @@ def test(model_name, models, model_params, timestamp):
                 mse12_image = results[6]
                 ssim12_image = results[8]
 
-                points2 = points1_2_predicted.clone()
-                target_image = transformed_source_affine.clone()
+                points1 = points1_2_predicted.clone()
+                source_image = transformed_source_affine.clone()
 
                 # apply the best model to this pair
                 # if tre12 < TRE_last and mse12 < MSE_last:
