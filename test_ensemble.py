@@ -1,12 +1,14 @@
 import subprocess
 import os
 
-# dataset = range(0, 6)
-# sups = [0, 1, 1, 1, 1, 1]
+dataset = range(0, 6)
+sups = [0, 1, 1, 1, 1, 1]
+# dataset = range(1, 6)
+# sups = [1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
-dataset = [0]
-sups = [0]
+# dataset = [0]
+# sups = [0]
 
 # models = ['Attention']
 # , 'AIRNet', 'SP_AffineNet4'
@@ -47,16 +49,16 @@ files = os.listdir('trained_models/')
 #               'DHR2x_51100_0.001_0_5_100_20240513-112002.pth']
 
 # Attention
-models = 'Attention'
-model_path = ['Attention_11100_0.001_0_5_100_20240513-152019.pth', 'Attention_21100_0.001_0_5_100_20240513-152334.pth',
-              'Attention_31100_0.001_0_5_100_20240513-152949.pth', 'Attention_41100_0.001_0_5_100_20240513-153219.pth',
-              'Attention_51100_0.001_0_5_100_20240513-153734.pth']
+# models = 'Attention'
+# model_path = ['Attention_11100_0.001_0_5_100_20240513-152019.pth', 'Attention_21100_0.001_0_5_100_20240513-152334.pth',
+#               'Attention_31100_0.001_0_5_100_20240513-152949.pth', 'Attention_41100_0.001_0_5_100_20240513-153219.pth',
+#               'Attention_51100_0.001_0_5_100_20240513-153734.pth']
     
 # Attention without pooling
-# models = 'Attention_no_pooling'
-# model_path = ['Attention_no_pooling_11100_0.001_0_5_100_20240514-095754.pth', 'Attention_no_pooling_21100_0.001_0_5_100_20240514-100109.pth',
-#               'Attention_no_pooling_31100_0.001_0_5_100_20240514-100721.pth', 'Attention_no_pooling_41100_0.001_0_5_100_20240514-100950.pth',
-#               'Attention_no_pooling_51100_0.001_0_5_100_20240514-101458.pth']
+models = 'Attention_no_pooling'
+model_path = ['Attention_no_pooling_11100_0.001_0_5_100_20240514-095754.pth', 'Attention_no_pooling_21100_0.001_0_5_100_20240514-100109.pth',
+              'Attention_no_pooling_31100_0.001_0_5_100_20240514-100721.pth', 'Attention_no_pooling_41100_0.001_0_5_100_20240514-100950.pth',
+              'Attention_no_pooling_51100_0.001_0_5_100_20240514-101458.pth']
 
 print(model_path)
 
@@ -64,17 +66,17 @@ runs = []
 learning_rate = 1e-3
 
 # generate run commands
-# for dataset_, sup in zip(dataset, sups):
-#     runs.append(['python', 'test_ensemble_1way.py', '--model', str(models), '--sup', str(sup),
-#                      '--dataset', str(dataset_),
-#                     '--model_path', str(model_path), '--plot', '1'
-#                                 ])
-    
 for dataset_, sup in zip(dataset, sups):
-    runs.append(['python', 'test_ensemble_2way.py', '--model', str(models), '--sup', str(sup),
+    runs.append(['python', 'test_ensemble_1way.py', '--model', str(models), '--sup', str(sup),
                      '--dataset', str(dataset_),
                     '--model_path', str(model_path), '--plot', '1'
                                 ])
+    
+# for dataset_, sup in zip(dataset, sups):
+#     runs.append(['python', 'test_ensemble_2way.py', '--model', str(models), '--sup', str(sup),
+#                      '--dataset', str(dataset_),
+#                     '--model_path', str(model_path), '--plot', '1'
+#                                 ])
         
 # sort runs by element 1, then 11, then 7
 # runs.sort(key=lambda x: x[3])

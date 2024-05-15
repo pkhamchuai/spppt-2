@@ -33,7 +33,8 @@ def test(model_name, models, model_params, timestamp):
     # model: model to be tested
     # model_params: model parameters
     # timestamp: timestamp of the model
-    print('Test function input:', model_name, models, model_params, timestamp)
+    print('Test 2-way ensemble model')
+    print('Function input:', model_name, models, model_params, timestamp)
 
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
@@ -100,7 +101,7 @@ def test(model_name, models, model_params, timestamp):
                 ssim12_image_before_first = 0, 0, 0, 0
             mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 20
+            rep = 10
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
             mse_list = [np.inf] * 5
             tre_list = [np.inf] * 5
@@ -179,7 +180,7 @@ def test(model_name, models, model_params, timestamp):
                     plot_ = False
 
                 results = DL_affine_plot(f"test_{i}", output_dir,
-                    f"{i+1}", f"rep{j:02d}_{best_tre}", source_image[0, 0, :, :].cpu().numpy(),
+                    f"{i+1}", f"fw_rep{j:02d}_{best_tre}", source_image[0, 0, :, :].cpu().numpy(),
                     target_image[0, 0, :, :].cpu().numpy(),
                     transformed_source_affine[0, 0, :, :].cpu().numpy(),
                     points1[0].cpu().detach().numpy().T,
