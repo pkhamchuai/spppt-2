@@ -71,6 +71,9 @@ def test(model_name, models, model_params, timestamp):
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
+
+            # source -> target +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
             # Get images and affine parameters
             source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
 
@@ -97,7 +100,7 @@ def test(model_name, models, model_params, timestamp):
                 ssim12_image_before_first = 0, 0, 0, 0
             mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 20
+            rep = 10
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
             mse_list = [np.inf] * 5
             tre_list = [np.inf] * 5
@@ -118,7 +121,7 @@ def test(model_name, models, model_params, timestamp):
                         plot_ = False
 
                     results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"{i+1}", f"rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
+                        f"{i+1}", f"fw_rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
                         target_image[0, 0, :, :].cpu().numpy(), 
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
                         points1[0].cpu().detach().numpy().T, 
@@ -225,6 +228,146 @@ def test(model_name, models, model_params, timestamp):
             metrics.append(new_entry)
             # print(f"Pair {i}: {new_entry}")
             # break
+
+            # target -> source +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            TRE_last = np.inf
+            MSE_last = np.inf
+            mse12 = 0
+            tre12 = 0
+
+            mse_before_first, tre_before_first, mse12_image_before_first, \
+                ssim12_image_before_first = 0, 0, 0, 0
+            mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
+
+            rep = 10
+            votes = [np.inf] * rep  # Initialize a list to store the votes for each model
+            mse_list = [np.inf] * 5
+            tre_list = [np.inf] * 5
+            no_improve = 0
+
+            for j in range(rep):
+                for k in range(len(models)):
+                    # Forward + backward + optimize
+                    outputs = model[k](target_image, source_image, points2)
+                    transformed_source_affine = outputs[0]
+                    affine_params_predicted = outputs[1]
+                    points1_2_predicted = outputs[2]
+
+                    # if i is an odd number
+                    if i % 2 == 1 and i < 10 and model_params.plot == 0:
+                        plot_ = True
+                    else:
+                        plot_ = False
+
+                    results = DL_affine_plot(f"test_{i}", output_dir,
+                        f"{i+1}", f"rv_rep{j:02d}_{k}", target_image[0, 0, :, :].cpu().numpy(), 
+                        source_image[0, 0, :, :].cpu().numpy(), 
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points2[0].cpu().detach().numpy().T, 
+                        points1[0].cpu().detach().numpy().T, 
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=affine_params_predicted, 
+                        heatmap1=None, heatmap2=None, plot=plot_)
+
+                    mse_before = results[1]
+                    tre_before = results[3]
+                    mse12_image_before = results[5]
+                    ssim12_image_before = results[7]
+
+                    mse12 = results[2]
+                    tre12 = results[4]
+                    mse12_image = results[6]
+                    ssim12_image = results[8]
+
+                    mse_list[k] = mse12
+                    tre_list[k] = tre12
+
+                    if j == 0 and k == 0:
+                        mse_before_first, tre_before_first, mse12_image_before_first, \
+                            ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
+                        # print(mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first)
+                
+                # print(f"Pair {i}, Rep {j}: {mse_list}, {tre_list}")
+                # the lowset mse12 and tre12 and its index
+                mse12, tre12 = np.min(mse_list), np.min(tre_list)
+                best_mse = np.argmin([mse_list])  # Find the index of the model with the best results
+                best_tre = np.argmin([tre_list])  # Find the index of the model with the best results
+
+                # print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_mse}, {best_tre}")
+                
+                # if any element in tre_list is nan, use the model with the lowest mse
+                if np.isnan(tre12):
+                    votes[j] = best_tre
+                else:
+                    votes[j] = best_mse
+                    best_tre = best_mse
+                    tre12 = mse12
+                    TRE_last = MSE_last
+
+                # print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_tre} {best_mse}")
+
+                outputs = model[best_tre](target_image, source_image, points2)
+                transformed_source_affine = outputs[0]
+                affine_params_predicted = outputs[1]
+                points1_2_predicted = outputs[2]
+                
+                if model_params.plot == 1 and i < 50:
+                    plot_ = True
+                else:
+                    plot_ = False
+
+                results = DL_affine_plot(f"test_{i}", output_dir,
+                    f"{i+1}", f"rv_rep{j:02d}_{best_tre}", target_image[0, 0, :, :].cpu().numpy(),
+                    source_image[0, 0, :, :].cpu().numpy(),
+                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                    points2[0].cpu().detach().numpy().T,
+                    points1[0].cpu().detach().numpy().T,
+                    points1_2_predicted[0].cpu().detach().numpy().T, None, None,
+                    affine_params_true=affine_params_true,
+                    affine_params_predict=affine_params_predicted,
+                    heatmap1=None, heatmap2=None, plot=plot_)
+                    
+                # mse_before = results[1]
+                # tre_before = results[3]
+                # mse12_image_before = results[5]
+                # ssim12_image_before = results[7]
+
+                mse12 = results[2]
+                tre12 = results[4]
+                mse12_image = results[6]
+                ssim12_image = results[8]
+
+                points1 = points1_2_predicted.clone()
+                source_image = transformed_source_affine.clone()
+
+                # apply the best model to this pair
+                # if tre12 < TRE_last and mse12 < MSE_last:
+                if mse12 < MSE_last:
+                    TRE_last = tre12
+                    MSE_last = mse12
+                    no_improve -= 1
+                
+                else:
+                    tre12 = TRE_last
+                    mse12 = MSE_last
+                    no_improve += 1
+
+                # if there is no improvement for 2 reps, stop the iteration
+                if no_improve > 2:
+                    break
+
+            # print(f'\nEnd register pair {i}')
+            # print(f'Votes: {votes}\n')
+            # break
+
+            # append metrics to metrics list
+            new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
+                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes]
+            metrics.append(new_entry)
+            # print(f"Pair {i}: {new_entry}")
+            # break
+        
 
     with open(csv_file, 'w', newline='') as file:
 
