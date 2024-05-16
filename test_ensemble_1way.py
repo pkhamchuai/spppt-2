@@ -26,6 +26,42 @@ if int(cv2.__version__[0]) < 3: # pragma: no cover
 
 image_size = 256
 
+# Convert 1x2x3 parameters to 3x3 affine transformation matrices
+def params_to_matrix(params):
+    params = params.view(-1, 6)[0]
+    print(params)
+    return torch.tensor([
+        [params[0], params[1], params[2]],
+        [params[3], params[4], params[5]],
+        [0,         0,         1]
+    ], dtype=torch.float32)
+
+# Convert the combined 3x3 matrix back to 1x6 affine parameters
+def matrix_to_params(matrix):
+    matrix = torch.tensor([
+        matrix[0, 0], matrix[0, 1], matrix[0, 2],
+        matrix[1, 0], matrix[1, 1], matrix[1, 2]
+        ], dtype=torch.float32)
+    return matrix.view(1, 2, 3)
+
+# combine 2 affine matrices
+def combine_matrices(matrix1, matrix2):
+    print(matrix1, matrix2)
+    matrix1 = params_to_matrix(matrix1)
+    matrix2 = params_to_matrix(matrix2)
+    return matrix_to_params(torch.matmul(matrix1, matrix2))
+
+# Transform a tensor image using an affine transformation matrix
+def tensor_affine_transform0(image, matrix):
+    # Get the image size
+    _, _, H, W = image.size()
+    # Generate a grid of (x,y) coordinates
+    grid = F.affine_grid(matrix, [1, 1, H, W])
+    # Sample the input image at the grid points
+    transformed_image = F.grid_sample(image, grid)
+    return transformed_image
+
+
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
 def test(model_name, models, model_params, timestamp):
@@ -98,11 +134,14 @@ def test(model_name, models, model_params, timestamp):
                 ssim12_image_before_first = 0, 0, 0, 0
             mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 10
+            rep = 30
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
             mse_list = [np.inf] * 5
             tre_list = [np.inf] * 5
             no_improve = 0
+            # accepted parameters
+            M = np.array([[1, 0, 0], [0, 1, 0]], dtype=np.float32)
+            M = torch.from_numpy(M).unsqueeze(0)#.to(device)
 
             for j in range(rep):
                 for k in range(len(models)):
@@ -153,16 +192,17 @@ def test(model_name, models, model_params, timestamp):
                 best_mse = np.argmin([mse_list])  # Find the index of the model with the best results
                 best_tre = np.argmin([tre_list])  # Find the index of the model with the best results
 
-                # print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_mse}, {best_tre}")
+                print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_mse}, {best_tre}")
                 
                 # if any element in tre_list is nan, use the model with the lowest mse
                 if np.isnan(tre12):
-                    votes[j] = best_tre
-                else:
-                    votes[j] = best_mse
-                    best_tre = best_mse
-                    tre12 = mse12
-                    TRE_last = MSE_last
+                    pass
+                #     votes[j] = best_mse
+                # else:
+                #     votes[j] = best_mse
+                #     best_tre = best_mse
+                #     tre12 = mse12
+                #     TRE_last = MSE_last
 
                 # print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_tre} {best_mse}")
 
@@ -197,20 +237,29 @@ def test(model_name, models, model_params, timestamp):
                 mse12_image = results[6]
                 ssim12_image = results[8]
 
-                points1 = points1_2_predicted.clone()
-                source_image = transformed_source_affine.clone()
+                
 
                 # apply the best model to this pair
                 # if tre12 < TRE_last and mse12 < MSE_last:
                 if mse12 < MSE_last:
                     TRE_last = tre12
                     MSE_last = mse12
-                    no_improve -= 1
+                    # update M
+                    # print(affine_params_predicted.shape)
+                    M = combine_matrices(M, affine_params_predicted)
+                    print(M)
+                    points1 = points1_2_predicted.clone()
+                    source_image = tensor_affine_transform0(data[0].to(device), M)
+
+                    if no_improve > 0:
+                        no_improve -= 1
                 
                 else:
                     tre12 = TRE_last
                     mse12 = MSE_last
                     no_improve += 1
+
+                print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_tre} {best_mse}, no_improve: {no_improve}, tre_last: {TRE_last}, mse_last: {MSE_last}")
 
                 # if there is no improvement for 2 reps, stop the iteration
                 if no_improve > 2:
@@ -225,7 +274,7 @@ def test(model_name, models, model_params, timestamp):
                             ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes]
             metrics.append(new_entry)
             # print(f"Pair {i}: {new_entry}")
-            # break
+            break
 
     with open(csv_file, 'w', newline='') as file:
 
