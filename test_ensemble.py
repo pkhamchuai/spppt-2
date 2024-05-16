@@ -1,10 +1,10 @@
 import subprocess
 import os
 
-dataset = range(0, 6)
-sups = [0, 1, 1, 1, 1, 1]
-# dataset = range(1, 6)
-# sups = [1, 1, 1, 1, 1]
+# dataset = range(0, 6)
+# sups = [0, 1, 1, 1, 1, 1]
+dataset = range(1, 6)
+sups = [1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
 # dataset = [0]
@@ -66,17 +66,17 @@ runs = []
 learning_rate = 1e-3
 
 # generate run commands
-for dataset_, sup in zip(dataset, sups):
-    runs.append(['python', 'test_ensemble_1way.py', '--model', str(models), '--sup', str(sup),
-                     '--dataset', str(dataset_),
-                    '--model_path', str(model_path), '--plot', '1'
-                                ])
-    
 # for dataset_, sup in zip(dataset, sups):
-#     runs.append(['python', 'test_ensemble_2way.py', '--model', str(models), '--sup', str(sup),
+#     runs.append(['python', 'test_ensemble_1way.py', '--model', str(models), '--sup', str(sup),
 #                      '--dataset', str(dataset_),
 #                     '--model_path', str(model_path), '--plot', '1'
 #                                 ])
+    
+for dataset_, sup in zip(dataset, sups):
+    runs.append(['python', 'test_ensemble_2way.py', '--model', str(models), '--sup', str(sup),
+                     '--dataset', str(dataset_),
+                    '--model_path', str(model_path), '--plot', '1'
+                                ])
         
 # sort runs by element 1, then 11, then 7
 # runs.sort(key=lambda x: x[3])

@@ -33,7 +33,8 @@ def test(model_name, models, model_params, timestamp):
     # model: model to be tested
     # model_params: model parameters
     # timestamp: timestamp of the model
-    print('Test function input:', model_name, models, model_params, timestamp)
+    print('Test 1way with reverse registration in every steps')
+    print('Function input:', model_name, models, model_params, timestamp)
 
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 

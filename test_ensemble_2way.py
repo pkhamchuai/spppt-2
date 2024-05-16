@@ -101,7 +101,7 @@ def test(model_name, models, model_params, timestamp):
                 ssim12_image_before_first = 0, 0, 0, 0
             mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 10
+            rep = 20
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
             mse_list = [np.inf] * 5
             tre_list = [np.inf] * 5
@@ -151,7 +151,9 @@ def test(model_name, models, model_params, timestamp):
                         # print(mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first)
                 
                 # print(f"Pair {i}, Rep {j}: {mse_list}, {tre_list}")
-                # the lowset mse12 and tre12 and its index
+                # the lowest mse12 and tre12 and its index
+
+                # TODO: fix values of TRE and MSE
                 mse12, tre12 = np.min(mse_list), np.min(tre_list)
                 best_mse = np.argmin([mse_list])  # Find the index of the model with the best results
                 best_tre = np.argmin([tre_list])  # Find the index of the model with the best results
