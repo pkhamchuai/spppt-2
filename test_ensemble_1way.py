@@ -131,7 +131,7 @@ def test(model_name, models, model_params, timestamp):
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 30
+            rep = 20
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
             mse_points = [np.inf] * 5
             mse_images = [np.inf] * 5
@@ -238,6 +238,8 @@ def test(model_name, models, model_params, timestamp):
                 if mse12 < mse_points_best or mse12_image < mse_images_best:
                     mse_points_best = mse12
                     mse_images_best = mse12_image
+                    votes[j] = best_index
+
                     # update M
                     # print(affine_params_predicted.shape)
                     M = combine_matrices(M, affine_params_predicted).to(device)
@@ -245,13 +247,14 @@ def test(model_name, models, model_params, timestamp):
                     points1 = points1_2_predicted.clone()
                     source_image = tensor_affine_transform0(data[0].to(device), M)
 
-                    if no_improve > 0:
-                        print(f"No improvement for {no_improve} reps")
+                    if no_improve > 0: 
                         no_improve -= 1
 
                 
                 else:
+                    print(f"No improvement for {no_improve+1} reps")
                     no_improve += 1
+                    votes[j] = -1
 
                 print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_index}, {mse_points_best}, {mse_images_best}")
 
@@ -268,6 +271,7 @@ def test(model_name, models, model_params, timestamp):
                             ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes]
             metrics.append(new_entry)
             # print(f"Pair {i}: {new_entry}")
+            print('\n')
             # break
 
     with open(csv_file, 'w', newline='') as file:
