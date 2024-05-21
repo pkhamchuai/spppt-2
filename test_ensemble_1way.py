@@ -133,7 +133,7 @@ def test(model_name, models, model_params, timestamp):
 
             rep = 20
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
-            mse_points = [np.inf] * 5
+            tre_points = [np.inf] * 5
             mse_images = [np.inf] * 5
             no_improve = 0
             # accepted parameters
@@ -175,7 +175,7 @@ def test(model_name, models, model_params, timestamp):
                     mse12_image = results[6]
                     ssim12_image = results[8]
 
-                    mse_points[k] = mse12
+                    tre_points[k] = tre12
                     mse_images[k] = mse12_image
 
                     if j == 0 and k == 0:
@@ -183,20 +183,20 @@ def test(model_name, models, model_params, timestamp):
                             ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
                         # print(mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first)
                 
-                print(f"Pair {i}, Rep {j}: {mse_points}, {mse_images}")
+                print(f"Pair {i}, Rep {j}: {tre_points}, {mse_images}")
                 # the lowset mse12 and tre12 and its index
                 # min_mse_points = np.min([mse_points])
                 # min_mse_images = np.min([mse_images])
-                best_mse_points = np.argmin([mse_points]) # Find the index of the model with the best results
+                best_tre_points = np.argmin([tre_points]) # Find the index of the model with the best results
                 best_mse_images = np.argmin([mse_images])
 
-                print(f"Pair {i}, Rep {j}, best model: {best_mse_points} {best_mse_images}")
+                print(f"Pair {i}, Rep {j}, best model: {best_tre_points} {best_mse_images}")
                 
                 # if any element in tre_list is nan, use the model with the lowest mse
                 if np.isnan(mse12):
                     best_index = best_mse_images
                 else:
-                    best_index = best_mse_points
+                    best_index = best_tre_points
 
                 # print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_tre} {best_mse}")
 
