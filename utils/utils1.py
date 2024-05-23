@@ -704,15 +704,20 @@ def transform_points_DVF_unbatched(points_, M, image): # original version
 def transform_points_DVF(points_, M, image): # batch version
     # DVF.shape = (B, 2, H, W)
     # points.shape = (2, N, B)
+    
+    if points_.shape[0] != 2:
+        points_ = points_.reshape(2, -1, points_.shape[0])
     # print(points_.shape)
+
     # print(M.shape)
     # print(image.shape)
-    _, _, B = points_.shape
+    _, N, B = points_.shape
+    # print("points_ shape:", points_.shape, "M shape:", M.shape, "image shape:", image.shape)
     # points = [transform_points_DVF_unbatched(points_[:, :, b], M[b, :, :], image[b, :, :, :]) for b in range(B)]
     for b in range(B):
         # print("points_ shape:", points_[:, :, b].shape, "M shape:", M[b].shape, "image shape:", image[b].shape)
         points_[:, :, b] = \
-            transform_points_DVF_unbatched(points_[:, :, b].view(2, -1, 1), \
+            transform_points_DVF_unbatched(points_[:, :, b].view(2, N, 1), \
                                            M[b].view(1, 2, 3), image[b].view(1, 1, image[b].size(-1), image[b].size(-1)))
     # print(points_.shape)
     return points_

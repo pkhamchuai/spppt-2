@@ -66,17 +66,24 @@ runs = []
 learning_rate = 1e-3
 
 # generate run commands
-for dataset_, sup in zip(dataset, sups):
-    runs.append(['python', 'test_ensemble_1way.py', '--model', str(models), '--sup', str(sup),
-                     '--dataset', str(dataset_),
-                    '--model_path', str(model_path), '--plot', '1'
-                                ])
+# for dataset_, sup in zip(dataset, sups):
+#     runs.append(['python', 'test_ensemble_1way.py', '--model', str(models), '--sup', str(sup),
+#                      '--dataset', str(dataset_),
+#                     '--model_path', str(model_path), '--plot', '1'
+#                                 ])
+    
     
 # for dataset_, sup in zip(dataset, sups):
 #     runs.append(['python', 'test_ensemble_2way.py', '--model', str(models), '--sup', str(sup),
 #                      '--dataset', str(dataset_),
 #                     '--model_path', str(model_path), '--plot', '0'
 #                                 ])
+
+for dataset_, sup in zip(dataset, sups):
+    runs.append(['python', 'test_ensemble_1way_reverse.py', '--model', str(models), '--sup', str(sup),
+                     '--dataset', str(dataset_),
+                    '--model_path', str(model_path), '--plot', '1'
+                                ])
         
 # sort runs by element 1, then 11, then 7
 # runs.sort(key=lambda x: x[3])
