@@ -648,12 +648,12 @@ def transform_points_DVF_unbatched(points_, M, image): # original version
     if len(points_.shape) == 3:
         points_ = points_.squeeze(-1)
     # print("points_ shape:", points_.shape)
-    displacement_field = torch.zeros(image.shape[-1], image.shape[-1])
+    displacement_field = torch.zeros(image.shape[-1], image.shape[-1]).to(M.device)
     DVF = transform_to_displacement_field(
         displacement_field.view(1, 1, displacement_field.size(0), displacement_field.size(1)), 
-        M.clone().view(1, 2, 3))
+        M.clone().view(1, 2, 3), device=M.device)
     if isinstance(DVF, torch.Tensor):
-        DVF = DVF.detach().numpy()
+        DVF = DVF.cpu().detach().numpy()
 
     # loop through each point and apply the transformation
     points = points_.clone()
