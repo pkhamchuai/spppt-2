@@ -156,9 +156,9 @@ def test(model_name, models, model_params, timestamp):
                     # Forward + backward + optimize
                     # print input devices
                     outputs = model[k](source_image, target_image, points1)
-                    transformed_source_affine_fw = outputs[0]
-                    affine_params_predicted_ = outputs[1]
-                    points1_2_predicted_fw = outputs[2]
+                    transformed_source_affine = outputs[0]
+                    affine_params_predicted = outputs[1]
+                    points1_2_predicted = outputs[2]
 
                     if i < 10 and model_params.plot == 0:
                         plot_ = True
@@ -167,17 +167,17 @@ def test(model_name, models, model_params, timestamp):
 
                     # print points shape
                     if points1.shape[0] != 1 and points1.shape[-1] != 2:
-                        points1 = points1.view(1, -1, 2)
+                        points1 = points1.clone().view(1, -1, 2)
                     # print(points1.shape, points2.shape, points1_2_predicted.shape)
                     results = DL_affine_plot(f"test_{i}", output_dir,
                         f"{i+1}", f"fw_rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
                         target_image[0, 0, :, :].cpu().numpy(), 
-                        transformed_source_affine_fw[0, 0, :, :].cpu().numpy(),
-                        points1[0].cpu().detach().numpy().T, 
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1[0].clone().cpu().detach().numpy().T, 
                         points2[0].cpu().detach().numpy().T, 
-                        points1_2_predicted_fw[0].cpu().detach().numpy().T, None, None, 
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
                         affine_params_true=affine_params_true,
-                        affine_params_predict=affine_params_predicted_, 
+                        affine_params_predict=affine_params_predicted, 
                         heatmap1=None, heatmap2=None, plot=plot_)
 
                     mse_before = results[1]
@@ -200,38 +200,45 @@ def test(model_name, models, model_params, timestamp):
                 
                     # apply the registration in the reverse direction
                     outputs = model[k](target_image, source_image, points2)
-                    transformed_source_affine_rv = outputs[0]
+                    # transformed_source_affine_rv = outputs[0]
                     affine_params_predicted_rv = outputs[1]
-                    points2_1_predicted_ = outputs[2]
+                    # points2_1_predicted_ = outputs[2]
+
+                    affine_params_predicted = matrix_to_params(
+                        torch.inverse(params_to_matrix(affine_params_predicted_rv)))
+                    transformed_source_affine = tensor_affine_transform0(source_image,
+                                        affine_params_predicted.to(device))
+                    points1_2_predicted = transform_points_DVF(points1.clone().view(2, -1, 1).cpu().detach(),
+                        affine_params_predicted, source_image)
 
                     if points1.shape[0] != 1:
-                        points1 = points1.view(1, -1, 2)
-                    if points2_1_predicted_.shape[0] != 1:
-                        points2_1_predicted_ = points2_1_predicted_.view(1, -1, 2)
+                        points1 = points1.clone().view(1, -1, 2)
+                    if points1_2_predicted.shape[0] != 1:
+                        points1_2_predicted = points1_2_predicted.view(1, -1, 2)
                     # print(points1.shape, points2.shape, points2_1_predicted.shape)
                     results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"{i+1}", f"rv_rep{j:02d}_{k}", target_image[0, 0, :, :].cpu().numpy(), 
-                        source_image[0, 0, :, :].cpu().numpy(), 
-                        transformed_source_affine_rv[0, 0, :, :].cpu().numpy(),
+                        f"{i+1}", f"rv_rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
+                        target_image[0, 0, :, :].cpu().numpy(), 
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1[0].clone().cpu().detach().numpy().T, 
                         points2[0].cpu().detach().numpy().T, 
-                        points1[0].cpu().detach().numpy().T, 
-                        points2_1_predicted_[0].cpu().detach().numpy().T, None, None, 
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
                         affine_params_true=affine_params_true,
-                        affine_params_predict=affine_params_predicted_rv, 
+                        affine_params_predict=affine_params_predicted, 
                         heatmap1=None, heatmap2=None, plot=plot_)
                     
-                    mse_before = results[1]
-                    tre_before = results[3]
+                    # mse_before = results[1]
+                    # tre_before = results[3]
                     # mse21_image_before = results[5]
                     # ssim21_image_before = results[7]
 
-                    mse21 = results[2]
-                    tre21 = results[4]
-                    mse21_image = results[6]
+                    mse12 = results[2]
+                    tre12 = results[4]
+                    mse12_image = results[6]
                     # ssim21_image = results[8]
 
-                    metrics_points[2*k+1] = tre21
-                    mse_images[2*k+1] = mse21_image
+                    metrics_points[2*k+1] = tre12
+                    mse_images[2*k+1] = mse12_image
 
                 # print(f"Pair {i}, Rep {j}: {metrics_points}, {mse_images}")
                 min_metrics_points = np.min([metrics_points])
@@ -240,12 +247,12 @@ def test(model_name, models, model_params, timestamp):
                 best_metrics_points = np.argmin([metrics_points])
                 
                 # if any element in tre_list is nan, use the model with the lowest mse
-                if np.isnan(mse12) or np.isnan(mse21):
+                if np.isnan(min_metrics_points) or np.isinf(min_metrics_points):
                     best_index = best_mse_images
                 else:
                     best_index = best_metrics_points
 
-                print(f"Pair {i}, Rep {j}, best index: {best_index} = model: {best_index//2}, {models[best_index//2]}")
+                print(f"Pair {i}, Rep {j}, best model index: {best_index}")
                 best_model = best_index//2
 
                 if best_index % 2 == 0:
@@ -271,16 +278,10 @@ def test(model_name, models, model_params, timestamp):
                 # print input device
                 # print(points1.view(2, -1, 1).shape, affine_params_predicted.shape, source_image.shape)
                 if points1.shape[0] != 1 and points1.shape[-1] != 2:
-                    points1 = points1.view(1, -1, 2)
-                # if points1_2_predicted.shape[0] != 1 and points1_2_predicted.shape[-1] != 2:
-                #     points1_2_predicted = points1_2_predicted.view(1, -1, 2)
-
-                points1_2_predicted = transform_points_DVF(points1.view(2, -1, 1), 
+                    points1 = points1.clone().view(1, -1, 2)
+                points1_2_predicted = transform_points_DVF(points1.clone().view(2, -1, 1).cpu().detach(),
                     affine_params_predicted, source_image)
-                # M_ = combine_matrices(M, affine_params_predicted).to(device)
-                # points1_2_predicted = transform_points_DVF(data[3],
-                #                         M_, data[0].cpu().detach())
-                transformed_source_affine = tensor_affine_transform0(data[0].to(device), 
+                transformed_source_affine = tensor_affine_transform0(source_image,
                                         affine_params_predicted.to(device))
                 # print(f"best_index: {best_index}, {best_index//2}, {points1_2_predicted.shape}")
                 
@@ -292,7 +293,7 @@ def test(model_name, models, model_params, timestamp):
                 best_model_text = f"rep{j:02d}_{best_index//2}_fw" if best_index % 2 == 0 else f"rep{j:02d}_{best_index//2}_rv"
 
                 if points1.shape[0] != 1 and points1.shape[-1] != 2:
-                    points1 = points1.view(1, -1, 2)
+                    points1 = points1.clone().view(1, -1, 2)
                 if points1_2_predicted.shape[0] != 1 and points1_2_predicted.shape[-1] != 2:
                     points1_2_predicted = points1_2_predicted.view(1, -1, 2)
 
@@ -301,7 +302,7 @@ def test(model_name, models, model_params, timestamp):
                     f"{i+1}", best_model_text, source_image[0, 0, :, :].cpu().numpy(),
                     target_image[0, 0, :, :].cpu().numpy(),
                     transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    points1[0].cpu().detach().numpy().T,
+                    points1[0].clone().cpu().detach().numpy().T,
                     points2[0].cpu().detach().numpy().T,
                     points1_2_predicted[0].cpu().detach().numpy().T, None, None,
                     affine_params_true=affine_params_true,
@@ -339,7 +340,8 @@ def test(model_name, models, model_params, timestamp):
                 else:
                     print(f"No improvement for {no_improve+1} reps")
                     no_improve += 1
-                    votes[j] = -1             
+                    votes[j] = -1
+                    points1 = data[3].clone().to(device)   
 
                 # if there is no improvement for 2 reps, stop the iteration
                 if no_improve > 2:
