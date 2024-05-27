@@ -272,7 +272,7 @@ def test(model_name, models, model_params, timestamp):
 
                     # inverse of the affine matrix
                     affine_params_predicted = matrix_to_params(
-                        torch.inverse(params_to_matrix(affine_params_predicted_rv)))
+                        torch.inverse(params_to_matrix(affine_params_predicted_rv))).to(device)
                     # print(affine_params_predicted_rv, affine_params_predicted)
 
                 # print input device
