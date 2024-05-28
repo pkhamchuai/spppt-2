@@ -232,7 +232,7 @@ def test(model_name, models, model_params, timestamp):
                 ssim12_image_before_first = 0, 0, 0, 0
             mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 20
+            rep = 30
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
             metrics_points = [np.inf] * 5 * 2
             mse_images = [np.inf] * 5 * 2
@@ -299,7 +299,7 @@ def test(model_name, models, model_params, timestamp):
                     transformed_source_affine = tensor_affine_transform0(source_image,
                                         affine_params_predicted.to(device))
                     points1_2_predicted = transform_points_DVF0(
-                        points1[0].clone().view(2, -1, 1).cpu().detach(),
+                        points1.clone().cpu().detach(),
                         affine_params_predicted_rv, source_image, reverse=True)
 
                     if points1.shape[0] != 1:
@@ -369,7 +369,7 @@ def test(model_name, models, model_params, timestamp):
                     transformed_source_affine = tensor_affine_transform0(source_image,
                                         affine_params_predicted.to(device))
                     points1_2_predicted = transform_points_DVF0(
-                        points1.clone().view(2, -1, 1).cpu().detach(),
+                        points1.clone().cpu().detach(),
                         affine_params_predicted_rv, source_image, reverse=True)
 
                 # print input device
@@ -438,7 +438,7 @@ def test(model_name, models, model_params, timestamp):
                     print(f"No improvement for {no_improve+1} reps")
                     no_improve += 1
                     votes[j] = -1
-                    points1 = data[3].clone().to(device)   
+                    # points1 = data[3].clone().to(device)   
 
                 # if there is no improvement for 2 reps, stop the iteration
                 if no_improve > 2:
