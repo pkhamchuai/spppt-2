@@ -73,12 +73,8 @@ def run(model_params):
     testbar = tqdm(test_dataset, desc=f'Testing:')
     for i, data in enumerate(testbar, 0):
         # Get images and affine parameters
-        if model_params.sup:
-            source_image, target_image, affine_params_true = data
-        else:
-            source_image, target_image = data
-            affine_params_true = None
-            
+        source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
+
         # process images
         source_image = process_image(source_image)
         target_image = process_image(target_image)
@@ -103,14 +99,29 @@ def run(model_params):
         matches1_RANSAC = matches1[:, matches_RANSAC]
         matches2_RANSAC = matches2[:, matches_RANSAC]
 
+        # # create affine transform matrix from points1 to points2
+        # # and apply it to points1
+        # affine_transform1 = cv2.estimateAffinePartial2D(matches1_RANSAC.T, matches2_RANSAC.T)
+        # matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
+        # matches1_transformed = matches1_transformed[0].T
+
+        # # transform image 1 and 2 using the affine transform matrix
+        # transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
+
         # create affine transform matrix from points1 to points2
         # and apply it to points1
-        affine_transform1 = cv2.estimateAffinePartial2D(matches1_RANSAC.T, matches2_RANSAC.T)
-        matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
-        matches1_transformed = matches1_transformed[0].T
-
-        # transform image 1 and 2 using the affine transform matrix
-        transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
+        try:
+            affine_transform1 = cv2.estimateAffinePartial2D(matches1_RANSAC.T, matches2_RANSAC.T)
+            matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
+            matches1_transformed = matches1_transformed[0].T
+            # transform image 1 and 2 using the affine transform matrix
+            transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
+        except cv2.error:
+            print(f"Error: {i}")
+            # set affine_transform1 to identity affine matrix
+            affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
+            matches1_transformed = matches1
+            transformed_source_affine = source_image
 
         # mse12 = np.mean((matches1_transformed - matches2_RANSAC)**2)
         # tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2_RANSAC)**2, axis=0)))
@@ -120,12 +131,12 @@ def run(model_params):
         else:
             plot_ = False
 
-        results = DL_affine_plot(f"{i+1}", output_dir,
-                f"{i}", "_", source_image, target_image, \
+        results = DL_affine_plot(f"test_{i+1}", output_dir,
+                f"{i}", "RANSAC", source_image, target_image, \
                 transformed_source_affine, \
                 matches1, matches2, matches1_transformed, desc1, desc2, 
                 affine_params_true=affine_params_true,
-                affine_params_predict=affine_transform1, 
+                affine_params_predict=affine_transform1[0], 
                 heatmap1=heatmap1, heatmap2=heatmap2, plot=plot_)
 
 
@@ -167,8 +178,8 @@ def run(model_params):
     #     if file.endswith(".txt"):
     #         os.remove(os.path.join(output_dir, file))
 
-    print_summary(args.model, None, model_params, 
-                  None, timestamp, True)
+    # print_summary(args.model, None, model_params, 
+    #               None, timestamp, True)
 
 
 # if main
@@ -179,7 +190,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=int, default=1, help='dataset number')
     parser.add_argument('--sup', type=int, default=1, help='supervised learning (1) or unsupervised learning (0)')
     parser.add_argument('--image', type=int, default=1, help='image used for training')
-    parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
+    # parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
     parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
@@ -188,7 +199,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     args = parser.parse_args()
 
-    model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, heatmaps=args.heatmaps, 
+    model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, # heatmaps=args.heatmaps, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
                                learning_rate=args.learning_rate, decay_rate=args.decay_rate)
     model_params.print_explanation()
