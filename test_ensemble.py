@@ -1,14 +1,14 @@
 import subprocess
 import os
 
-# dataset = range(0, 6)
-# sups = [0, 1, 1, 1, 1, 1]
+dataset = range(0, 6)
+sups = [0, 1, 1, 1, 1, 1]
 # dataset = range(1, 6)
 # sups = [1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
-dataset = [0]
-sups = [0]
+# dataset = [0]
+# sups = [0]
 
 # models = ['Attention']
 # , 'AIRNet', 'SP_AffineNet4'
@@ -43,16 +43,16 @@ files = os.listdir('trained_models/')
 #             'DHR_51100_0.001_0_5_100_20240509-140837.pth']
 
 # DHR 2x
-models = 'DHR2x'
-model_path = ['DHR2x_11100_0.001_0_10_100_20240515-130704.pth', 'DHR2x_21100_0.001_0_5_100_20240514-131741.pth',
-              'DHR2x_31100_0.001_0_5_100_20240514-132527.pth', 'DHR2x_41100_0.001_0_5_100_20240514-132814.pth',
-              'DHR2x_51100_0.001_0_5_100_20240513-112002.pth']
+# models = 'DHR2x'
+# model_path = ['DHR2x_11100_0.001_0_10_100_20240515-130704.pth', 'DHR2x_21100_0.001_0_5_100_20240514-131741.pth',
+#               'DHR2x_31100_0.001_0_5_100_20240514-132527.pth', 'DHR2x_41100_0.001_0_5_100_20240514-132814.pth',
+#               'DHR2x_51100_0.001_0_5_100_20240513-112002.pth']
 
 # Attention
-# models = 'Attention'
-# model_path = ['Attention_11100_0.001_0_5_100_20240513-152019.pth', 'Attention_21100_0.001_0_5_100_20240513-152334.pth',
-#               'Attention_31100_0.001_0_5_100_20240513-152949.pth', 'Attention_41100_0.001_0_5_100_20240513-153219.pth',
-#               'Attention_51100_0.001_0_5_100_20240513-153734.pth']
+models = 'Attention'
+model_path = ['Attention_11100_0.001_0_5_100_20240513-152019.pth', 'Attention_21100_0.001_0_5_100_20240513-152334.pth',
+              'Attention_31100_0.001_0_5_100_20240513-152949.pth', 'Attention_41100_0.001_0_5_100_20240513-153219.pth',
+              'Attention_51100_0.001_0_5_100_20240513-153734.pth']
     
 # Attention without pooling
 # models = 'Attention_no_pooling'
@@ -82,7 +82,7 @@ learning_rate = 1e-3
 for dataset_, sup in zip(dataset, sups):
     runs.append(['python', 'test_ensemble_1way_reverse0.py', '--model', str(models), '--sup', str(sup),
                      '--dataset', str(dataset_),
-                    '--model_path', str(model_path), '--plot', '1'
+                    '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
                                 ])
         
 # sort runs by element 1, then 11, then 7

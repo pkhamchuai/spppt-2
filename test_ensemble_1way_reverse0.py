@@ -56,14 +56,14 @@ def tensor_affine_transform0(image, matrix):
     # Get the image size
     _, _, H, W = image.size()
     # Generate a grid of (x,y) coordinates
-    grid = F.affine_grid(matrix, [1, 1, H, W])
+    grid = F.affine_grid(matrix, [1, 1, H, W], align_corners=False)
     # Sample the input image at the grid points
     
     # if image and matrix are on the same device
     if image.device == matrix.device:
-        transformed_image = F.grid_sample(image, grid)
+        transformed_image = F.grid_sample(image, grid, align_corners=False)
     else:
-        transformed_image = F.grid_sample(image.to(matrix.device), grid)
+        transformed_image = F.grid_sample(image.to(matrix.device), grid, align_corners=False)
     return transformed_image
 
 def transform_points_DVF0(points_, M, image, reverse=False):
@@ -158,7 +158,7 @@ def transform_points_DVF_unbatched0(points_, M, image, reverse=False):
 
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
-def test(model_name, models, model_params, timestamp):
+def test(model_name, models, model_params, timestamp, verbose=False):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
@@ -343,7 +343,8 @@ def test(model_name, models, model_params, timestamp):
                 else:
                     best_index = best_metrics_points
 
-                print(f"Pair {i}, Rep {j}, best model index: {best_index}")
+                if verbose:
+                    print(f"Pair {i}, Rep {j}, best model index: {best_index}")
                 best_model = best_index//2
 
                 if best_index % 2 == 0:
@@ -435,7 +436,8 @@ def test(model_name, models, model_params, timestamp):
                         no_improve -= 1
 
                 else:
-                    print(f"No improvement for {no_improve+1} reps")
+                    if verbose:
+                        print(f"No improvement for {no_improve+1} reps")
                     no_improve += 1
                     votes[j] = -1
                     # points1 = data[3].clone().to(device)   
@@ -503,6 +505,7 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--plot', type=int, default=1, help='plot the results')
+    parser.add_argument('--verbose', type=int, default=0, help='verbose output')
     args = parser.parse_args()
 
     # model_path = 'trained_models/' + args.model_path
@@ -535,5 +538,7 @@ if __name__ == '__main__':
 
     print(f"\nTesting the trained model: {args.model} +++++++++++++++++++++++")
 
-    test(args.model, model_path, model_params, timestamp)
+    args.verbose = int(args.verbose)
+    print(f"verbose: {args.verbose}")
+    test(args.model, model_path, model_params, timestamp, verbose=args.verbose)
     print("Test model finished +++++++++++++++++++++++++++++")
