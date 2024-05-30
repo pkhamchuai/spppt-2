@@ -50,8 +50,11 @@ def model_loader(model_name, model_params):
         elif model_name == 'SP_AffineNet4':
             from utils.SPaffineNet4 import SP_AffineNet4
             model = SP_AffineNet4(model_params).to(device)
-        elif model_name == 'DHR':
-            from utils.SP_DHR import SP_DHR_Net
+        elif model_name == 'DHRoriginal':
+            from utils.SP_DHRoriginal import SP_DHR_Net
+            model = SP_DHR_Net(model_params).to(device)
+        elif model_name == 'DHRdiff':
+            from utils.SP_DHRdiff import SP_DHR_Net
             model = SP_DHR_Net(model_params).to(device)
         elif model_name == 'DHR2x':
             from utils.SP_DHR2x import SP_DHR_Net

@@ -104,6 +104,7 @@ class Feature_Extractor(nn.Module):
         return x
 
 def load_network(device, path=None):
+    print("Loading DHR original network.")
     model = Affine_Network(device)
     model = model.to(device)
     batch_size = 2

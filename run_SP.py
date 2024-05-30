@@ -96,7 +96,7 @@ def run(model_params):
         # create affine transform matrix from points1 to points2
         # and apply it to points1
         try:
-            affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T)
+            affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T, method=cv2.LMEDS)
             matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
             matches1_transformed = matches1_transformed[0].T
             # transform image 1 and 2 using the affine transform matrix
