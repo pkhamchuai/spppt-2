@@ -94,8 +94,8 @@ def run(model_params):
 
 
         # Match keypoints using nearest neighbor search
-        bf = cv2.BFMatcher()
-        matches = bf.knnMatch(desc1, desc2, k=2)
+        # bf = cv2.BFMatcher()
+        # matches = bf.knnMatch(desc1, desc2, k=2)
 
         # tracker = PointTracker(2, nn_thresh=0.7)
         # matches = tracker.ransac(desc1, desc2, matches)
@@ -116,28 +116,29 @@ def run(model_params):
             if m.distance < 0.9 * n.distance:
                 good_matches.append(m)
 
-        # Apply RANSAC to filter out outliers
+        # # Apply RANSAC to filter out outliers
         matches1 = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
 
         matches2 = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
 
-        print(f"matches1: {matches1.shape}")
-        print(f"matches2: {matches2.shape}")
-
         matches1 = matches1.squeeze(1)
         matches2 = matches2.squeeze(1)
+
+        print(f"matches1: {matches1.shape}")
+        print(f"matches2: {matches2.shape}")
         
         try:
             M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
             # print(f"M: {M}")
             # affine_transform1 = M[:2, :]
-            affine_transform1 = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.LMEDS)
+            affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T, method=cv2.LMEDS)
             matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
             matches1_transformed = matches1_transformed[0].T
             # transform image 1 and 2 using the affine transform matrix
             transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
         except cv2.error:
             print(f"Error: {i}")
+            continue
             affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
             matches1_transformed = matches1
             transformed_source_affine = source_image
