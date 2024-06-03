@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import random
 import math
 from skimage.metrics import structural_similarity as ssim
-from skimage.measure import ransac
+# from skimage.measure import ransac
 from skimage.transform import FundamentalMatrixTransform, AffineTransform
 # Suppress the specific warning
 import warnings
@@ -34,7 +34,7 @@ myjet = np.array([[0.        , 0.        , 0.5       ],
                   [0.99910873, 0.07334786, 0.        ],
                   [0.5       , 0.        , 0.        ]])
 
-from utils.SuperPoint import SuperPointFrontend, PointTracker, load_image
+from utils.SuperPoint import SuperPointFrontend, PointTracker, load_image, ransac
 from utils.datagen import datagen
 from utils.utils0 import *
 from utils.utils1 import *
@@ -50,15 +50,10 @@ def process_image(image):
     image = image.squeeze(0).squeeze(0)
     # convert to numpy array
     image = image.cpu().numpy()
-    # normalize image to range 0 to 1
-    image = (image/np.max(image)).astype('float32')
+    image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
     return image
 
 def run(model_params):
-    # Initialize SuperPointFrontend
-    superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
-                          conf_thresh=0.015,
-                          nn_thresh=0.7, cuda=True)
     
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
@@ -78,46 +73,100 @@ def run(model_params):
         # process images
         source_image = process_image(source_image)
         target_image = process_image(target_image)
+        # print(f"source_image: {source_image.shape}")
+        # print(f"target_image: {target_image.shape}")
 
+        # Extract keypoints and descriptors using SIFT
         sift = cv2.SIFT_create()
-
-        # find the keypoints and descriptors with SIFT
         kp1, desc1 = sift.detectAndCompute(source_image, None)
         kp2, desc2 = sift.detectAndCompute(target_image, None)
 
-        # create BFMatcher object
+        print(desc1.shape)
+        print(desc2.shape)
+
+        # pad the smaller desc to the same size with zeros
+        if desc1.shape[0] < desc2.shape[0]:
+            desc1 = np.pad(desc1, ((0, desc2.shape[0] - desc1.shape[0]), (0, 0)), mode='constant')
+            kp1 = kp1 + tuple([cv2.KeyPoint(x=kp1[0].pt[0], y=kp1[0].pt[1], size=0)])
+        elif desc1.shape[0] > desc2.shape[0]:
+            desc2 = np.pad(desc2, ((0, desc1.shape[0] - desc2.shape[0]), (0, 0)), mode='constant')
+            kp2 = kp2 + tuple([cv2.KeyPoint(x=kp2[0].pt[0], y=kp2[0].pt[1], size=0)])
+
+
+        # Match keypoints using nearest neighbor search
         bf = cv2.BFMatcher()
         matches = bf.knnMatch(desc1, desc2, k=2)
 
-        # Apply ratio test
-        good = []
+        # tracker = PointTracker(2, nn_thresh=0.7)
+        # matches = tracker.ransac(desc1, desc2, matches)
+
+        # print(f"matches: {matches}")
+
+        FLANN_INDEX_KDTREE = 1
+        index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+        search_params = dict(checks = 50)
+        
+        flann = cv2.FlannBasedMatcher(index_params, search_params)
+        
+        matches = flann.knnMatch(desc1,desc2,k=2)
+
+        # Apply ratio test to filter out ambiguous matches
+        good_matches = []
         for m, n in matches:
-            if m.distance < 0.75 * n.distance:
-                good.append(m)
+            if m.distance < 0.9 * n.distance:
+                good_matches.append(m)
 
-        print(f"Number of matches: {len(matches)}")
-        print(f"Number of good matches: {len(good)}")
-        print(f"Number of keypoints: {len(kp1)}")
-        print(f"Number of keypoints: {len(kp2)}")
+        # Apply RANSAC to filter out outliers
+        matches1 = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
 
-        # take the elements from points1 and points2 using the matches as indices
-        matches1 = points1[:2, matches[0, :].astype(int)]
-        matches2 = points2[:2, matches[1, :].astype(int)]
+        matches2 = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
 
-        # create affine transform matrix from points1 to points2
-        # and apply it to points1
+        print(f"matches1: {matches1.shape}")
+        print(f"matches2: {matches2.shape}")
+
+        matches1 = matches1.squeeze(1)
+        matches2 = matches2.squeeze(1)
+        
         try:
-            affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T, method=cv2.LMEDS)
+            M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
+            # print(f"M: {M}")
+            # affine_transform1 = M[:2, :]
+            affine_transform1 = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.LMEDS)
             matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
             matches1_transformed = matches1_transformed[0].T
             # transform image 1 and 2 using the affine transform matrix
             transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
         except cv2.error:
             print(f"Error: {i}")
-            # set affine_transform1 to identity affine matrix
             affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
             matches1_transformed = matches1
             transformed_source_affine = source_image
+            # continue
+
+        # Create affine transformation matrix from matches1 to matches2
+
+        # affine_transform = M[:2, :]
+        # affine_transform, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.LMEDS)
+
+        # matches = np.array([m for m in matches])
+        # print(f"matches: {matches.shape}")
+        # # print(f"matches: {matches}")
+
+        # take the elements from points1 and points2 using the matches as indices
+        # matches1 = points1[:2, matches[0, :].astype(int)]
+        # matches2 = points2[:2, matches[1, :].astype(int)]
+
+        # create affine transform matrix from points1 to points2
+        # and apply it to points1
+        # try:
+            
+            
+        # except cv2.error:
+        #     print(f"Error: {i}")
+        #     # set affine_transform1 to identity affine matrix
+        #     affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
+        #     matches1_transformed = matches1
+        #     transformed_source_affine = source_image
         
         # mse12 = np.mean((matches1_transformed - matches2)**2)
         # tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2)**2, axis=0)))
@@ -128,7 +177,7 @@ def run(model_params):
             plot_ = False
 
         results = DL_affine_plot(f"test_{i+1}", output_dir,
-                f"{i}", "SP", source_image, target_image, \
+                f"{i}", "SIFT", source_image, target_image, \
                 transformed_source_affine, \
                 matches1, matches2, matches1_transformed, desc1, desc2, 
                 affine_params_true=affine_params_true,
@@ -182,7 +231,7 @@ def run(model_params):
 if __name__ == '__main__':
     # get the arguments
     parser = argparse.ArgumentParser(description='Deep Learning for Image Registration')    
-    parser.add_argument('--dataset', type=int, default=1, help='dataset number')
+    parser.add_argument('--dataset', type=int, default=0, help='dataset number')
     parser.add_argument('--sup', type=int, default=1, help='supervised learning (1) or unsupervised learning (0)')
     parser.add_argument('--image', type=int, default=1, help='image used for training')
     parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
@@ -190,7 +239,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default='SP', help='which model to use')
+    parser.add_argument('--model', type=str, default='SIFT', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     args = parser.parse_args()
 

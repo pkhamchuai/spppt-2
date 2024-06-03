@@ -43,8 +43,8 @@ class MyDataset(torch.utils.data.Dataset):
         source_path = row['source']
         target_path = row['target']
         # print(idx, source_path, target_path)
-        source_img = cv2.imread(source_path, 0)
-        target_img = cv2.imread(target_path, 0)
+        source_img = cv2.imread(source_path, cv2.IMREAD_GRAYSCALE)
+        target_img = cv2.imread(target_path, cv2.IMREAD_GRAYSCALE)
         source_img = cv2.resize(source_img, (img_size, img_size), interpolation=cv2.INTER_AREA)
         target_img = cv2.resize(target_img, (img_size, img_size), interpolation=cv2.INTER_AREA)
 
