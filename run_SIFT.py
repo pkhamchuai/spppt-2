@@ -53,7 +53,7 @@ def process_image(image):
     image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
     return image
 
-def run(model_params):
+def run(model_params, method1='BFMatcher', method2='RANSAC'):
     
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
@@ -96,78 +96,76 @@ def run(model_params):
         #     desc2 = np.pad(desc2, ((0, desc1.shape[0] - desc2.shape[0]), (0, 0)), mode='constant')
         #     kp2 = kp2 + tuple([cv2.KeyPoint(x=kp2[0].pt[0], y=kp2[0].pt[1], size=0)])
 
+        if method1 == 'BFMatcher':
+            # Match keypoints using nearest neighbor search
+            bf = cv2.BFMatcher()
+            matches = bf.knnMatch(desc1, desc2, k=2)
 
-        # Match keypoints using nearest neighbor search
-        bf = cv2.BFMatcher()
-        matches = bf.knnMatch(desc1, desc2, k=2)
-
-        good = []
-        try:
-            for m,n in matches:
-                if m.distance < 0.75*n.distance:
-                    good.append([m])
-        except ValueError:
             good = []
+            try:
+                for m,n in matches:
+                    if m.distance < 0.75*n.distance:
+                        good.append([m])
+            except ValueError:
+                good = []
 
-        # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-        # plt.imshow(img3), plt.show()
+            # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+            # plt.imshow(img3), plt.show()
 
-        matches = np.array([m for m in matches])
-        matches1 = np.float32([kp1[m[0].queryIdx].pt for m in good]).reshape(-1, 2)
-        matches2 = np.float32([kp2[m[0].trainIdx].pt for m in good]).reshape(-1, 2)
-        # print(f"matches1: {matches1}")
-        # print(f"matches2: {matches2}")
+            matches = np.array([m for m in matches])
+            matches1 = np.float32([kp1[m[0].queryIdx].pt for m in good]).reshape(-1, 2)
+            matches2 = np.float32([kp2[m[0].trainIdx].pt for m in good]).reshape(-1, 2)
+            # print(f"matches1: {matches1}")
+            # print(f"matches2: {matches2}")
 
-        # tracker = PointTracker(2, nn_thresh=0.7)
-        # matches = tracker.ransac(desc1, desc2, matches)
+            # tracker = PointTracker(2, nn_thresh=0.7)
+            # matches = tracker.ransac(desc1, desc2, matches)
 
-        # print(f"pair: {i+1}, matches: {matches.shape}")
+            # print(f"pair: {i+1}, matches: {matches.shape}")
 
-        # FLANN_INDEX_KDTREE = 1
-        # index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-        # search_params = dict(checks = 50)
-        
-        # flann = cv2.FlannBasedMatcher(index_params, search_params)
-        
-        # matches = flann.knnMatch(desc1,desc2,k=2)
+        elif method1 == 'FLANN':
+            FLANN_INDEX_KDTREE = 1
+            index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+            search_params = dict(checks = 50)
+            
+            flann = cv2.FlannBasedMatcher(index_params, search_params)
+            
+            matches = flann.knnMatch(desc1,desc2,k=2)
 
-        # # Apply ratio test to filter out ambiguous matches
-        # good_matches = []
-        # for m, n in matches:
-        #     if m.distance < 0.75 * n.distance:
-        #         good_matches.append(m)
+            # Apply ratio test to filter out ambiguous matches
+            good_matches = []
+            for m, n in matches:
+                if m.distance < 0.75 * n.distance:
+                    good_matches.append(m)
 
-        # # Apply RANSAC to filter out outliers
-        # matches1 = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 2)
-        # matches2 = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 2)
+            # Apply RANSAC to filter out outliers
+            matches1 = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 2)
+            matches2 = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 2)
 
-        # # Need to draw only good matches, so create a mask
-        # matchesMask = [[0,0] for i in range(len(matches))]
-        
-        # # ratio test as per Lowe's paper
-        # for i,(m,n) in enumerate(matches):
-        #     if m.distance < 0.*n.distance:
-        #         matchesMask[i]=[1,0]
+            # # Need to draw only good matches, so create a mask
+            # matchesMask = [[0,0] for i in range(len(matches))]
+            
+            # # ratio test as per Lowe's paper
+            # for i,(m,n) in enumerate(matches):
+            #     if m.distance < 0.*n.distance:
+            #         matchesMask[i]=[1,0]
 
-        # draw_params = dict(matchColor = (0,255,0),
-        #     singlePointColor = (255,0,0),
-        #     matchesMask = matchesMask,
-        #     flags = cv2.DrawMatchesFlags_DEFAULT)
-        
-        # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2, matches, None, **draw_params)
-        # plt.imshow(img3), plt.show()
-
-        # matches1 = matches1.squeeze(1)
-        # matches2 = matches2.squeeze(1)
-
-        # print(f"matches1: {matches1.shape}")
-        # print(f"matches2: {matches2.shape}")
+            # draw_params = dict(matchColor = (0,255,0),
+            #     singlePointColor = (255,0,0),
+            #     matchesMask = matchesMask,
+            #     flags = cv2.DrawMatchesFlags_DEFAULT)
+            
+            # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2, matches, None, **draw_params)
+            # plt.imshow(img3), plt.show()
         
         try:
             # M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
             # print(f"M: {M}")
             # affine_transform1 = M[:2, :]
-            affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.RANSAC)
+            if method2 == 'RANSAC':
+                affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.RANSAC)
+            elif method2 == 'LMEDS':
+                affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.LMEDS)
             points1_transformed = cv2.transform(points1[None, :, :], affine_transform1)
             # print(f"matches1_transformed: {matches1_transformed.shape}")
             try:
@@ -305,4 +303,4 @@ if __name__ == '__main__':
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    run(model_params)
+    run(model_params, method1='FLANN', method2='RANSAC')
