@@ -71,6 +71,8 @@ def run(model_params):
     for i, data in enumerate(testbar, 0):
         # Get images and affine parameters
         source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
+        points1 = points1.squeeze(0).cpu().numpy()
+        points2 = points2.squeeze(0).cpu().numpy()
             
         # process images
         source_image = process_image(source_image)
@@ -100,9 +102,12 @@ def run(model_params):
         matches = bf.knnMatch(desc1, desc2, k=2)
 
         good = []
-        for m,n in matches:
-            if m.distance < 0.75*n.distance:
-                good.append([m])
+        try:
+            for m,n in matches:
+                if m.distance < 0.75*n.distance:
+                    good.append([m])
+        except ValueError:
+            good = []
 
         # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
         # plt.imshow(img3), plt.show()
@@ -126,17 +131,15 @@ def run(model_params):
         
         # matches = flann.knnMatch(desc1,desc2,k=2)
 
-        # Apply ratio test to filter out ambiguous matches
+        # # Apply ratio test to filter out ambiguous matches
         # good_matches = []
         # for m, n in matches:
-        #     if m.distance < 0.9 * n.distance:
+        #     if m.distance < 0.75 * n.distance:
         #         good_matches.append(m)
 
-        
-
         # # Apply RANSAC to filter out outliers
-        # matches1 = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
-        # matches2 = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+        # matches1 = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 2)
+        # matches2 = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 2)
 
         # # Need to draw only good matches, so create a mask
         # matchesMask = [[0,0] for i in range(len(matches))]
@@ -164,10 +167,13 @@ def run(model_params):
             # M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
             # print(f"M: {M}")
             # affine_transform1 = M[:2, :]
-            affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.LMEDS)
-            matches1_transformed = cv2.transform(matches1[None, :, :], affine_transform1)
+            affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.RANSAC)
+            points1_transformed = cv2.transform(points1[None, :, :], affine_transform1)
             # print(f"matches1_transformed: {matches1_transformed.shape}")
-            matches1_transformed = matches1_transformed[0]
+            try:
+                points1_transformed = points1_transformed[0]
+            except TypeError:
+                pass
             # transform image 1 and 2 using the affine transform matrix
             transformed_source_affine = cv2.warpAffine(source_image, affine_transform1, (256, 256))
             text = "success"
@@ -175,7 +181,7 @@ def run(model_params):
             # print(f"Error: {i}")
             # break
             affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
-            matches1_transformed = matches1
+            points1_transformed = points1
             transformed_source_affine = source_image
             text = "failed"
             num_failed += 1
@@ -214,14 +220,22 @@ def run(model_params):
         else:
             plot_ = False
 
+        try:
+            points1, points2, points1_transformed = points1.T, points2.T, points1_transformed.T
+        except AttributeError:
+            points1, points2, points1_transformed = [], [], []
+
+        # print(f"points1: {points1.shape}")
+        # print(f"points2: {points2.shape}")
+        # print(f"points1_transformed: {points1_transformed.shape}")
+        
         results = DL_affine_plot(f"test_{i+1}", output_dir,
                 f"{i}", text, source_image, target_image, \
                 transformed_source_affine, \
-                matches1.T, matches2.T, matches1_transformed.T, desc1, desc2, 
+                points1, points2, points1_transformed, desc1, desc2, 
                 affine_params_true=affine_params_true,
                 affine_params_predict=np.round(affine_transform1, 3), 
                 heatmap1=None, heatmap2=None, plot=plot_)
-
 
         # calculate metrics
         # matches1_transformed = results[0]
@@ -236,7 +250,7 @@ def run(model_params):
 
         # append metrics to metrics list
         metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, 
-            mse12_image, ssim12_image_before, ssim12_image, matches2.shape[-1]])
+            mse12_image, ssim12_image_before, ssim12_image, matches2.shape[0]])
         
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)

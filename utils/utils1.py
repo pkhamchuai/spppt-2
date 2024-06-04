@@ -770,17 +770,23 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
     # print("desc1 shape:", desc1.shape)
     # print("desc2 shape:", desc2.shape)
 
-    # MSE and TRE before transformation (points)
-    mse_before = mse(matches1, matches2)
-    tre_before = tre(matches1, matches2)
-    
-    # matches3 = cv2.transform(matches1.T[None, :, :], affine_params[0])
-    # matches3 = matches3[0].T
-    # print("matches3 shape:", matches3.shape)
-    # print("matches2 shape:", matches2.shape)
+    try:
+        # MSE and TRE before transformation (points)
+        mse_before = mse(matches1, matches2)
+        tre_before = tre(matches1, matches2)
+        
+        # matches3 = cv2.transform(matches1.T[None, :, :], affine_params[0])
+        # matches3 = matches3[0].T
+        # print("matches3 shape:", matches3.shape)
+        # print("matches2 shape:", matches2.shape)
 
-    mse12 = mse(matches3, matches2)
-    tre12 = tre(matches3, matches2)
+        mse12 = mse(matches3, matches2)
+        tre12 = tre(matches3, matches2)
+    except:
+        mse_before = np.nan
+        tre_before = np.nan
+        mse12 = np.nan
+        tre12 = np.nan
 
     # calculate the MSE between image3 and image2
     mse12_image_before = mse(image1, image2)
@@ -818,7 +824,10 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
 
             # axe B shows source image
             axes["B"].imshow(overlaid1, cmap='gray')
-            axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}\n{matches1.shape}, {matches2.shape}, {matches3.shape}") 
+            try:
+                axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}\n{matches1.shape}, {matches2.shape}, {matches3.shape}") 
+            except:
+                axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}")
             axes["B"].axis('off')
             axes['B'].grid(True)
 
@@ -851,7 +860,10 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             except:
                 axes["D"].imshow(overlaidD)
             # img2 = draw_lines_one_image(img2, matches2, matches3, line_color=(255, 0, 0))
-            axes["D"].set_title(f"Source -> Warped, Transformation. {mse(matches1, matches3):.4f}, {tre(matches1, matches3):.4f}")
+            try:
+                axes["D"].set_title(f"Source -> Warped, Transformation. {mse(matches1, matches3):.4f}, {tre(matches1, matches3):.4f}")
+            except:
+                axes["D"].set_title(f"Source -> Warped, Transformation.")
             axes["D"].axis('off')
 
             # img2 = draw_lines_one_image(overlaid2, matches3, matches1, line_color=(0, 0, 155))
