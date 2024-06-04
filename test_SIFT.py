@@ -85,41 +85,65 @@ def run(model_params):
         print(desc2.shape)
 
         # pad the smaller desc to the same size with zeros
-        if desc1.shape[0] < desc2.shape[0]:
-            desc1 = np.pad(desc1, ((0, desc2.shape[0] - desc1.shape[0]), (0, 0)), mode='constant')
-            kp1 = kp1 + tuple([cv2.KeyPoint(x=kp1[0].pt[0], y=kp1[0].pt[1], size=0)])
-        elif desc1.shape[0] > desc2.shape[0]:
-            desc2 = np.pad(desc2, ((0, desc1.shape[0] - desc2.shape[0]), (0, 0)), mode='constant')
-            kp2 = kp2 + tuple([cv2.KeyPoint(x=kp2[0].pt[0], y=kp2[0].pt[1], size=0)])
+        # if desc1.shape[0] < desc2.shape[0]:
+        #     desc1 = np.pad(desc1, ((0, desc2.shape[0] - desc1.shape[0]), (0, 0)), mode='constant')
+        #     kp1 = kp1 + tuple([cv2.KeyPoint(x=kp1[0].pt[0], y=kp1[0].pt[1], size=0)])
+        # elif desc1.shape[0] > desc2.shape[0]:
+        #     desc2 = np.pad(desc2, ((0, desc1.shape[0] - desc2.shape[0]), (0, 0)), mode='constant')
+        #     kp2 = kp2 + tuple([cv2.KeyPoint(x=kp2[0].pt[0], y=kp2[0].pt[1], size=0)])
 
 
         # Match keypoints using nearest neighbor search
-        # bf = cv2.BFMatcher()
-        # matches = bf.knnMatch(desc1, desc2, k=2)
+        bf = cv2.BFMatcher()
+        matches = bf.knnMatch(desc1, desc2, k=2)
+
+        good = []
+        for m,n in matches:
+            if m.distance < 0.75*n.distance:
+                good.append([m])
+
+        img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
         # tracker = PointTracker(2, nn_thresh=0.7)
         # matches = tracker.ransac(desc1, desc2, matches)
 
         # print(f"matches: {matches}")
 
-        FLANN_INDEX_KDTREE = 1
-        index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-        search_params = dict(checks = 50)
+        # FLANN_INDEX_KDTREE = 1
+        # index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+        # search_params = dict(checks = 50)
         
-        flann = cv2.FlannBasedMatcher(index_params, search_params)
+        # flann = cv2.FlannBasedMatcher(index_params, search_params)
         
-        matches = flann.knnMatch(desc1,desc2,k=2)
+        # matches = flann.knnMatch(desc1,desc2,k=2)
 
         # Apply ratio test to filter out ambiguous matches
-        good_matches = []
-        for m, n in matches:
-            if m.distance < 0.9 * n.distance:
-                good_matches.append(m)
+        # good_matches = []
+        # for m, n in matches:
+        #     if m.distance < 0.9 * n.distance:
+        #         good_matches.append(m)
+
+        
 
         # # Apply RANSAC to filter out outliers
-        matches1 = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+        # matches1 = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+        # matches2 = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
 
-        matches2 = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+        # # Need to draw only good matches, so create a mask
+        # matchesMask = [[0,0] for i in range(len(matches))]
+        
+        # # ratio test as per Lowe's paper
+        # for i,(m,n) in enumerate(matches):
+        #     if m.distance < 0.*n.distance:
+        #         matchesMask[i]=[1,0]
+
+        # draw_params = dict(matchColor = (0,255,0),
+        #     singlePointColor = (255,0,0),
+        #     matchesMask = matchesMask,
+        #     flags = cv2.DrawMatchesFlags_DEFAULT)
+        
+        # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2, matches, None, **draw_params)
+        plt.imshow(img3), plt.show()
 
         matches1 = matches1.squeeze(1)
         matches2 = matches2.squeeze(1)
@@ -138,7 +162,7 @@ def run(model_params):
             transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
         except cv2.error:
             print(f"Error: {i}")
-            continue
+            break
             affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
             matches1_transformed = matches1
             transformed_source_affine = source_image
@@ -232,7 +256,7 @@ def run(model_params):
 if __name__ == '__main__':
     # get the arguments
     parser = argparse.ArgumentParser(description='Deep Learning for Image Registration')    
-    parser.add_argument('--dataset', type=int, default=0, help='dataset number')
+    parser.add_argument('--dataset', type=int, default=1, help='dataset number')
     parser.add_argument('--sup', type=int, default=1, help='supervised learning (1) or unsupervised learning (0)')
     parser.add_argument('--image', type=int, default=1, help='image used for training')
     parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
