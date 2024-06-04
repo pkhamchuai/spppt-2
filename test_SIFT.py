@@ -65,6 +65,8 @@ def run(model_params):
     # create a csv file to store the metrics
     csv_file = f"{output_dir}/metrics.csv"
 
+    num_failed = 0
+
     testbar = tqdm(test_dataset, desc=f'Testing:')
     for i, data in enumerate(testbar, 0):
         # Get images and affine parameters
@@ -81,8 +83,8 @@ def run(model_params):
         kp1, desc1 = sift.detectAndCompute(source_image, None)
         kp2, desc2 = sift.detectAndCompute(target_image, None)
 
-        print(desc1.shape)
-        print(desc2.shape)
+        # print(desc1.shape)
+        # print(desc2.shape)
 
         # pad the smaller desc to the same size with zeros
         # if desc1.shape[0] < desc2.shape[0]:
@@ -102,12 +104,19 @@ def run(model_params):
             if m.distance < 0.75*n.distance:
                 good.append([m])
 
-        img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+        # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+        # plt.imshow(img3), plt.show()
+
+        matches = np.array([m for m in matches])
+        matches1 = np.float32([kp1[m[0].queryIdx].pt for m in good]).reshape(-1, 2)
+        matches2 = np.float32([kp2[m[0].trainIdx].pt for m in good]).reshape(-1, 2)
+        # print(f"matches1: {matches1}")
+        # print(f"matches2: {matches2}")
 
         # tracker = PointTracker(2, nn_thresh=0.7)
         # matches = tracker.ransac(desc1, desc2, matches)
 
-        # print(f"matches: {matches}")
+        # print(f"pair: {i+1}, matches: {matches.shape}")
 
         # FLANN_INDEX_KDTREE = 1
         # index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
@@ -143,29 +152,33 @@ def run(model_params):
         #     flags = cv2.DrawMatchesFlags_DEFAULT)
         
         # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2, matches, None, **draw_params)
-        plt.imshow(img3), plt.show()
+        # plt.imshow(img3), plt.show()
 
-        matches1 = matches1.squeeze(1)
-        matches2 = matches2.squeeze(1)
+        # matches1 = matches1.squeeze(1)
+        # matches2 = matches2.squeeze(1)
 
-        print(f"matches1: {matches1.shape}")
-        print(f"matches2: {matches2.shape}")
+        # print(f"matches1: {matches1.shape}")
+        # print(f"matches2: {matches2.shape}")
         
         try:
-            M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
+            # M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
             # print(f"M: {M}")
             # affine_transform1 = M[:2, :]
-            affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T, method=cv2.LMEDS)
-            matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
-            matches1_transformed = matches1_transformed[0].T
+            affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.LMEDS)
+            matches1_transformed = cv2.transform(matches1[None, :, :], affine_transform1)
+            # print(f"matches1_transformed: {matches1_transformed.shape}")
+            matches1_transformed = matches1_transformed[0]
             # transform image 1 and 2 using the affine transform matrix
-            transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
+            transformed_source_affine = cv2.warpAffine(source_image, affine_transform1, (256, 256))
+            text = "success"
         except cv2.error:
-            print(f"Error: {i}")
-            break
+            # print(f"Error: {i}")
+            # break
             affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
             matches1_transformed = matches1
             transformed_source_affine = source_image
+            text = "failed"
+            num_failed += 1
             # continue
 
         # Create affine transformation matrix from matches1 to matches2
@@ -202,11 +215,11 @@ def run(model_params):
             plot_ = False
 
         results = DL_affine_plot(f"test_{i+1}", output_dir,
-                f"{i}", "SIFT", source_image, target_image, \
+                f"{i}", text, source_image, target_image, \
                 transformed_source_affine, \
-                matches1, matches2, matches1_transformed, desc1, desc2, 
+                matches1.T, matches2.T, matches1_transformed.T, desc1, desc2, 
                 affine_params_true=affine_params_true,
-                affine_params_predict=affine_transform1[0], 
+                affine_params_predict=np.round(affine_transform1, 3), 
                 heatmap1=None, heatmap2=None, plot=plot_)
 
 
@@ -248,7 +261,10 @@ def run(model_params):
     #     if file.endswith(".txt"):
     #         os.remove(os.path.join(output_dir, file))
 
-    # print_summary(args.model, None, model_params, None, timestamp, True)
+    extra_text = f"Failed: {num_failed} out of {len(test_dataset)}"
+    print(extra_text)
+    print_summary("SIFT", None, model_params, None, timestamp, 
+                  output_dir=output_dir, test=True, extra=extra_text)
 
 
 # if main
