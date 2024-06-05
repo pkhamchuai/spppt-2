@@ -24,6 +24,7 @@ print('Seed:', torch.seed())
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, print_summary
+from utils.utils2 import *
 from utils import test
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -93,13 +94,16 @@ def test(model_name, model_, model_params, timestamp):
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
-            TRE_last = 1e10
-            MSE_last = 1e10
+            metrics_points_best, mse_images_best = np.inf, np.inf
 
             mse_before_first, tre_before_first, mse12_image_before_first, \
                 ssim12_image_before_first = 0, 0, 0, 0
+            
+            no_improve = 0
+            M = np.array([[1, 0, 0], [0, 1, 0]], dtype=np.float32)
+            M = torch.from_numpy(M).unsqueeze(0)#.to(device)
 
-            for j in range(10):
+            for j in range(30):
                 # Forward + backward + optimize
                 outputs = model(source_image, target_image, points1)
                 # for i in range(len(outputs)):
@@ -155,6 +159,9 @@ def test(model_name, model_, model_params, timestamp):
                 ssim12_image_before = results[7]
                 ssim12_image = results[8]
 
+                # save the best points
+
+
                 if j == 0:
                     mse_before_first, tre_before_first, mse12_image_before_first, \
                         ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
@@ -162,24 +169,25 @@ def test(model_name, model_, model_params, timestamp):
                 # check if the mse and affine parameters are not change anymore
                 # print(np.linalg.norm(transformed_source_affine.cpu().numpy() - source_image.cpu().numpy()),
                 #       np.linalg.norm(affine_params_predicted[0].cpu().numpy() - identity))
-                if tre12 < TRE_last and mse12 < MSE_last:
+                if tre12 < metrics_points_best or mse12_image < mse_images_best:
+                    metrics_points_best = tre12
+                    mse_images_best = mse12_image
+
+                    # update M
+                    # print(affine_params_predicted.shape)
+                    M = combine_matrices(M, affine_params_predicted).to(device)
+                    # print(M)
                     points1 = points1_2_predicted.clone()
-                    source_image = transformed_source_affine.clone() # update the source image
-                    TRE_last = tre12
-                    MSE_last = mse12
+                    source_image = tensor_affine_transform0(data[0].to(device), M)
+
+                    if no_improve > 0: 
+                        no_improve -= 1
+
                 else:
-                    # _ = DL_affine_plot(f"rep{j:02d}", output_dir,
-                    #     f"{i}", f"{i+1}", source_image[0, 0, :, :].cpu().numpy(), 
-                    #     target_image[0, 0, :, :].cpu().numpy(), 
-                    #     transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    #     points1[0].cpu().detach().numpy().T, 
-                    #     points2[0].cpu().detach().numpy().T, 
-                    #     points1_2_predicted.cpu().detach().numpy().T, None, None, 
-                    #     affine_params_true=affine_params_true,
-                    #     affine_params_predict=affine_params_predicted, 
-                    #     heatmap1=None, heatmap2=None, plot=True)
-                    tre12 = TRE_last
-                    mse12 = MSE_last
+                    no_improve += 1
+
+                # if there is no improvement for 2 reps, stop the iteration
+                if no_improve > 2:
                     break
 
             # append metrics to metrics list
