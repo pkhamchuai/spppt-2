@@ -29,7 +29,7 @@ image_size = 256
 
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
-def test(model_name, models, model_params, timestamp, verbose=False):
+def test(model_name, models, model_params, timestamp, verbose=False, plot=1):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
@@ -254,29 +254,62 @@ def test(model_name, models, model_params, timestamp, verbose=False):
                 #                         affine_params_predicted.to(device))
                 # print(f"best_index: {best_index}, {best_index//2}, {points1_2_predicted.shape}")
                 
-                if model_params.plot == 1 and i < 50:
-                    plot_ = True
+                if i < 100 and plot == 1:
+                    plot_ = 1
+                    best_model_text = f"rep{j:02d}_{best_index//2}_fw" if best_index % 2 == 0 else f"rep{j:02d}_{best_index//2}_rv"
+
+                    if points1.shape[0] != 1 and points1.shape[-1] != 2:
+                        points1 = points1.clone().view(1, -1, 2)
+                    if points1_2_predicted.shape[0] != 1 and points1_2_predicted.shape[-1] != 2:
+                        points1_2_predicted = points1_2_predicted.view(1, -1, 2)
+
+                    # print(points1.shape, points2.shape, points1_2_predicted.shape)
+                    results = DL_affine_plot(f"test", output_dir,
+                        f"{i}", best_model_text, source_image[0, 0, :, :].cpu().numpy(),
+                        target_image[0, 0, :, :].cpu().numpy(),
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1[0].clone().cpu().detach().numpy().T,
+                        points2[0].cpu().detach().numpy().T,
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None,
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=affine_params_predicted,
+                        heatmap1=None, heatmap2=None, plot=plot_)
+                    
+                elif i < 100 and plot == 2:
+                    plot_ = 2
+                    results = DL_affine_plot(f"test", output_dir,
+                        f"{i}", "", source_image[0, 0, :, :].cpu().numpy(),
+                        target_image[0, 0, :, :].cpu().numpy(),
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1[0].clone().cpu().detach().numpy().T,
+                        points2[0].cpu().detach().numpy().T,
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None,
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=affine_params_predicted,
+                        heatmap1=None, heatmap2=None, plot=plot_)
+
                 else:
-                    plot_ = False
+                    plot_ = 0
+                    best_model_text = f"rep{j:02d}_{best_index//2}_fw" if best_index % 2 == 0 else f"rep{j:02d}_{best_index//2}_rv"
 
-                best_model_text = f"rep{j:02d}_{best_index//2}_fw" if best_index % 2 == 0 else f"rep{j:02d}_{best_index//2}_rv"
+                    if points1.shape[0] != 1 and points1.shape[-1] != 2:
+                        points1 = points1.clone().view(1, -1, 2)
+                    if points1_2_predicted.shape[0] != 1 and points1_2_predicted.shape[-1] != 2:
+                        points1_2_predicted = points1_2_predicted.view(1, -1, 2)
 
-                if points1.shape[0] != 1 and points1.shape[-1] != 2:
-                    points1 = points1.clone().view(1, -1, 2)
-                if points1_2_predicted.shape[0] != 1 and points1_2_predicted.shape[-1] != 2:
-                    points1_2_predicted = points1_2_predicted.view(1, -1, 2)
+                    # print(points1.shape, points2.shape, points1_2_predicted.shape)
+                    results = DL_affine_plot(f"test", output_dir,
+                        f"{i}", best_model_text, source_image[0, 0, :, :].cpu().numpy(),
+                        target_image[0, 0, :, :].cpu().numpy(),
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1[0].clone().cpu().detach().numpy().T,
+                        points2[0].cpu().detach().numpy().T,
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None,
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=affine_params_predicted,
+                        heatmap1=None, heatmap2=None, plot=plot_)
 
-                # print(points1.shape, points2.shape, points1_2_predicted.shape)
-                results = DL_affine_plot(f"test_{i}", output_dir,
-                    f"{i+1}", best_model_text, source_image[0, 0, :, :].cpu().numpy(),
-                    target_image[0, 0, :, :].cpu().numpy(),
-                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    points1[0].clone().cpu().detach().numpy().T,
-                    points2[0].cpu().detach().numpy().T,
-                    points1_2_predicted[0].cpu().detach().numpy().T, None, None,
-                    affine_params_true=affine_params_true,
-                    affine_params_predict=affine_params_predicted,
-                    heatmap1=None, heatmap2=None, plot=plot_)
+                
                     
                 # mse_before = results[1]
                 # tre_before = results[3]
@@ -359,8 +392,8 @@ def test(model_name, models, model_params, timestamp, verbose=False):
     #         os.remove(os.path.join(output_dir, file))
 
     # extra_text = f"Test model {model_name} at {model_} with dataset {model_params.dataset}. "
-    # print_summary(model_name, model_, model_params, 
-    #               None, timestamp, test=True)
+    print_summary(model_name, None, model_params, 
+                  None, timestamp, test=True, output_dir=output_dir)
 
 if __name__ == '__main__':
     # get the arguments
@@ -411,5 +444,6 @@ if __name__ == '__main__':
 
     args.verbose = int(args.verbose)
     print(f"verbose: {args.verbose}")
-    test(args.model, model_path, model_params, timestamp, verbose=args.verbose)
+    test(args.model, model_path, model_params, timestamp, 
+         verbose=args.verbose, plot=args.plot)
     print("Test model finished +++++++++++++++++++++++++++++")

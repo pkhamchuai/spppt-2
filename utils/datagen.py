@@ -202,23 +202,8 @@ def my_collate(batch):
         
 
 def datagen(dataset, is_train, sup, batch_size=1):
-    if dataset == 0:
-        # actual eye dataset
-        dataset_path = 'Dataset/Dataset-processed'
-        if is_train:
-            df = pd.read_csv('Dataset/dataset_eye_actual_keypoints.csv')
-            # count number of rows that df['training'] == 1
-            print('Training eye dataset')
-            print('Number of training data: ', len(df[df['training'] == 1]))
-            df = df[df['training'] == 1]
-        else:
-            df = pd.read_csv('Dataset/dataset_eye_actual_keypoints.csv')
-            # count number of rows that df['training'] == 0
-            print('Test eye dataset')
-            print('Number of testing data: ', len(df[df['training'] == 0]))
-            df = df[df['training'] == 0]
 
-    elif dataset == 1:
+    if dataset == 1:
         if is_train:
             # tranlation
             dataset_path = 'Dataset/synth_eye_translate_train'
@@ -264,13 +249,20 @@ def datagen(dataset, is_train, sup, batch_size=1):
             df = pd.read_csv('Dataset/synth_eye_mix0_test.csv')
 
     elif dataset == 6:
-        # new medium dataset
+        # actual eye dataset
+        dataset_path = 'Dataset/Dataset-processed'
         if is_train:
-            dataset_path = 'Dataset/synth_eye_mix_train'
-            df = pd.read_csv('Dataset/synth_eye_mix_train.csv')
+            df = pd.read_csv('Dataset/dataset_eye_actual_keypoints.csv')
+            # count number of rows that df['training'] == 1
+            print('Training eye dataset')
+            print('Number of training data: ', len(df[df['training'] == 1]))
+            df = df[df['training'] == 1]
         else:
-            dataset_path = 'Dataset/synthetic_eye_mix_test'
-            df = pd.read_csv('Dataset/synth_eye_mix_test.csv')
+            df = pd.read_csv('Dataset/dataset_eye_actual_keypoints.csv')
+            # count number of rows that df['training'] == 0
+            print('Test eye dataset')
+            print('Number of testing data: ', len(df[df['training'] == 0]))
+            df = df[df['training'] == 0]
 
     # elif dataset == 4:
     #     # synthetic shape dataset

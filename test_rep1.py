@@ -38,7 +38,7 @@ image_size = 256
 
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
-def test(model_name, model_, model_params, timestamp):
+def test(model_name, model_, model_params, timestamp, plot=1):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
@@ -64,7 +64,7 @@ def test(model_name, model_, model_params, timestamp):
     model.eval()
 
     # Create output directory
-    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_test"
+    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_rep1_test"
     os.makedirs(output_dir, exist_ok=True)
 
     # Validate model
@@ -118,35 +118,43 @@ def test(model_name, model_, model_params, timestamp):
                 # except:
                 #     pass
 
-                if i < 100:
-                    plot_ = True
+                if i < 100 and plot == 1:
+                    plot_ = 1
+                    results = DL_affine_plot(f"test_{i}", output_dir,
+                        f"{i+1}", f"rep{j:02d}", source_image[0, 0, :, :].cpu().numpy(), 
+                        target_image[0, 0, :, :].cpu().numpy(), 
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1[0].cpu().detach().numpy().T, 
+                        points2[0].cpu().detach().numpy().T, 
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=affine_params_predicted, 
+                        heatmap1=None, heatmap2=None, plot=plot_)
+                elif i < 100 and plot == 2:
+                    plot_ = 2
+                    results = DL_affine_plot(f"test", output_dir,
+                        f"{i}", "", source_image[0, 0, :, :].cpu().numpy(), 
+                        target_image[0, 0, :, :].cpu().numpy(), 
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1[0].cpu().detach().numpy().T, 
+                        points2[0].cpu().detach().numpy().T, 
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=affine_params_predicted, 
+                        heatmap1=None, heatmap2=None, plot=plot_)
                 else:
-                    plot_ = False
-
-                # if len(points1_2_predicted.shape) == 3:
-                #     points1_2_predicted = points1_2_predicted.squeeze(0)
-                # if len(points1.shape) == 3:
-                #     points1 = points1.squeeze(0)
-                # if len(points2.shape) == 3:
-                #     points2 = points2.squeeze(0)
-                # if points1_2_predicted.shape[-1] != 2:
-                #     points1_2_predicted = points1_2_predicted.T
-                # if points1.shape[-1] != 2:
-                #     points1 = points1.T
-                # if points2.shape[-1] != 2:
-                #     points2 = points2.T
-                # print(points1_2_predicted.shape, points2.shape, points1.shape)
-
-                results = DL_affine_plot(f"test_{i}", output_dir,
-                    f"{i+1}", f"rep{j:02d}", source_image[0, 0, :, :].cpu().numpy(), 
-                    target_image[0, 0, :, :].cpu().numpy(), 
-                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    points1[0].cpu().detach().numpy().T, 
-                    points2[0].cpu().detach().numpy().T, 
-                    points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
-                    affine_params_true=affine_params_true,
-                    affine_params_predict=affine_params_predicted, 
-                    heatmap1=None, heatmap2=None, plot=plot_)
+                    plot_ = 0
+                    results = DL_affine_plot(f"test_{i}", output_dir,
+                        f"{i+1}", f"rep{j:02d}", source_image[0, 0, :, :].cpu().numpy(), 
+                        target_image[0, 0, :, :].cpu().numpy(), 
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1[0].cpu().detach().numpy().T, 
+                        points2[0].cpu().detach().numpy().T, 
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=affine_params_predicted, 
+                        heatmap1=None, heatmap2=None, plot=plot_)
+                
 
                 # calculate metrics
                 # matches1_transformed = results[0]
@@ -219,7 +227,7 @@ def test(model_name, model_, model_params, timestamp):
 
     # extra_text = f"Test model {model_name} at {model_} with dataset {model_params.dataset}. "
     print_summary(model_name, model_, model_params, 
-                  None, timestamp, test=True)
+                  None, timestamp, test=True, output_dir=output_dir)
 
 if __name__ == '__main__':
     # get the arguments
@@ -234,6 +242,8 @@ if __name__ == '__main__':
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default=None, help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
+    parser.add_argument('--plot', type=int, default=0, help='plot the results')
+
     args = parser.parse_args()
 
     model_path = 'trained_models/' + args.model_path
@@ -249,5 +259,5 @@ if __name__ == '__main__':
 
     print(f"\nTesting the trained model: {args.model} +++++++++++++++++++++++")
 
-    test(args.model, model_path, model_params, timestamp)
+    test(args.model, model_path, model_params, timestamp, plot=args.plot)
     print("Test model finished +++++++++++++++++++++++++++++")

@@ -37,7 +37,7 @@ image_size = 256
 
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
-def test(model_name, model_, model_params, timestamp):
+def test(model_name, model_, model_params, timestamp, plot=1):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
@@ -100,10 +100,12 @@ def test(model_name, model_, model_params, timestamp):
             # except:
             #     pass
 
-            if i < 100:
-                plot_ = True
+            if i < 100 and plot == 1:
+                plot_ = 1
+            elif i < 100 and plot == 2:
+                plot_ = 2
             else:
-                plot_ = False
+                plot_ = 0
 
             # print(points1_2_predicted.shape, points2.shape, points1.shape)
             # for loop to plot each image, use the actual batch size from output
@@ -113,7 +115,7 @@ def test(model_name, model_, model_params, timestamp):
                 # points1_2_predicted[batch] = points1_2_predicted[batch].reshape(
                 #     points1_2_predicted[batch].shape[1], points1_2_predicted[batch].shape[0])
                 results = DL_affine_plot(f"test", output_dir,
-                    f"{i}", f"{model_params.batch_size}", 
+                    f"{i}", "", 
                     source_image[batch, 0, :, :].cpu().numpy(), 
                     target_image[batch, 0, :, :].cpu().numpy(), 
                     transformed_source_affine[batch, 0, :, :].cpu().numpy(),
@@ -225,6 +227,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--timestamp', type=str, default=None, help='timestamp')
     parser.add_argument('--batch_size', type=int, default=1, help='batch size')
+    parser.add_argument('--plot', type=int, default=0, help='plot the results')
     args = parser.parse_args()
 
     model_path = 'trained_models/' + args.model_path
@@ -240,5 +243,5 @@ if __name__ == '__main__':
 
     print(f"\nTesting the trained model: {args.model} +++++++++++++++++++++++")
 
-    test(args.model, model_path, model_params, timestamp)
+    test(args.model, model_path, model_params, timestamp, plot=args.plot)
     print("Test model finished +++++++++++++++++++++++++++++")

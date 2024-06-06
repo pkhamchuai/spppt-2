@@ -14,7 +14,7 @@ from utils import test
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f'Device: {device}')
 
-def test(model_name, model_, model_params, timestamp):
+def test(model_name, model_, model_params, timestamp, plot=True):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters

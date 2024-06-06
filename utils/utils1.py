@@ -376,14 +376,17 @@ class ModelParams:
     def print_explanation(self):
         print('\nModel name: ', self.model_name)
         print('Model code: ', self.model_code)
-        print('Dataset used: ', 'Actual eye' if self.dataset == 0 else \
-                'Synthetic eye translate' if self.dataset == 1 else \
+        print('Dataset used: ', 'Synthetic eye translate' if self.dataset == 1 else \
                 'Synthetic eye scaling' if self.dataset == 2 else \
                 'Synthetic eye rotation' if self.dataset == 3 else \
                 'Synthetic eye shear' if self.dataset == 4 else \
                 'Synthetic eye mix 1-4' if self.dataset == 5 else \
-                'Synthetic eye mix 1-4 + new images' if self.dataset == 6 else \
-                'there is only dataset 0-6')
+                # 'Synthetic eye mix 1-4 + new images' if self.dataset == 6 else \
+                'Actual eye mix' if self.dataset == 6 else \
+                'Actual eye hard' if self.dataset == 7 else \
+                'Actual eye medium' if self.dataset == 8 else \
+                'Actual eye easy' if self.dataset == 9 else \
+                'there is only dataset 1-9')
         print('Supervised or unsupervised model: ', 'Supervised' if self.sup else 'Unsupervised')
         print('Loss image type: ', 'Loss image not used' if self.image == 0 else \
                 'Image used')
@@ -762,7 +765,11 @@ def transform_points_DVF(points_, M, image): # batch version
 
 def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, image3,
                        matches1, matches2, matches3, desc1, desc2, affine_params_true=None, 
-                       affine_params_predict=None, heatmap1=None, heatmap2=None, plot=True):
+                       affine_params_predict=None, heatmap1=None, heatmap2=None, plot=0):
+    
+    # plot = 0: no plot
+    # plot = 1: plot the output table
+    # plot = 2: plot the images only 
 
     # print("matches1 shape:", matches1.shape)
     # print("matches2 shape:", matches2.shape)
@@ -797,7 +804,8 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
     ssim12_image = ssim(image3, image2)
 
     # Part 3 - Plotting
-    if plot:
+    # if plot == True or plot == 'image':
+    if plot == 1:
         try:
             # Create a subplot with 2 rows and 2 columns
             # fig, axes = plt.subplot_mosaic("AADE;BCFG", figsize=(20, 10))
@@ -935,6 +943,14 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
         except TypeError:
             print("TypeError in plotting")
             pass
+
+    elif plot == 2:
+        # save images to output folder
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_{image2_name}_source.png", image1*255)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_{image2_name}_target.png", image2*255)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_{image2_name}_warped.png", image3*255)
 
     return matches3, mse_before, mse12, tre_before, tre12, \
         mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
