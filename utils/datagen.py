@@ -284,7 +284,7 @@ def datagen(dataset, is_train, sup, batch_size=1):
     #     return dataloader
 
     else:
-        raise ValueError('Input dataset parameter 0-5')
+        raise ValueError('Input dataset parameter 1-9')
 
     if batch_size == 1:
         dataset = MyDataset(dataset_path, df, is_train, sup)

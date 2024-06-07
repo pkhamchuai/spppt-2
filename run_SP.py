@@ -54,7 +54,7 @@ def process_image(image):
     image = (image/np.max(image)).astype('float32')
     return image
 
-def run(model_params):
+def run(model_params, method='LMEDS', plot=1):
     # Initialize SuperPointFrontend
     superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
                           conf_thresh=0.015,
@@ -63,7 +63,7 @@ def run(model_params):
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
     # Create output directory
-    output_dir = f"output/{args.model}_{model_params.get_model_code()}_{timestamp}_test"
+    output_dir = f"output/{args.model}_{model_params.get_model_code()}_{timestamp}_{method}_test"
     os.makedirs(output_dir, exist_ok=True)
 
     metrics = []
@@ -96,7 +96,10 @@ def run(model_params):
         # create affine transform matrix from points1 to points2
         # and apply it to points1
         try:
-            affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T, method=cv2.LMEDS)
+            if method == 'RANSAC':
+                affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T, method=cv2.RANSAC)
+            elif method == 'LMEDS':
+                affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T, method=cv2.LMEDS)
             matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
             matches1_transformed = matches1_transformed[0].T
             # transform image 1 and 2 using the affine transform matrix
@@ -111,12 +114,14 @@ def run(model_params):
         # mse12 = np.mean((matches1_transformed - matches2)**2)
         # tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2)**2, axis=0)))
 
-        if i < 100:
-            plot_ = True
+        if i < 100 and plot == 1:
+            plot_ = 1
+        elif i < 100 and plot == 2:
+            plot_ = 2
         else:
-            plot_ = False
+            plot_ = 0
 
-        results = DL_affine_plot(f"test_{i+1}", output_dir,
+        results = DL_affine_plot(f"test", output_dir,
                 f"{i}", "SP", source_image, target_image, \
                 transformed_source_affine, \
                 matches1, matches2, matches1_transformed, desc1, desc2, 
@@ -176,11 +181,13 @@ if __name__ == '__main__':
     parser.add_argument('--image', type=int, default=1, help='image used for training')
     parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
+    parser.add_argument('--num_epochs', type=int, default=1, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default='SP', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
+    parser.add_argument('--plot', type=int, default=1, help='plot the results')
+    parser.add_argument('--method', type=str, default='LMEDS', help='method to use for affine transformation')
     args = parser.parse_args()
 
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, #heatmaps=args.heatmaps, 
@@ -190,4 +197,4 @@ if __name__ == '__main__':
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    run(model_params)
+    run(model_params, method=args.method, plot=args.plot)

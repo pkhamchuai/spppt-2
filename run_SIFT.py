@@ -53,12 +53,12 @@ def process_image(image):
     image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
     return image
 
-def run(model_params, method1='BFMatcher', method2='RANSAC'):
+def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
     
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
     # Create output directory
-    output_dir = f"output/{args.model}_{model_params.get_model_code()}_{timestamp}_test"
+    output_dir = f"output/{args.model}_{model_params.get_model_code()}_{timestamp}_{method1}_{method2}_test"
     os.makedirs(output_dir, exist_ok=True)
 
     metrics = []
@@ -213,10 +213,17 @@ def run(model_params, method1='BFMatcher', method2='RANSAC'):
         # mse12 = np.mean((matches1_transformed - matches2)**2)
         # tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2)**2, axis=0)))
 
-        if i < 100:
-            plot_ = True
+        if i < 100 and plot == 1:
+            plot_ = 1
+        elif i < 100 and plot == 2:
+            plot_ = 2
+            # do the bitwise not operation to get the inverse of the image
+            source_image = cv2.bitwise_not(source_image)
+            target_image = cv2.bitwise_not(target_image)
+            transformed_source_affine = cv2.bitwise_not(transformed_source_affine)
+
         else:
-            plot_ = False
+            plot_ = 0
 
         try:
             points1, points2, points1_transformed = points1.T, points2.T, points1_transformed.T
@@ -227,7 +234,7 @@ def run(model_params, method1='BFMatcher', method2='RANSAC'):
         # print(f"points2: {points2.shape}")
         # print(f"points1_transformed: {points1_transformed.shape}")
         
-        results = DL_affine_plot(f"test_{i+1}", output_dir,
+        results = DL_affine_plot(f"test", output_dir,
                 f"{i}", text, source_image, target_image, \
                 transformed_source_affine, \
                 points1, points2, points1_transformed, desc1, desc2, 
@@ -285,15 +292,18 @@ if __name__ == '__main__':
     # get the arguments
     parser = argparse.ArgumentParser(description='Deep Learning for Image Registration')    
     parser.add_argument('--dataset', type=int, default=1, help='dataset number')
-    parser.add_argument('--sup', type=int, default=1, help='supervised learning (1) or unsupervised learning (0)')
+    parser.add_argument('--sup', type=int, default=0, help='supervised learning (1) or unsupervised learning (0)')
     parser.add_argument('--image', type=int, default=1, help='image used for training')
     parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
     parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs')
+    parser.add_argument('--num_epochs', type=int, default=1, help='number of epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default='SIFT', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
+    parser.add_argument('--plot', type=int, default=1, help='plot the results')
+    parser.add_argument('--method1', type=str, default='FLANN', help='method to use for matching keypoints')
+    parser.add_argument('--method2', type=str, default='RANSAC', help='method to use for estimating affine transformation')
     args = parser.parse_args()
 
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, #heatmaps=args.heatmaps, 
@@ -303,4 +313,4 @@ if __name__ == '__main__':
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    run(model_params, method1='FLANN', method2='RANSAC')
+    run(model_params, method1=args.method1, method2=args.method2, plot=args.plot)
