@@ -254,13 +254,49 @@ def datagen(dataset, is_train, sup, batch_size=1):
         if is_train:
             df = pd.read_csv('Dataset/dataset_eye_actual_keypoints.csv')
             # count number of rows that df['training'] == 1
-            print('Training eye dataset')
+            print('Training eye dataset (mixed)')
             print('Number of training data: ', len(df[df['training'] == 1]))
             df = df[df['training'] == 1]
         else:
             df = pd.read_csv('Dataset/dataset_eye_actual_keypoints.csv')
             # count number of rows that df['training'] == 0
-            print('Test eye dataset')
+            print('Test eye dataset (mixed)')
+            print('Number of testing data: ', len(df[df['training'] == 0]))
+            df = df[df['training'] == 0]
+
+    elif dataset == 7:
+        # actual eye dataset
+        dataset_path = 'Dataset/Dataset-processed'
+        if is_train:
+            raise ValueError('Not implemented yet')
+        else:
+            df = pd.read_csv('Dataset/dataset_eye_hard.csv')
+            # count number of rows that df['training'] == 0
+            print('Test eye dataset (hard)')
+            print('Number of testing data: ', len(df[df['training'] == 0]))
+            df = df[df['training'] == 0]
+
+    elif dataset == 8:
+        # actual eye dataset
+        dataset_path = 'Dataset/Dataset-processed'
+        if is_train:
+            raise ValueError('Not implemented yet')
+        else:
+            df = pd.read_csv('Dataset/dataset_eye_medium.csv')
+            # count number of rows that df['training'] == 0
+            print('Test eye dataset (medium)')
+            print('Number of testing data: ', len(df[df['training'] == 0]))
+            df = df[df['training'] == 0]
+
+    elif dataset == 9:
+        # actual eye dataset
+        dataset_path = 'Dataset/Dataset-processed'
+        if is_train:
+            raise ValueError('Not implemented yet')
+        else:
+            df = pd.read_csv('Dataset/dataset_eye_easy.csv')
+            # count number of rows that df['training'] == 0
+            print('Test eye dataset (easy)')
             print('Number of testing data: ', len(df[df['training'] == 0]))
             df = df[df['training'] == 0]
 
