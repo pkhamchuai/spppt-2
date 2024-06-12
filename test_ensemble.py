@@ -7,7 +7,7 @@ import os
 # sups = [1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
-dataset = [8]
+dataset = [7]
 sups = [0]
 
 # models = ['Attention']
