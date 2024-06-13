@@ -386,7 +386,8 @@ class ModelParams:
                 'Actual eye hard' if self.dataset == 7 else \
                 'Actual eye medium' if self.dataset == 8 else \
                 'Actual eye easy' if self.dataset == 9 else \
-                'there is only dataset 1-9')
+                'Actual eye very hard' if self.dataset == 10 else \
+                'there is only dataset 1-10')
         print('Supervised or unsupervised model: ', 'Supervised' if self.sup else 'Unsupervised')
         print('Loss image type: ', 'Loss image not used' if self.image == 0 else \
                 'Image used')

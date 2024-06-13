@@ -300,6 +300,17 @@ def datagen(dataset, is_train, sup, batch_size=1):
             print('Number of testing data: ', len(df[df['training'] == 0]))
             df = df[df['training'] == 0]
 
+    elif dataset == 10:
+        dataset_path = 'Dataset/Dataset-processed'
+        if is_train:
+            raise ValueError('Not implemented yet')
+        else:
+            df = pd.read_csv('Dataset/dataset_eye_very_hard.csv')
+            # count number of rows that df['training'] == 0
+            print('Test eye dataset (very hard)')
+            print('Number of testing data: ', len(df[df['training'] == 0]))
+            df = df[df['training'] == 0]
+
     # elif dataset == 4:
     #     # synthetic shape dataset
     #     dataset_path = 'Dataset/synthetic_shape_dataset'
