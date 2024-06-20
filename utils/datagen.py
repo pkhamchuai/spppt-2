@@ -270,9 +270,9 @@ def datagen(dataset, is_train, sup, batch_size=1):
         if is_train:
             raise ValueError('Not implemented yet')
         else:
-            df = pd.read_csv('Dataset/dataset_eye_hard.csv')
+            df = pd.read_csv('Dataset/dataset_eye_easy.csv')
             # count number of rows that df['training'] == 0
-            print('Test eye dataset (hard)')
+            print('Test eye dataset (easy)')
             print('Number of testing data: ', len(df[df['training'] == 0]))
             df = df[df['training'] == 0]
 
@@ -294,9 +294,9 @@ def datagen(dataset, is_train, sup, batch_size=1):
         if is_train:
             raise ValueError('Not implemented yet')
         else:
-            df = pd.read_csv('Dataset/dataset_eye_easy.csv')
+            df = pd.read_csv('Dataset/dataset_eye_hard.csv')
             # count number of rows that df['training'] == 0
-            print('Test eye dataset (easy)')
+            print('Test eye dataset (hard)')
             print('Number of testing data: ', len(df[df['training'] == 0]))
             df = df[df['training'] == 0]
 

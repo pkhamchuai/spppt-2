@@ -383,9 +383,9 @@ class ModelParams:
                 'Synthetic eye mix 1-4' if self.dataset == 5 else \
                 # 'Synthetic eye mix 1-4 + new images' if self.dataset == 6 else \
                 'Actual eye mix' if self.dataset == 6 else \
-                'Actual eye hard' if self.dataset == 7 else \
+                'Actual eye easy' if self.dataset == 7 else \
                 'Actual eye medium' if self.dataset == 8 else \
-                'Actual eye easy' if self.dataset == 9 else \
+                'Actual eye hard' if self.dataset == 9 else \
                 'Actual eye very hard' if self.dataset == 10 else \
                 'there is only dataset 1-10')
         print('Supervised or unsupervised model: ', 'Supervised' if self.sup else 'Unsupervised')
