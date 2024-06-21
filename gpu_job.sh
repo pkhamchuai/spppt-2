@@ -10,6 +10,6 @@
 
 # source /home/pakpoom_kh/.bashrc
 source .venv/bin/activate
-python test_ensemble.py
-python test.py
-# python test_SP_batch.py 
+# python test_ensemble.py
+# python test.py
+python test_SP_batch.py 
