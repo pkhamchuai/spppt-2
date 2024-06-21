@@ -270,7 +270,7 @@ def datagen(dataset, is_train, sup, batch_size=1):
         if is_train:
             raise ValueError('Not implemented yet')
         else:
-            df = pd.read_csv('Dataset/dataset_eye_easy.csv')
+            df = pd.read_csv('Dataset/dataset_eye_7.csv')
             # count number of rows that df['training'] == 0
             print('Test eye dataset (easy)')
             print('Number of testing data: ', len(df[df['training'] == 0]))
@@ -282,7 +282,7 @@ def datagen(dataset, is_train, sup, batch_size=1):
         if is_train:
             raise ValueError('Not implemented yet')
         else:
-            df = pd.read_csv('Dataset/dataset_eye_medium.csv')
+            df = pd.read_csv('Dataset/dataset_eye_8.csv')
             # count number of rows that df['training'] == 0
             print('Test eye dataset (medium)')
             print('Number of testing data: ', len(df[df['training'] == 0]))
@@ -294,7 +294,7 @@ def datagen(dataset, is_train, sup, batch_size=1):
         if is_train:
             raise ValueError('Not implemented yet')
         else:
-            df = pd.read_csv('Dataset/dataset_eye_hard.csv')
+            df = pd.read_csv('Dataset/dataset_eye_9.csv')
             # count number of rows that df['training'] == 0
             print('Test eye dataset (hard)')
             print('Number of testing data: ', len(df[df['training'] == 0]))
@@ -305,9 +305,20 @@ def datagen(dataset, is_train, sup, batch_size=1):
         if is_train:
             raise ValueError('Not implemented yet')
         else:
-            df = pd.read_csv('Dataset/dataset_eye_very_hard.csv')
+            df = pd.read_csv('Dataset/dataset_eye_10.csv')
             # count number of rows that df['training'] == 0
             print('Test eye dataset (very hard)')
+            print('Number of testing data: ', len(df[df['training'] == 0]))
+            df = df[df['training'] == 0]
+
+    elif dataset == 11:
+        dataset_path = 'Dataset/Dataset-processed'
+        if is_train:
+            raise ValueError('Not implemented yet')
+        else:
+            df = pd.read_csv('Dataset/dataset_eye_11.csv')
+            # count number of rows that df['training'] == 0
+            print('Test eye dataset (very very hard)')
             print('Number of testing data: ', len(df[df['training'] == 0]))
             df = df[df['training'] == 0]
 
@@ -331,7 +342,7 @@ def datagen(dataset, is_train, sup, batch_size=1):
     #     return dataloader
 
     else:
-        raise ValueError('Input dataset parameter 1-9')
+        raise ValueError('Input dataset parameter 1-11')
 
     if batch_size == 1:
         dataset = MyDataset(dataset_path, df, is_train, sup)
