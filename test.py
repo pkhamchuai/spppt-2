@@ -60,14 +60,14 @@ learning_rate = 1e-3
 # generate run commands
 for model in model_path:
     for dataset_, sup in zip(dataset, sups):
-        # runs.append(['python', 'test_points.py', '--model', str(model_name), '--sup', str(sup),
-        #              '--dataset', str(dataset_),
-        #             '--model_path', str(model), '--plot', '1'
-        #                         ])
-        # runs.append(['python', 'test_points.py', '--model', str(model_name), '--sup', str(sup),
-        #              '--dataset', str(dataset_),
-        #             '--model_path', str(model), '--plot', '2'
-        #                         ])
+        runs.append(['python', 'test_points.py', '--model', str(model_name), '--sup', str(sup),
+                     '--dataset', str(dataset_),
+                    '--model_path', str(model), '--plot', '1'
+                                ])
+        runs.append(['python', 'test_points.py', '--model', str(model_name), '--sup', str(sup),
+                     '--dataset', str(dataset_),
+                    '--model_path', str(model), '--plot', '2'
+                                ])
         
         # runs.append(['python', 'test_two_ways.py', '--model', str(model_name), '--sup', str(sup),
         #             '--dataset', str(dataset_),
@@ -79,14 +79,14 @@ for model in model_path:
         #             '--model_path', str(model)
         #                         ])
         
-        runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
-                    '--dataset', str(dataset_),
-                    '--model_path', str(model), '--plot', '1'
-                                ])
-        runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
-                    '--dataset', str(dataset_),
-                    '--model_path', str(model), '--plot', '2'
-                                ])
+        # runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
+        #             '--dataset', str(dataset_),
+        #             '--model_path', str(model), '--plot', '1'
+        #                         ])
+        # runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
+        #             '--dataset', str(dataset_),
+        #             '--model_path', str(model), '--plot', '2'
+        #                         ])
         # runs.append(['python', 'test_rep2.py', '--model', str(model_name), '--sup', str(sup),
         #              '--dataset', str(dataset_),
         #             '--model_path', str(model)
