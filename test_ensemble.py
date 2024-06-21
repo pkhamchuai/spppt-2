@@ -37,10 +37,10 @@ files = os.listdir('trained_models/')
 # model_path = 'trained_models/' + args.model_path
 
 # DHR original
-models = 'DHRoriginal'
-model_path = ['DHRoriginal_11100_0.001_0_5_100_20240530-152108.pth', 'DHRoriginal_21100_0.001_0_5_100_20240530-152346.pth',
-            'DHRoriginal_31100_0.001_0_5_100_20240530-152825.pth', 'DHRoriginal_41100_0.001_0_5_100_20240530-153029.pth',
-            'DHRoriginal_51100_0.001_0_10_100_20240530-142556.pth']
+# models = 'DHRoriginal'
+# model_path = ['DHRoriginal_11100_0.001_0_5_100_20240530-152108.pth', 'DHRoriginal_21100_0.001_0_5_100_20240530-152346.pth',
+#             'DHRoriginal_31100_0.001_0_5_100_20240530-152825.pth', 'DHRoriginal_41100_0.001_0_5_100_20240530-153029.pth',
+#             'DHRoriginal_51100_0.001_0_10_100_20240530-142556.pth']
 
 # models = 'DHRdiff'
 # model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
@@ -48,10 +48,10 @@ model_path = ['DHRoriginal_11100_0.001_0_5_100_20240530-152108.pth', 'DHRorigina
 #             'DHR_51100_0.001_0_5_100_20240509-140837.pth']
 
 # DHR 2x
-# models = 'DHR2x'
-# model_path = ['DHR2x_11100_0.001_0_10_100_20240515-130704.pth', 'DHR2x_21100_0.001_0_5_100_20240514-131741.pth',
-#               'DHR2x_31100_0.001_0_5_100_20240514-132527.pth', 'DHR2x_41100_0.001_0_5_100_20240514-132814.pth',
-#               'DHR2x_51100_0.001_0_5_100_20240513-112002.pth']
+models = 'DHR2x'
+model_path = ['DHR2x_11100_0.001_0_10_100_20240515-130704.pth', 'DHR2x_21100_0.001_0_5_100_20240514-131741.pth',
+              'DHR2x_31100_0.001_0_5_100_20240514-132527.pth', 'DHR2x_41100_0.001_0_5_100_20240514-132814.pth',
+              'DHR2x_51100_0.001_0_5_100_20240513-112002.pth']
 
 # Attention
 # models = 'Attention'
