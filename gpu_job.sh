@@ -8,7 +8,7 @@
 #SBATCH --time=06:00:00          # total run time limit (HH:MM:SS)
 #SBATCH --ntasks=1              ## จำนวน tasks ที่ต้องการใช้ในการรัน
 
-source /home/pakpoom_kh/.bashrc
+# source /home/pakpoom_kh/.bashrc
 source .venv/bin/activate
 python test_ensemble.py
 python test.py
