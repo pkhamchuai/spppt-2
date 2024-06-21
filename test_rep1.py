@@ -200,7 +200,7 @@ def test(model_name, model_, model_params, timestamp, plot=1):
 
             # append metrics to metrics list
             metrics.append([i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
-                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape)])
+                            ssim12_image_before_first, ssim12_image, points1_2_predicted.shape[1]])
 
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
