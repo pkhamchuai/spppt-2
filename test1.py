@@ -40,11 +40,11 @@ files = os.listdir('trained_models/')
 # model_path = ['Attention_no_pooling_41100_0.001_0_5_100_20240514-100950.pth',
 #               'Attention_no_pooling_51100_0.001_0_5_100_20240514-101458.pth']
 
-model_name = 'DHRoriginal'
-model_path = ['DHRoriginal_51100_0.001_0_10_100_20240530-142556.pth']
+# model_name = 'DHRoriginal'
+# model_path = ['DHRoriginal_51100_0.001_0_10_100_20240530-142556.pth']
 
-# model_name = 'DHRdiff'
-# model_path = ['DHR_51100_0.001_0_5_100_20240509-140837.pth']
+model_name = 'DHRdiff'
+model_path = ['DHR_51100_0.001_0_5_100_20240509-140837.pth']
 
 # model_name = 'DHR2x'
 # model_path = ['DHR2x_51100_0.001_0_5_100_20240513-112002.pth']
