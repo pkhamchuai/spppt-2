@@ -3,7 +3,7 @@ import os
 
 # dataset = range(1, 6)
 # sups = [1, 1, 1, 1, 1]
-dataset = [10]
+dataset = range(7, 12)
 sups = [0]
 # dataset = [7, 8 , 9]
 # sups = [0, 0, 0]
@@ -40,11 +40,12 @@ files = os.listdir('trained_models/')
 # model_path = ['Attention_no_pooling_41100_0.001_0_5_100_20240514-100950.pth',
 #               'Attention_no_pooling_51100_0.001_0_5_100_20240514-101458.pth']
 
-model_name = 'DHRoriginal'
-model_path = ['DHRoriginal_51100_0.001_0_10_100_20240530-142556.pth']
+# model_name = 'DHRoriginal'
+# model_path = ['DHRoriginal_51100_0.001_0_10_100_20240530-142556.pth']
 
-# model_name = 'DHRdiff'
+model_name = 'DHRdiff'
 # model_path = ['DHR_51100_0.001_0_5_100_20240509-140837.pth']
+model_path = ['DHRdiff_60110_0.001_5_10_1_20240622-133330.pth']
 
 # model_name = 'DHR2x'
 # model_path = ['DHR2x_51100_0.001_0_5_100_20240513-112002.pth']
@@ -60,14 +61,14 @@ learning_rate = 1e-3
 # generate run commands
 for model in model_path:
     for dataset_, sup in zip(dataset, sups):
-        runs.append(['python', 'test_points.py', '--model', str(model_name), '--sup', str(sup),
-                     '--dataset', str(dataset_),
-                    '--model_path', str(model), '--plot', '1'
-                                ])
-        runs.append(['python', 'test_points.py', '--model', str(model_name), '--sup', str(sup),
-                     '--dataset', str(dataset_),
-                    '--model_path', str(model), '--plot', '2'
-                                ])
+        # runs.append(['python', 'test_points.py', '--model', str(model_name), '--sup', str(sup),
+        #              '--dataset', str(dataset_),
+        #             '--model_path', str(model), '--plot', '1'
+        #                         ])
+        # runs.append(['python', 'test_points.py', '--model', str(model_name), '--sup', str(sup),
+        #              '--dataset', str(dataset_),
+        #             '--model_path', str(model), '--plot', '2'
+        #                         ])
         
         # runs.append(['python', 'test_two_ways.py', '--model', str(model_name), '--sup', str(sup),
         #             '--dataset', str(dataset_),
@@ -79,10 +80,10 @@ for model in model_path:
         #             '--model_path', str(model)
         #                         ])
         
-        # runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
-        #             '--dataset', str(dataset_),
-        #             '--model_path', str(model), '--plot', '1'
-        #                         ])
+        runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
+                    '--dataset', str(dataset_),
+                    '--model_path', str(model), '--plot', '1'
+                                ])
         # runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
         #             '--dataset', str(dataset_),
         #             '--model_path', str(model), '--plot', '2'

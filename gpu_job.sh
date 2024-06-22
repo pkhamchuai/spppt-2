@@ -5,7 +5,7 @@
 #SBATCH --partition=gpu
 #SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH --gpus=1                 # total number of GPUs
-#SBATCH --time=06:00:00          # total run time limit (HH:MM:SS)
+#SBATCH --time=12:00:00          # total run time limit (HH:MM:SS)
 #SBATCH --ntasks=1              ## จำนวน tasks ที่ต้องการใช้ในการรัน
 
 # source /home/pakpoom_kh/.bashrc

@@ -1,30 +1,33 @@
 import subprocess
 
-dataset = range(1,5)
-model = 'DHRoriginal'
+# dataset = range(1,5)
+dataset = [6]
+# model = 'DHRoriginal'
+model = 'DHRdiff'
 # model = 'Attention_no_pooling'
 # models = ['DHR', 'AIRNet', 'SP_AffineNet4']
 # model = 'SP_AffineNet4'
-sups = [1, 1, 1, 1]
+sups = [0]
 runs = []
 # learning_rate = 1e-4
 # loss = [[1, 1]]
 # offset = 0.01
 # sigma = range(30, 100, 10)
 files = ['train_img_batch.py']
+# files = ['train_stage.py']
 # files = ['train_points_rigid_img', 'train_points_rigid_pt', 'train_img_batch.py', 'train_one_sample.py']
-batch_size = 100 # 2, 3, 4, 5
+batch_size = 1 # 2, 3, 4, 5
 lr = 1e-3
 decay_rate = 0.96
 
 # generate run commands
 for file in files:
-    sup = 1
+    sup = 0
     for dataset in dataset:
         runs.append(['python', str(file), '--dataset', str(dataset),
             '--model', str(model), '--num_epochs', str(5), 
             '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
-            '--image', str(1), '--points', str(0), '--sup', str(sup), #'--model_path', 'with_groupnorm/DHR_41100_0.001_0_50_100_20240306-153459.pth',
+            '--image', str(1), '--points', str(1), '--sup', str(sup), '--model_path', 'DHR_51100_0.001_0_5_100_20240509-140837.pth',
             '--batch_size', str(batch_size)])
 
     # for data in dataset:

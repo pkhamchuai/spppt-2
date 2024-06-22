@@ -69,7 +69,7 @@ def train(model_name, model_path, model_params, timestamp):
             model.load_state_dict(torch.load(model_path))
             print(f'Loaded model from {model_path}')
             # print(model_path.split('/')[-1].split('_'))
-            model_params.start_epoch = int(model_path.split('/')[-1].split('_')[5])
+            model_params.start_epoch = int(model_path.split('/')[-1].split('_')[4])
         else:
             print('Input a valid model')
             sys.exit()
@@ -160,8 +160,11 @@ def train(model_name, model_path, model_params, timestamp):
                 if not isinstance(points1_2_true, torch.Tensor):
                         points1_2_true = torch.tensor(points1_2_true)
                 # print(f"points1_2_predicted: {points1_2_predicted.shape}, points1_2_true: {points1_2_true.shape}")
-                loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
+                try:
+                    loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
                                     torch.flatten(points1_2_true, start_dim=1).cpu().detach())
+                except:
+                    pass
                 
             # optimizer.zero_grad()
             loss.backward()
@@ -264,8 +267,11 @@ def train(model_name, model_path, model_params, timestamp):
                     if not isinstance(points1_2_true, torch.Tensor):
                         points1_2_true = torch.tensor(points1_2_true)
                     # print(f"points1_2_predicted: {points1_2_predicted}, points1_2_true: {points1_2_true}")
-                    loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
-                                    torch.flatten(points1_2_true, start_dim=1).cpu().detach())
+                    try:
+                        loss += criterion_points(torch.flatten(points1_2_predicted, start_dim=1).cpu().detach(), 
+                                        torch.flatten(points1_2_true, start_dim=1).cpu().detach())
+                    except:
+                        pass
 
                 # Add to validation loss
                 validation_loss += loss.item()
