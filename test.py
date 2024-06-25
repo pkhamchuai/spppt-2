@@ -3,7 +3,7 @@ import os
 
 # dataset = range(1, 6)
 # sups = [1, 1, 1, 1, 1]
-dataset = range(7, 12)
+dataset = range(1, 12)
 sups = [0]
 # dataset = [7, 8 , 9]
 # sups = [0, 0, 0]
@@ -60,7 +60,7 @@ learning_rate = 1e-3
 
 # generate run commands
 for model in model_path:
-    for dataset_, sup in zip(dataset, sups):
+    for dataset_ in dataset:
         # runs.append(['python', 'test_points.py', '--model', str(model_name), '--sup', str(sup),
         #              '--dataset', str(dataset_),
         #             '--model_path', str(model), '--plot', '1'
@@ -80,9 +80,9 @@ for model in model_path:
         #             '--model_path', str(model)
         #                         ])
         
-        runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
+        runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(0),
                     '--dataset', str(dataset_),
-                    '--model_path', str(model), '--plot', '1'
+                    '--model_path', str(model), '--plot', '0'
                                 ])
         # runs.append(['python', 'test_rep1.py', '--model', str(model_name), '--sup', str(sup),
         #             '--dataset', str(dataset_),
