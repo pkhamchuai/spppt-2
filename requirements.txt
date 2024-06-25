@@ -23,7 +23,7 @@ pyparsing==3.1.1
 PySocks==1.7.1
 python-dotenv==1.0.0
 pytz==2023.3.post1
-requests==2.31.0
+requests==2.32.0
 selenium==4.14.0
 selenium-injector==2.3
 selenium-interceptor==1.0.2
