@@ -157,6 +157,14 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             
             # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2, matches, None, **draw_params)
             # plt.imshow(img3), plt.show()
+
+            results = DL_affine_plot(f"test", output_dir,
+                f"{i}", text, source_image, target_image, \
+                transformed_source_affine, \
+                matches1, matches2, cv2.transform(matches1[None, :, :], affine_transform1)[0], desc1, desc2,
+                affine_params_true=affine_params_true,
+                affine_params_predict=np.round(affine_transform1, 3), 
+                heatmap1=None, heatmap2=None, plot=plot_)
         
         try:
             # M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
@@ -175,6 +183,15 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             # transform image 1 and 2 using the affine transform matrix
             transformed_source_affine = cv2.warpAffine(source_image, affine_transform1, (256, 256))
             text = "success"
+
+            results = DL_affine_plot(f"test", output_dir,
+                f"{i}", text, source_image, target_image, \
+                transformed_source_affine, \
+                matches1, matches2, cv2.transform(matches1[None, :, :], affine_transform1)[0], desc1, desc2,
+                affine_params_true=affine_params_true,
+                affine_params_predict=np.round(affine_transform1, 3), 
+                heatmap1=None, heatmap2=None, plot=plot_)
+
         except cv2.error:
             # print(f"Error: {i}")
             # break
@@ -184,6 +201,14 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             text = "failed"
             num_failed += 1
             # continue
+
+            results = DL_affine_plot(f"test", output_dir,
+                f"{i}", text, source_image, target_image, \
+                transformed_source_affine, \
+                matches1, matches2, cv2.transform(matches1[None, :, :], affine_transform1)[0], desc1, desc2,
+                affine_params_true=affine_params_true,
+                affine_params_predict=np.round(affine_transform1, 3), 
+                heatmap1=None, heatmap2=None, plot=plot_)
 
         # Create affine transformation matrix from matches1 to matches2
 
@@ -240,7 +265,7 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
                 points1, points2, points1_transformed, desc1, desc2, 
                 affine_params_true=affine_params_true,
                 affine_params_predict=np.round(affine_transform1, 3), 
-                heatmap1=None, heatmap2=None, plot=plot_)
+                heatmap1=None, heatmap2=None, plot=false)
 
         # calculate metrics
         # matches1_transformed = results[0]
