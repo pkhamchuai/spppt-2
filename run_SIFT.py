@@ -157,14 +157,6 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             
             # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2, matches, None, **draw_params)
             # plt.imshow(img3), plt.show()
-
-            results = DL_affine_plot(f"test", output_dir,
-                f"{i}", text, source_image, target_image, \
-                transformed_source_affine, \
-                matches1, matches2, cv2.transform(matches1[None, :, :], affine_transform1)[0], desc1, desc2,
-                affine_params_true=affine_params_true,
-                affine_params_predict=np.round(affine_transform1, 3), 
-                heatmap1=None, heatmap2=None, plot=plot_)
         
         try:
             # M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
@@ -184,10 +176,25 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             transformed_source_affine = cv2.warpAffine(source_image, affine_transform1, (256, 256))
             text = "success"
 
+            if i < 100 and plot == 1:
+                plot_ = 1
+            elif i < 100 and plot == 2:
+                plot_ = 2
+                # do the bitwise not operation to get the inverse of the image
+                source_image = cv2.bitwise_not(source_image)
+                target_image = cv2.bitwise_not(target_image)
+                transformed_source_affine = cv2.bitwise_not(transformed_source_affine)
+            else:
+                plot_ = 0
+
+            matches1_2 = cv2.transform(matches1[None, :, :], affine_transform1)[0]
+            # print(f"matcches1: {matches1.shape}")
+            # print(f"matches2: {matches2.shape}")
+            # print(f"matches1_2: {matches1_2.shape}")
             results = DL_affine_plot(f"test", output_dir,
                 f"{i}", text, source_image, target_image, \
                 transformed_source_affine, \
-                matches1, matches2, cv2.transform(matches1[None, :, :], affine_transform1)[0], desc1, desc2,
+                matches1.T, matches2.T, matches1_2.T, desc1, desc2,
                 affine_params_true=affine_params_true,
                 affine_params_predict=np.round(affine_transform1, 3), 
                 heatmap1=None, heatmap2=None, plot=plot_)
@@ -201,6 +208,17 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             text = "failed"
             num_failed += 1
             # continue
+
+            if i < 100 and plot == 1:
+                plot_ = 1
+            elif i < 100 and plot == 2:
+                plot_ = 2
+                # do the bitwise not operation to get the inverse of the image
+                source_image = cv2.bitwise_not(source_image)
+                target_image = cv2.bitwise_not(target_image)
+                transformed_source_affine = cv2.bitwise_not(transformed_source_affine)
+            else:
+                plot_ = 0
 
             results = DL_affine_plot(f"test", output_dir,
                 f"{i}", text, source_image, target_image, \
@@ -238,18 +256,6 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
         # mse12 = np.mean((matches1_transformed - matches2)**2)
         # tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2)**2, axis=0)))
 
-        if i < 100 and plot == 1:
-            plot_ = 1
-        elif i < 100 and plot == 2:
-            plot_ = 2
-            # do the bitwise not operation to get the inverse of the image
-            source_image = cv2.bitwise_not(source_image)
-            target_image = cv2.bitwise_not(target_image)
-            transformed_source_affine = cv2.bitwise_not(transformed_source_affine)
-
-        else:
-            plot_ = 0
-
         try:
             points1, points2, points1_transformed = points1.T, points2.T, points1_transformed.T
         except AttributeError:
@@ -265,7 +271,7 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
                 points1, points2, points1_transformed, desc1, desc2, 
                 affine_params_true=affine_params_true,
                 affine_params_predict=np.round(affine_transform1, 3), 
-                heatmap1=None, heatmap2=None, plot=false)
+                heatmap1=None, heatmap2=None, plot=False)
 
         # calculate metrics
         # matches1_transformed = results[0]
@@ -309,7 +315,6 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
     print(extra_text)
     print_summary("SIFT", None, model_params, None, timestamp, 
                   output_dir=output_dir, test=True, extra=extra_text)
-
 
 # if main
 # from utils.utils1 import transform_points_DVF

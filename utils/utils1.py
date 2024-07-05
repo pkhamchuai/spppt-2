@@ -920,19 +920,19 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # dir_name = f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}"
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name) 
-            save_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{image2_name}.png")
+            save_file_name = os.path.join(dir_name, f"{name}_{int(image1_name):04d}_{image2_name}.png")
             # Check if the file already exists
             if os.path.exists(save_file_name):
                 suffix = 1
                 while True:
                     # Add a suffix to the file name
-                    new_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{image2_name}_{suffix}.png")
+                    new_file_name = os.path.join(dir_name, f"{name}_{int(image1_name):04d}_{image2_name}_{suffix}.png")
                     if not os.path.exists(new_file_name):
                         save_file_name = new_file_name
                         break
                     suffix += 1
 
-            signaturebar_gray(fig, f"{name}, S: {image1_name}, T: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
+            signaturebar_gray(fig, f"{name}, S: {int(image1_name):04d}, T: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
                     rect_kw={"facecolor": "gray", "edgecolor": None},
                     text_kw={"color": "w"})
             fig.savefig(save_file_name)
@@ -950,9 +950,9 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
         # save images to output folder
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
-        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_{image2_name}_source.png", image1*255)
-        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_{image2_name}_target.png", image2*255)
-        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_{image2_name}_warped.png", image3*255)
+        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_source.png", image1*255)
+        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_target.png", image2*255)
+        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_warped.png", image3*255)
 
     return matches3, mse_before, mse12, tre_before, tre12, \
         mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
