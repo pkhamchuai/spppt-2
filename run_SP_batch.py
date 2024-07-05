@@ -1,7 +1,7 @@
 import subprocess
 
 # dataset = range(0, 6)
-dataset = range(1, 12)
+dataset = range(1, 4)
 
 for i in dataset:
     # Run the SP batch file

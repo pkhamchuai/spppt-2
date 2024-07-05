@@ -187,14 +187,21 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             else:
                 plot_ = 0
 
-            matches1_2 = cv2.transform(matches1[None, :, :], affine_transform1)[0]
+            try:
+                matches1_2 = cv2.transform(matches1[None, :, :], affine_transform1)[0]
+                matches1, matches2, matches1_2 = matches1.T, matches2.T, matches1_2.T
+            except:
+                matches1, matches2, matches1_2 = [], [], []
+                text = "failed"
+                plot_ = plot
+
             # print(f"matcches1: {matches1.shape}")
             # print(f"matches2: {matches2.shape}")
             # print(f"matches1_2: {matches1_2.shape}")
             results = DL_affine_plot(f"test", output_dir,
                 f"{i}", text, source_image, target_image, \
                 transformed_source_affine, \
-                matches1.T, matches2.T, matches1_2.T, desc1, desc2,
+                matches1, matches2, matches1_2, desc1, desc2,
                 affine_params_true=affine_params_true,
                 affine_params_predict=np.round(affine_transform1, 3), 
                 heatmap1=None, heatmap2=None, plot=plot_)
@@ -220,10 +227,18 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             else:
                 plot_ = 0
 
+            try:
+                matches1_2 = cv2.transform(matches1[None, :, :], affine_transform1)[0]
+                matches1, matches2, matches1_2 = matches1.T, matches2.T, matches1_2.T
+            except:
+                matches1, matches2, matches1_2 = [], [], []
+                text = "failed"
+                plot_ = plot
+
             results = DL_affine_plot(f"test", output_dir,
                 f"{i}", text, source_image, target_image, \
                 transformed_source_affine, \
-                matches1, matches2, cv2.transform(matches1[None, :, :], affine_transform1)[0], desc1, desc2,
+                matches1, matches2, matches1_2, desc1, desc2,
                 affine_params_true=affine_params_true,
                 affine_params_predict=np.round(affine_transform1, 3), 
                 heatmap1=None, heatmap2=None, plot=plot_)
@@ -258,7 +273,7 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
 
         try:
             points1, points2, points1_transformed = points1.T, points2.T, points1_transformed.T
-        except AttributeError:
+        except:
             points1, points2, points1_transformed = [], [], []
 
         # print(f"points1: {points1.shape}")
@@ -285,9 +300,12 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
         ssim12_image = results[8]
 
         # append metrics to metrics list
-        metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, 
-            mse12_image, ssim12_image_before, ssim12_image, matches2.shape[0]])
-        
+        try:
+            metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, 
+                mse12_image, ssim12_image_before, ssim12_image, np.max(matches1.shape)])
+        except AttributeError:
+            metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, 
+                mse12_image, ssim12_image_before, ssim12_image, 0])        
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", "ssim12_image_before", "ssim12_image", "num_points"])
