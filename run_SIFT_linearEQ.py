@@ -159,52 +159,66 @@ def run(model_params, method1='BFMatcher', plot=1):
             # img3 = cv2.drawMatchesKnn(source_image, kp1, target_image, kp2, matches, None, **draw_params)
             # plt.imshow(img3), plt.show()
         
-        try:
+        if matches1.shape[0] >= 3:
             # print(matches1)
             # print(matches2)
             # print(matches1_2)
 
             # use point sets to calculate the affine transformation matrix
             # append one vector of ones to the points
+            matches1_ = matches1.copy()
+            matches2_ = matches2.copy()
+
+            matches1 = matches1.T
+            matches2 = matches2.T
+
             matches1 = np.concatenate([matches1, np.ones((1, matches1.shape[1]))], axis=0)
             matches2 = np.concatenate([matches2, np.ones((1, matches2.shape[1]))], axis=0)
 
-            print(f"matches1: {matches1.shape}")
-            print(f"matches2: {matches2.shape}")
+            # print(f"matches1: {matches1.shape}")
+            # print(f"matches2: {matches2.shape}")
 
             # convert matches2 to a vector with 1 column
             matches2 = np.reshape(matches2.T, (matches2.shape[0] * matches2.shape[1], 1))
-            print(f"matches2:\n{matches2}")
+            # print(f"matches2:\n{matches2}")
 
             # create the matrix A
             row = matches1.shape[0]*matches1.shape[1]
+            # print(f"row: {row}")
             matches1 = matches1.T
-            A = np.zeros((row, row))
-            # populate the matrix A
-            for i in range(matches1.shape[1]):
-                A[i*matches1.shape[0]: (i+1)*matches1.shape[0], i*matches1.shape[0]: (i+1)*matches1.shape[0]] = matches1
 
+            A = np.zeros((row, 9))
+            # print(f"A:\n{A.shape}")
+            # populate the matrix A
+            for j in range(matches1.shape[0]):
+                A[j*3, 0:3] = matches1[j, :]
+                A[j*3, 6:9] = -matches1[j, :]*matches2[j, 0]
+                A[j*3+1, 3:6] = matches1[j, :]
+                A[j*3+1, 6:9] = -matches1[j, :]*matches2[j, 0]
+                A[j*3+2, 6:9] = matches1[j, :]
+        
             # reaarange the rows of A as 1, 2, 3, 1, 2, 3, ...
             A = A[np.argsort(np.arange(row) % matches1.shape[0])]
 
-            print(f"A:\n{A}") 
+            # print(f"A:\n{A}") 
 
             # calculate A^-1*b
             affine_transform = np.dot(np.linalg.pinv(A), matches2)
-            print(f"affine_transform:\n{affine_transform}")
+            # print(f"affine_transform:\n{affine_transform.shape}")  
 
             # reshape affine_transform to 3x3 matrix
-            affine_transform = np.reshape(affine_transform, (matches1.shape[0], matches1.shape[0]))
-            print(f"affine_transform:\n{affine_transform}")
+            affine_transform = np.reshape(affine_transform, (3, 3))
+            # print(f"affine_transform:\n{affine_transform}")
 
             # reshape affine_transform to 2x3 matrix
-            affine_transform1 = affine_transform[:2, :]
-            print(f"affine_transform:\n{affine_transform}")
+            affine_transform1 = affine_transform[0:2, :]
+            # print(f"affine_transform final:\n{affine_transform1}")
 
             # break
             
             points1_transformed = cv2.transform(points1[None, :, :], affine_transform1)
             # print(f"matches1_transformed: {matches1_transformed.shape}")
+
             try:
                 points1_transformed = points1_transformed[0]
             except TypeError:
@@ -226,8 +240,8 @@ def run(model_params, method1='BFMatcher', plot=1):
                 plot_ = 0
 
             try:
-                matches1_2 = cv2.transform(matches1[None, :, :], affine_transform1)[0]
-                matches1, matches2, matches1_2 = matches1.T, matches2.T, matches1_2.T
+                matches1_2 = cv2.transform(matches1_[None, :, :], affine_transform1)[0]
+                matches1, matches2, matches1_2 = matches1_.T, matches2_.T, matches1_2.T
             except:
                 matches1, matches2, matches1_2 = [], [], []
                 text = "failed"
@@ -244,7 +258,7 @@ def run(model_params, method1='BFMatcher', plot=1):
                 affine_params_predict=np.round(affine_transform1, 3), 
                 heatmap1=None, heatmap2=None, plot=plot_)
 
-        except cv2.error:
+        else:
             # print(f"Error: {i}")
             # break
             affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
@@ -344,6 +358,7 @@ def run(model_params, method1='BFMatcher', plot=1):
         except AttributeError:
             metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, 
                 mse12_image, ssim12_image_before, ssim12_image, 0])        
+            
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", "ssim12_image_before", "ssim12_image", "num_points"])

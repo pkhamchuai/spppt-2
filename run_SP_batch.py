@@ -45,6 +45,6 @@ for i in dataset:
                     '--sup', '0', '--dataset', str(i), '--plot', '1',
                     '--method1', 'BFMatcher'])
 
-    subprocess.run(['python', 'run_SIFT_linearEQ.py', '--model', 'SIFT', 
-                    '--sup', '0', '--dataset', str(i), '--plot', '2',
-                    '--method1', 'BFMatcher'])
+    # subprocess.run(['python', 'run_SIFT_linearEQ.py', '--model', 'SIFT', 
+    #                 '--sup', '0', '--dataset', str(i), '--plot', '2',
+    #                 '--method1', 'BFMatcher'])
