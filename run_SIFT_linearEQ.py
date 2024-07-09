@@ -53,8 +53,9 @@ def process_image(image):
     image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX).astype('uint8')
     return image
 
-def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
+def run(model_params, method1='BFMatcher', plot=1):
     
+    method2='linearEQ'
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
     # Create output directory
@@ -159,19 +160,56 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             # plt.imshow(img3), plt.show()
         
         try:
-            # M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
-            # print(f"M: {M}")
-            # affine_transform1 = M[:2, :]
-            if method2 == 'RANSAC':
-                affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.RANSAC)
-            elif method2 == 'LMEDS':
-                affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.LMEDS)
+            # print(matches1)
+            # print(matches2)
+            # print(matches1_2)
+
+            # use point sets to calculate the affine transformation matrix
+            # append one vector of ones to the points
+            matches1 = np.concatenate([matches1, np.ones((1, matches1.shape[1]))], axis=0)
+            matches2 = np.concatenate([matches2, np.ones((1, matches2.shape[1]))], axis=0)
+
+            print(f"matches1: {matches1.shape}")
+            print(f"matches2: {matches2.shape}")
+
+            # convert matches2 to a vector with 1 column
+            matches2 = np.reshape(matches2.T, (matches2.shape[0] * matches2.shape[1], 1))
+            print(f"matches2:\n{matches2}")
+
+            # create the matrix A
+            row = matches1.shape[0]*matches1.shape[1]
+            matches1 = matches1.T
+            A = np.zeros((row, row))
+            # populate the matrix A
+            for i in range(matches1.shape[1]):
+                A[i*matches1.shape[0]: (i+1)*matches1.shape[0], i*matches1.shape[0]: (i+1)*matches1.shape[0]] = matches1
+
+            # reaarange the rows of A as 1, 2, 3, 1, 2, 3, ...
+            A = A[np.argsort(np.arange(row) % matches1.shape[0])]
+
+            print(f"A:\n{A}") 
+
+            # calculate A^-1*b
+            affine_transform = np.dot(np.linalg.pinv(A), matches2)
+            print(f"affine_transform:\n{affine_transform}")
+
+            # reshape affine_transform to 3x3 matrix
+            affine_transform = np.reshape(affine_transform, (matches1.shape[0], matches1.shape[0]))
+            print(f"affine_transform:\n{affine_transform}")
+
+            # reshape affine_transform to 2x3 matrix
+            affine_transform1 = affine_transform[:2, :]
+            print(f"affine_transform:\n{affine_transform}")
+
+            # break
+            
             points1_transformed = cv2.transform(points1[None, :, :], affine_transform1)
             # print(f"matches1_transformed: {matches1_transformed.shape}")
             try:
                 points1_transformed = points1_transformed[0]
             except TypeError:
                 pass
+
             # transform image 1 and 2 using the affine transform matrix
             transformed_source_affine = cv2.warpAffine(source_image, affine_transform1, (256, 256))
             text = "success"
@@ -242,49 +280,6 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
                 affine_params_true=affine_params_true,
                 affine_params_predict=np.round(affine_transform1, 3), 
                 heatmap1=None, heatmap2=None, plot=plot_)
-
-        print(matches1)
-        print(matches2)
-        print(matches1_2)
-
-        # use point sets to calculate the affine transformation matrix
-        # append one vector of ones to the points
-        matches1 = np.concatenate([matches1, np.ones((1, matches1.shape[1]))], axis=0)
-        matches2 = np.concatenate([matches2, np.ones((1, matches2.shape[1]))], axis=0)
-
-        print(f"matches1: {matches1.shape}")
-        print(f"matches2: {matches2.shape}")
-
-        # convert matches2 to a vector with 1 column
-        matches2 = np.reshape(matches2.T, (matches2.shape[0] * matches2.shape[1], 1))
-        print(f"matches2:\n{matches2}")
-
-        # create the matrix A
-        row = matches1.shape[0]*matches1.shape[1]
-        matches1 = matches1.T
-        A = np.zeros((row, row))
-        # populate the matrix A
-        for i in range(matches1.shape[1]):
-            A[i*matches1.shape[0]: (i+1)*matches1.shape[0], i*matches1.shape[0]: (i+1)*matches1.shape[0]] = matches1
-
-        # reaarange the rows of A as 1, 2, 3, 1, 2, 3, ...
-        A = A[np.argsort(np.arange(row) % matches1.shape[0])]
-
-        print(f"A:\n{A}") 
-
-        # calculate A^-1*b
-        affine_transform = np.dot(np.linalg.pinv(A), matches2)
-        print(f"affine_transform:\n{affine_transform}")
-
-        # reshape affine_transform to 3x3 matrix
-        affine_transform = np.reshape(affine_transform, (matches1.shape[0], matches1.shape[0]))
-        print(f"affine_transform:\n{affine_transform}")
-
-        # reshape affine_transform to 2x3 matrix
-        affine_transform = affine_transform[:2, :]
-        print(f"affine_transform:\n{affine_transform}")
-
-        break
 
         # Create affine transformation matrix from matches1 to matches2
 
@@ -394,7 +389,6 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--plot', type=int, default=1, help='plot the results')
     parser.add_argument('--method1', type=str, default='FLANN', help='method to use for matching keypoints')
-    parser.add_argument('--method2', type=str, default='RANSAC', help='method to use for estimating affine transformation')
     args = parser.parse_args()
 
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, #heatmaps=args.heatmaps, 
@@ -404,4 +398,4 @@ if __name__ == '__main__':
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    run(model_params, method1=args.method1, method2=args.method2, plot=args.plot)
+    run(model_params, method1=args.method1, plot=args.plot)
