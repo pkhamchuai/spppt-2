@@ -55,7 +55,7 @@ def process_image(image):
 
 def run(model_params, method1='BFMatcher', plot=1):
     
-    method2='linearEQ_3pairs'
+    method2='linearEQ_3pairs_1'
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
     # Create output directory
