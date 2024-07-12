@@ -169,51 +169,77 @@ def run(model_params, method1='BFMatcher', plot=1):
             matches1_ = matches1.copy()
             matches2_ = matches2.copy()
 
-            matches1 = matches1.T
-            matches2 = matches2.T
+            # matches1 = matches1.T
+            # matches2 = matches2.T
 
-            matches1 = np.concatenate([matches1, np.ones((1, matches1.shape[1]))], axis=0)
-            matches2 = np.concatenate([matches2, np.ones((1, matches2.shape[1]))], axis=0)
+            # matches1 = np.concatenate([matches1, np.ones((1, matches1.shape[1]))], axis=0)
+            # matches2 = np.concatenate([matches2, np.ones((1, matches2.shape[1]))], axis=0)
 
             # print(f"matches1: {matches1.shape}")
             # print(f"matches2: {matches2.shape}")
 
             # convert matches2 to a vector with 1 column
-            matches2 = np.reshape(matches2.T, (matches2.shape[0] * matches2.shape[1], 1))
-            # print(f"matches2:\n{matches2}")
+            # matches2 = np.reshape(matches2.T, (matches2.shape[0] * matches2.shape[1], 1))
+            # # print(f"matches2:\n{matches2}")
 
-            # create the matrix A
-            row = matches1.shape[0]*matches1.shape[1]
-            # print(f"row: {row}")
-            matches1 = matches1.T
+            # # create the matrix A
+            # row = matches1.shape[0]*matches1.shape[1]
+            # # print(f"row: {row}")
+            # matches1 = matches1.T
 
-            A = np.zeros((row, 9))
-            # print(f"A:\n{A.shape}")
-            # populate the matrix A
-            for j in range(matches1.shape[0]):
-                A[j*matches1.shape[0]: (j+1)*matches1.shape[0], j*matches1.shape[0]: (j+1)*matches1.shape[0]] = matches1
+            # A = np.zeros((row, 9))
+            # # print(f"A:\n{A.shape}")
+            # # populate the matrix A
+            # for j in range(matches1.shape[0]):
+            #     A[j*matches1.shape[0]: (j+1)*matches1.shape[0], j*matches1.shape[0]: (j+1)*matches1.shape[0]] = matches1
         
-            # reaarange the rows of A as 1, 2, 3, 1, 2, 3, ...
-            A = A[np.argsort(np.arange(row) % matches1.shape[0])]
+            # # reaarange the rows of A as 1, 2, 3, 1, 2, 3, ...
+            # A = A[np.argsort(np.arange(row) % matches1.shape[0])]
 
             # print(f"A:\n{A}") 
 
             # calculate A^-1*b
             try:
-                affine_transform = np.dot(np.linalg.pinv(A), matches2)
+                # affine_transform = np.dot(np.linalg.inv(A), matches2)
+                # calculations
+                l = len(matches1)
+                # print("Number of matches: ", l)
+                B = np.vstack([np.transpose(matches1), np.ones(l)])
+                # print("B matrix:\n", B)
+                # print(np.linalg.det(B))
+                D = 1.0 / np.linalg.det(B)
+                # print("D: ", D)
+                entry = lambda r,d: np.linalg.det(np.delete(np.vstack([r, B]), (d+1), axis=0))
+                M = [[(-1)**i * D * entry(R, i) for i in range(l)] for R in np.transpose(matches2)]
+                A, t = np.hsplit(np.array(M), [l-1])
+                t = np.transpose(t)[0]
+
+                # output
+                # print("Affine transformation matrix:\n", A)
+                # print("Affine transformation translation vector:\n", t)
+
+                # compose the affine transformation matrix
+                affine_transform = np.vstack([A, t]).T
+                # print("Affine transformation matrix:\n", affine_transform)
                 text = "success"
+
+                # break
+
             except np.linalg.LinAlgError:
                 affine_transform = np.array([[[1, 0, 0], [0, 1, 0]]])
                 text = "failed"
                 # print(f"Error: {i}")
                 # break
+            # print(f"affine_transform:\n{affine_transform.shape}")  
+
+            
 
             # reshape affine_transform to 3x3 matrix
-            affine_transform = np.reshape(affine_transform, (3, 3))
+            # affine_transform = np.reshape(affine_transform, (3, 3))
             # print(f"affine_transform:\n{affine_transform}")
 
             # reshape affine_transform to 2x3 matrix
-            affine_transform1 = affine_transform[0:2, :]
+            affine_transform1 = affine_transform
             # print(f"affine_transform final:\n{affine_transform1}")
 
             # break
