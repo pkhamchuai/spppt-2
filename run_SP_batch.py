@@ -1,7 +1,7 @@
 import subprocess
 
 # dataset = range(0, 6)
-dataset = [10]
+dataset = [2]
 
 for i in dataset:
     # Run the SP batch file
@@ -32,18 +32,18 @@ for i in dataset:
     #                 '--method1', 'BFMatcher', '--method2', 'LMEDS',
     #                 ])
 
-    # subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
-    #                 '--sup', '0', '--dataset', str(i), '--plot', '1',
-    #                 '--method1', 'BFMatcher', '--method2', 'RANSAC',
-    #                 ])
+    subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
+                    '--sup', '0', '--dataset', str(i), '--plot', '1',
+                    '--method1', 'BFMatcher', '--method2', 'RANSAC',
+                    ])
     # subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
     #                 '--sup', '0', '--dataset', str(i), '--plot', '2',
     #                 '--method1', 'BFMatcher', '--method2', 'RANSAC',
     #                 ])
 
-    subprocess.run(['python', 'run_SIFT_linearEQ_3pairs.py', '--model', 'SIFT', 
-                    '--sup', '0', '--dataset', str(i), '--plot', '1',
-                    '--method1', 'BFMatcher'])
+    # subprocess.run(['python', 'run_SIFT_linearEQ_3pairs.py', '--model', 'SIFT', 
+    #                 '--sup', '0', '--dataset', str(i), '--plot', '1',
+    #                 '--method1', 'BFMatcher'])
 
     # subprocess.run(['python', 'run_SIFT_linearEQ_3pairs.py', '--model', 'SIFT', 
     #                 '--sup', '0', '--dataset', str(i), '--plot', '2',
