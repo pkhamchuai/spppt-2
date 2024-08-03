@@ -32,7 +32,7 @@ for i in dataset:
     #                 '--method1', 'BFMatcher', '--method2', 'LMEDS',
     #                 ])
 
-    subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
+    subprocess.run(['python', 'check_keypoints.py', '--model', 'SIFT', 
                     '--sup', '0', '--dataset', str(i), '--plot', '1',
                     '--method1', 'BFMatcher', '--method2', 'RANSAC',
                     ])

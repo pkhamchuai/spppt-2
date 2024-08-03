@@ -484,19 +484,24 @@ bright_colors = [
 ]
 
 # Function to draw lines connecting points from image 1 to image 2 with random bright colors
-def draw_lines(image1, image2, points1, points2, match=None, line_thickness=1, opacity=0.2):
+def draw_lines(image1, image2, points1, points2, 
+        match=None, line_thickness=1, opacity=0.2):
     # Convert grayscale images to 3-channel with repeated intensity value
     if len(image1.shape) == 2:
         image1 = cv2.cvtColor(image1, cv2.COLOR_GRAY2BGR)
     if len(image2.shape) == 2:
         image2 = cv2.cvtColor(image2, cv2.COLOR_GRAY2BGR)
 
+    # add the two images side by side
+    # add the white space between the two images first
+    white_space = np.ones((image1.shape[0], 10, 3), dtype=np.uint8) * 255
+    image1 = np.concatenate((image1, white_space), axis=1)
     combined_image = np.concatenate((image1, image2), axis=1)
 
     if match is None:
         for pt1, pt2 in zip(points1.T, points2.T):
             x1, y1 = int(pt1[0]), int(pt1[1])
-            x2, y2 = int(pt2[0] + image1.shape[1]), int(pt2[1])
+            x2, y2 = int(pt2[0] + image1.shape[1] + 10), int(pt2[1])
 
             # Randomly choose a color from the predefined bright colors
             line_color = random.choice(bright_colors)
@@ -526,9 +531,10 @@ def draw_lines(image1, image2, points1, points2, match=None, line_thickness=1, o
             cv2.addWeighted(overlay, opacity, combined_image, 1 - opacity, 0, combined_image)
 
             # Add value from 'match' array as text around the beginning of the line on the left image
-            value_text = f"{value:.2f}"
-            text_x = x1 - 50 if x1 > 50 else x1 + 10
-            text_y = y1 + 15
+            # value_text = f"{value:.2f}"
+            value_text = f"{value}"
+            text_x = x1 - 30 #if x1 > 20 else x1 + 5
+            text_y = y1 #- 10
             cv2.putText(combined_image, value_text, (text_x, text_y),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, line_color, 1)
 
