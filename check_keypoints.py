@@ -166,9 +166,9 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
                 # print(f"M: {M}")
                 # affine_transform1 = M[:2, :]
                 if method2 == 'RANSAC':
-                    affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.RANSAC)
+                    affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.RANSAC, maxIters=100000)
                 elif method2 == 'LMEDS':
-                    affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.LMEDS)
+                    affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.LMEDS, maxIters=100000)
                 points1_transformed = cv2.transform(points1[None, :, :], affine_transform1)
                 # print(f"matches1_transformed: {matches1_transformed.shape}")
                 try:
