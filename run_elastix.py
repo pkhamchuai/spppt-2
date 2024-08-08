@@ -55,7 +55,7 @@ def process_image(image):
     image = (image/np.max(image)).astype('float32')
     return image
 
-def run(model_params, method='LMEDS', plot=1):
+def run(model_params, method='affine', plot=1, num_iter=512):
     # Initialize SuperPointFrontend
     superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
                           conf_thresh=0.015,
@@ -64,7 +64,7 @@ def run(model_params, method='LMEDS', plot=1):
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
     # Create output directory
-    output_dir = f"output/{args.model}_{model_params.get_model_code()}_{timestamp}_{method}_test"
+    output_dir = f"output/{args.model}_{model_params.get_model_code()}_{timestamp}_elastix_{method}_test"
     os.makedirs(output_dir, exist_ok=True)
 
     metrics = []
@@ -80,11 +80,22 @@ def run(model_params, method='LMEDS', plot=1):
         source_image = process_image(source_image)
         target_image = process_image(target_image)
 
+        parameterMap = sitk.GetDefaultParameterMap(f'{method}')
+
+        # Use a non-rigid transform instead of a translation transform
+        # parameterMap['Transform'] = ['BSplineTransform']
+
+        # Because of the increased complexity of the b-spline transform,
+        # it is a good idea to run the registration a little longer to
+        # ensure convergence
+        parameterMap['MaximumNumberOfIterations'] = [f'{int(num_iter)}']
+
         elastixImageFilter = sitk.ElastixImageFilter()
         elastixImageFilter.LogToConsoleOff()
         elastixImageFilter.SetFixedImage(sitk.GetImageFromArray(target_image))
         elastixImageFilter.SetMovingImage(sitk.GetImageFromArray(source_image))
-        elastixImageFilter.SetParameterMap(sitk.GetDefaultParameterMap("affine"))
+        # elastixImageFilter.SetParameterMap(sitk.GetDefaultParameterMap("affine"))
+        elastixImageFilter.SetParameterMap(parameterMap)
         elastixImageFilter.Execute()
         transformed_source_affine = elastixImageFilter.GetResultImage()
         transformed_source_affine = sitk.GetArrayFromImage(transformed_source_affine)
@@ -160,24 +171,23 @@ if __name__ == '__main__':
     # get the arguments
     parser = argparse.ArgumentParser(description='Deep Learning for Image Registration')    
     parser.add_argument('--dataset', type=int, default=10, help='dataset number')
-    parser.add_argument('--sup', type=int, default=0, help='supervised learning (1) or unsupervised learning (0)')
-    parser.add_argument('--image', type=int, default=1, help='image used for training')
-    parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
-    parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
-    parser.add_argument('--num_epochs', type=int, default=1, help='number of epochs')
-    parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
-    parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
-    parser.add_argument('--model', type=str, default='SP', help='which model to use')
-    parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
+    # parser.add_argument('--sup', type=int, default=0, help='supervised learning (1) or unsupervised learning (0)')
+    # parser.add_argument('--image', type=int, default=1, help='image used for training')
+    # parser.add_argument('--heatmaps', type=int, default=0, help='use heatmaps (1) or not (0)')
+    # parser.add_argument('--loss_image', type=int, default=0, help='loss function for image registration')
+    parser.add_argument('--num_iter', type=int, default=1, help='number of iterations')
+    # parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
+    # parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
+    parser.add_argument('--model', type=str, default='SE', help='which model to use')
+    # parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--plot', type=int, default=1, help='plot the results')
-    parser.add_argument('--method', type=str, default='LMEDS', help='method to use for affine transformation')
+    parser.add_argument('--method', type=str, default='affine')
     args = parser.parse_args()
 
-    model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, #heatmaps=args.heatmaps, 
-                               loss_image=args.loss_image, num_epochs=args.num_epochs, 
-                               learning_rate=args.learning_rate, decay_rate=args.decay_rate)
+    model_params = ModelParams(dataset=args.dataset, 
+                               )
     model_params.print_explanation()
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    run(model_params, method=args.method, plot=args.plot)
+    run(model_params, method=args.method, plot=args.plot, num_iter=args.num_iter)

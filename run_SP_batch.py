@@ -32,10 +32,10 @@ for i in dataset:
     #                 '--method1', 'BFMatcher', '--method2', 'LMEDS',
     #                 ])
 
-    subprocess.run(['python', 'check_keypoints.py', '--model', 'SIFT', 
-                    '--sup', '0', '--dataset', str(i), '--plot', '1',
-                    '--method1', 'BFMatcher', '--method2', 'RANSAC',
-                    ])
+    # subprocess.run(['python', 'check_keypoints.py', '--model', 'SIFT', 
+    #                 '--sup', '0', '--dataset', str(i), '--plot', '1',
+    #                 '--method1', 'BFMatcher', '--method2', 'RANSAC',
+    #                 ])
     # subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
     #                 '--sup', '0', '--dataset', str(i), '--plot', '2',
     #                 '--method1', 'BFMatcher', '--method2', 'RANSAC',
@@ -48,4 +48,8 @@ for i in dataset:
     # subprocess.run(['python', 'run_SIFT_linearEQ_3pairs.py', '--model', 'SIFT', 
     #                 '--sup', '0', '--dataset', str(i), '--plot', '2',
     #                 '--method1', 'BFMatcher'])
-                    
+    
+    subprocess.run(['python', 'run_elastix.py', 
+                    '--dataset', str(i), '--plot', '1',
+                    '--method', 'affine', '--num_iter', '10000',
+                    ])
