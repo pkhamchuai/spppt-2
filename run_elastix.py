@@ -110,7 +110,7 @@ def run(model_params, method='affine', plot=1, num_iter=0):
         affine_transform1 = elastixImageFilter.GetTransformParameterMap()[0]["TransformParameters"]
         affine_transform1 = np.array([float(i) for i in affine_transform1])
         affine_transform1 = torch.tensor(affine_transform1, dtype=torch.float32).view(1, 2, 3)
-        print(f"\naffine_transform1: {affine_transform1}")
+        # print(f"\naffine_transform1: {affine_transform1}")
 
         # reshape points1
         points1_ = points1.view(2, -1, 1)
@@ -129,13 +129,14 @@ def run(model_params, method='affine', plot=1, num_iter=0):
             
         points1 = points1[0].T
         points2 = points2[0].T
-        print(f"\npoints1: {points1.shape}")
-        print(f"points1_transformed: {points1_transformed.shape}")
+        # print(f"\npoints1: {points1.shape}")
+        # print(f"points1_transformed: {points1_transformed.shape}")
 
         results = DL_affine_plot(f"test", output_dir,
                 f"{i}", "SE", source_image, target_image, \
                 transformed_source_affine, \
-                points1, points2, points1_transformed, None, None, \
+                # points1, points2, points1_transformed, None, None, \
+                points1, points2, None, None, None, \
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_transform1[0], 
                 heatmap1=None, heatmap2=None, plot=plot_)
@@ -154,7 +155,7 @@ def run(model_params, method='affine', plot=1, num_iter=0):
 
         # append metrics to metrics list
         metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, 
-            mse12_image, ssim12_image_before, ssim12_image, len(points1)])
+            mse12_image, ssim12_image_before, ssim12_image, np.max(points1.shape)])
         
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
