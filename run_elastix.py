@@ -17,7 +17,9 @@ import csv
 import sys
 from IPython.utils.capture import capture_output
 from datetime import datetime
-import SimpleITK as sitk
+# install from here https://pypi.org/project/SimpleITK-SimpleElastix/
+# pip install SimpleITK-SimpleElastix
+import SimpleITK as sitk 
 
 # Stub to warn about opencv version.
 if int(cv2.__version__[0]) < 3: # pragma: no cover
@@ -55,7 +57,7 @@ def process_image(image):
     image = (image/np.max(image)).astype('float32')
     return image
 
-def run(model_params, method='affine', plot=1, num_iter=512):
+def run(model_params, method='affine', plot=1, num_iter=0):
     # Initialize SuperPointFrontend
     superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
                           conf_thresh=0.015,
@@ -64,7 +66,7 @@ def run(model_params, method='affine', plot=1, num_iter=512):
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
     # Create output directory
-    output_dir = f"output/{args.model}_{model_params.get_model_code()}_{timestamp}_elastix_{method}_test"
+    output_dir = f"output/{args.model}_{model_params.get_model_code()}_{timestamp}_elastix_{num_iter}_test"
     os.makedirs(output_dir, exist_ok=True)
 
     metrics = []
@@ -72,6 +74,19 @@ def run(model_params, method='affine', plot=1, num_iter=512):
     csv_file = f"{output_dir}/metrics.csv"
 
     testbar = tqdm(test_dataset, desc=f'Testing:')
+
+    parameterMap = sitk.GetDefaultParameterMap(f'{method}')
+    # Use a non-rigid transform instead of a translation transform
+    # parameterMap['Transform'] = ['BSplineTransform']
+
+    # Because of the increased complexity of the b-spline transform,
+    # it is a good idea to run the registration a little longer to
+    # ensure convergence
+    if num_iter > 0:
+        parameterMap['MaximumNumberOfIterations'] = [f'{int(num_iter)}']
+
+    print(f"\nparameterMap: {parameterMap}")
+
     for i, data in enumerate(testbar, 0):
         # Get images and affine parameters
         source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
@@ -79,16 +94,6 @@ def run(model_params, method='affine', plot=1, num_iter=512):
         # process images
         source_image = process_image(source_image)
         target_image = process_image(target_image)
-
-        parameterMap = sitk.GetDefaultParameterMap(f'{method}')
-
-        # Use a non-rigid transform instead of a translation transform
-        # parameterMap['Transform'] = ['BSplineTransform']
-
-        # Because of the increased complexity of the b-spline transform,
-        # it is a good idea to run the registration a little longer to
-        # ensure convergence
-        parameterMap['MaximumNumberOfIterations'] = [f'{int(num_iter)}']
 
         elastixImageFilter = sitk.ElastixImageFilter()
         elastixImageFilter.LogToConsoleOff()
@@ -104,9 +109,16 @@ def run(model_params, method='affine', plot=1, num_iter=512):
         affine_transform1 = elastixImageFilter.GetTransformParameterMap()
         affine_transform1 = elastixImageFilter.GetTransformParameterMap()[0]["TransformParameters"]
         affine_transform1 = np.array([float(i) for i in affine_transform1])
+        affine_transform1 = torch.tensor(affine_transform1, dtype=torch.float32).view(1, 2, 3)
+        print(f"\naffine_transform1: {affine_transform1}")
 
-        points1_transformed = transform_points_DVF(points1, affine_transform1, image_size)
-        print(f"points1_transformed: {points1_transformed}")
+        # reshape points1
+        points1_ = points1.view(2, -1, 1)
+        # print(f"points1: {points1.shape}")
+        points1_transformed = transform_points_DVF_unbatched(points1_, affine_transform1, source_image)
+        # print(f"points1: {points1.shape}")
+        # print(f"points2: {points2.shape}")
+        # print(f"points1_transformed: {points1_transformed.shape}")
 
         if i < 100 and plot == 1:
             plot_ = 1
@@ -114,9 +126,14 @@ def run(model_params, method='affine', plot=1, num_iter=512):
             plot_ = 2
         else:
             plot_ = 0
+            
+        points1 = points1[0].T
+        points2 = points2[0].T
+        print(f"\npoints1: {points1.shape}")
+        print(f"points1_transformed: {points1_transformed.shape}")
 
         results = DL_affine_plot(f"test", output_dir,
-                f"{i}", "SP", source_image, target_image, \
+                f"{i}", "SE", source_image, target_image, \
                 transformed_source_affine, \
                 points1, points2, points1_transformed, None, None, \
                 affine_params_true=affine_params_true,

@@ -51,5 +51,6 @@ for i in dataset:
     
     subprocess.run(['python', 'run_elastix.py', 
                     '--dataset', str(i), '--plot', '1',
-                    '--method', 'affine', '--num_iter', '10000',
+                    '--method', 'affine', '--num_iter', '0',
                     ])
+    
