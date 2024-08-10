@@ -1,7 +1,8 @@
 import subprocess
 
 # dataset = range(0, 6)
-dataset = [2, 10]
+# dataset = [3, 4, 5, 6, 7, 8, 9, 11]
+dataset = [11, 9, 8, 7, 6, 5, 4, 3]
 
 for i in dataset:
     # Run the SP batch file
@@ -53,8 +54,16 @@ for i in dataset:
                     '--dataset', str(i), '--plot', '1',
                     '--method', 'affine', '--num_iter', '0',
                     ])
+    subprocess.run(['python', 'run_elastix.py', 
+                    '--dataset', str(i), '--plot', '2',
+                    '--method', 'affine', '--num_iter', '0',
+                    ])
     
     subprocess.run(['python', 'run_elastix.py', 
                     '--dataset', str(i), '--plot', '1',
+                    '--method', 'affine', '--num_iter', '1000',
+                    ])
+    subprocess.run(['python', 'run_elastix.py', 
+                    '--dataset', str(i), '--plot', '2',
                     '--method', 'affine', '--num_iter', '1000',
                     ])
