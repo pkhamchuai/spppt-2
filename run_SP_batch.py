@@ -1,8 +1,8 @@
 import subprocess
 
-# dataset = range(0, 6)
+dataset = [1]
 # dataset = [3, 4, 5, 6, 7, 8, 9, 11]
-dataset = [11, 9, 8, 7, 6, 5, 4, 3]
+# dataset = [11, 9, 8, 7, 6, 5, 4, 3]
 
 for i in dataset:
     # Run the SP batch file
