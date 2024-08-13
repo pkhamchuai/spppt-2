@@ -162,6 +162,7 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             # M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
             # print(f"M: {M}")
             # affine_transform1 = M[:2, :]
+
             if method2 == 'RANSAC':
                 affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.RANSAC)
             elif method2 == 'LMEDS':

@@ -71,7 +71,7 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
     for i, data in enumerate(testbar, 0):
         if i != 90:
             continue
-        elif i == 90:
+        else:
             # Get images and affine parameters
             source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
             points1 = points1.squeeze(0).cpu().numpy()
@@ -165,6 +165,8 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
                 # M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
                 # print(f"M: {M}")
                 # affine_transform1 = M[:2, :]
+                # TODO: add cv2.getPerspectiveTransform, cv2.warpPerspective
+
                 if method2 == 'RANSAC':
                     affine_transform1, _ = cv2.estimateAffinePartial2D(matches1, matches2, method=cv2.RANSAC, maxIters=100000)
                 elif method2 == 'LMEDS':
