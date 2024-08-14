@@ -87,10 +87,12 @@ def run(model_params, method='affine', plot=1, num_iter=0):
 
     print(f"\nparameterMap: {parameterMap}")
 
+    time_list = []
+
     for i, data in enumerate(testbar, 0):
-        if i != 2 or i != 28:
-            continue
-        else:
+        if i == 2 or i == 28:
+            # collect time
+            start_time = time.time()
             # Get images and affine parameters
             source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
                 
@@ -104,6 +106,10 @@ def run(model_params, method='affine', plot=1, num_iter=0):
             elastixImageFilter.SetMovingImage(sitk.GetImageFromArray(source_image))
             # elastixImageFilter.SetParameterMap(sitk.GetDefaultParameterMap("affine"))
             elastixImageFilter.SetParameterMap(parameterMap)
+            # parameterMapVector = sitk.VectorOfParameterMap()
+            # parameterMapVector.append(sitk.GetDefaultParameterMap("affine"))
+            # parameterMapVector.append(sitk.GetDefaultParameterMap("bspline"))
+            # elastixImageFilter.SetParameterMap(parameterMapVector)
             elastixImageFilter.Execute()
             transformed_source_affine = elastixImageFilter.GetResultImage()
             transformed_source_affine = sitk.GetArrayFromImage(transformed_source_affine)
@@ -122,6 +128,9 @@ def run(model_params, method='affine', plot=1, num_iter=0):
             # print(f"points1: {points1.shape}")
             # print(f"points2: {points2.shape}")
             # print(f"points1_transformed: {points1_transformed.shape}")
+
+            stop_time = time.time()
+            time_list.append(stop_time - start_time)
 
             if i < 100 and plot == 1:
                 plot_ = 1
@@ -159,6 +168,11 @@ def run(model_params, method='affine', plot=1, num_iter=0):
             # append metrics to metrics list
             metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, 
                 mse12_image, ssim12_image_before, ssim12_image, np.max(points1.shape)])
+            
+        else:
+            continue
+    
+    print(f"\nAverage time: {np.mean(time_list)} for {len(time_list)} images, {num_iter} iterations\n")
         
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
