@@ -1,6 +1,6 @@
 import subprocess
 
-dataset = range(2, 12)
+dataset = range(1, 12)
 # dataset = [3, 4, 5, 6, 7, 8, 9, 11]
 # dataset = [11, 9, 8, 7, 6, 5, 4, 3]
 # method = ['perspective']
