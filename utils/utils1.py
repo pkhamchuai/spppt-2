@@ -721,6 +721,64 @@ def transform_points_DVF(points_, M, image): # batch version
     
     if points_.shape[0] != 2:
         points_ = points_.reshape(2, -1, points_.shape[0])
+
+    _, N, B = points_.shape
+    for b in range(B):
+        # print("points_ shape:", points_[:, :, b].shape, "M shape:", M[b].shape, "image shape:", image[b].shape)
+        points_[:, :, b] = \
+            transform_points_DVF_unbatched(points_[:, :, b].view(2, N, 1), 
+                                        M[b].view(1, 2, 3), 
+                                        image[b].view(1, 1, image[b].size(-1), image[b].size(-1)))
+    # print(points_.shape)
+    return points_
+
+def transform_points_from_DVF_unbatched(points_, DVF, image): # original version
+    # transform points using displacement field
+    if isinstance(DVF, torch.Tensor):
+        DVF = DVF.cpu().detach().numpy()
+
+    # loop through each point and apply the transformation
+    points = points_.clone()
+    points = points.detach().numpy()#.copy()
+    print(f"DVF shape: {DVF.shape}, points shape: {points.shape}")
+
+    for i in range(points.shape[1]):
+        try:
+            print(points[:, i])
+            print(DVF[:, int(points[1, i]), int(points[0, i])])
+            points[:, i] = points[:, i] - DVF[:, int(points[1, i]), int(points[0, i])]
+            # print(points[:, i])
+        except IndexError:
+            # if both points are outside the image
+            # find the nearest point inside the image and apply the transformation
+            if int(points[1, i]) > 255 and int(points[0, i]) > 255:
+                points[:, i] = points[:, i] - DVF[:, 255, 255]
+            elif int(points[1, i]) < 0 and int(points[0, i]) < 0:
+                points[:, i] = points[:, i] - DVF[:, 0, 0]
+            elif int(points[1, i]) > 255 and int(points[0, i]) < 0:
+                points[:, i] = points[:, i] - DVF[:, 255, 0]
+            elif int(points[1, i]) < 0 and int(points[0, i]) > 255:
+                points[:, i] = points[:, i] - DVF[:, 0, 255]
+            # if only one point is outside the image
+            elif int(points[1, i]) > 255:
+                points[:, i] = points[:, i] - DVF[:, 255, int(points[0, i])]
+            elif int(points[1, i]) < 0:
+                points[:, i] = points[:, i] - DVF[:, 0, int(points[0, i])]
+            elif int(points[0, i]) > 255:
+                points[:, i] = points[:, i] - DVF[:, int(points[1, i]), 255]
+            elif int(points[0, i]) < 0:
+                points[:, i] = points[:, i] - DVF[:, int(points[1, i]), 0]
+            # print("points:", points[0, i], points[1, i])
+
+        # print("points shape:", points.shape)
+    return torch.tensor(points)
+
+def transform_points_from_DVF(points_, DVF, image): # batch version
+    # DVF.shape = (B, 2, H, W)
+    # points.shape = (2, N, B)
+
+    if points_.shape[0] != 2:
+        points_ = points_.reshape(2, -1, points_.shape[0])
     # print(points_.shape)
 
     # print(M.shape)
@@ -731,8 +789,8 @@ def transform_points_DVF(points_, M, image): # batch version
     for b in range(B):
         # print("points_ shape:", points_[:, :, b].shape, "M shape:", M[b].shape, "image shape:", image[b].shape)
         points_[:, :, b] = \
-            transform_points_DVF_unbatched(points_[:, :, b].view(2, N, 1), 
-                                        M[b].view(1, 2, 3), 
+            transform_points_from_DVF_unbatched(points_[:, :, b].view(2, N, 1), 
+                                        DVF, 
                                         image[b].view(1, 1, image[b].size(-1), image[b].size(-1)))
     # print(points_.shape)
     return points_

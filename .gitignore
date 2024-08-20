@@ -8,3 +8,4 @@ trained_models/*.pth.filepart
 output/*/*.png
 output/*
 output/vermeer/*/*
+Dataset/synth_eye_perspetive_easy/*
