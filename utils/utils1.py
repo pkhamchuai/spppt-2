@@ -830,6 +830,12 @@ def transform_points_from_DVF(points_, DVF, image): # batch version
 #                 points[b, :, i] = points[b, :, i] - DVF[b, :, int(points[b, 1, i]), int(points[b, 0, i])]
 #     return torch.tensor(points)
 
+def plot_grid(ax, gridx, gridy, **kwargs):
+    for i in range(gridx.shape[0]):
+        ax.plot(gridx[i, :], gridy[i, :], **kwargs)
+    for i in range(gridx.shape[1]):
+        ax.plot(gridx[:, i], gridy[:, i], **kwargs)
+
 def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, image3,
                        matches1, matches2, matches3, desc1, desc2, affine_params_true=None, 
                        affine_params_predict=None, heatmap1=None, heatmap2=None, plot=0):
