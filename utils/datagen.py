@@ -330,8 +330,8 @@ def datagen(dataset, is_train, sup, batch_size=1):
             df = pd.read_csv('Dataset/synth_eye_perspetive_test.csv')
             # count number of rows that df['training'] == 0
             print('Test synthetic perspective eye dataset')
-            print('Number of testing data: ', len(df[df['training'] == 0]))
-            df = df[df['training'] == 0]
+            print('Number of testing data: ', len(df))
+            # df = df[df['training'] == 0]
     # elif dataset == 4:
     #     # synthetic shape dataset
     #     dataset_path = 'Dataset/synthetic_shape_dataset'
