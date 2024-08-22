@@ -322,6 +322,16 @@ def datagen(dataset, is_train, sup, batch_size=1):
             print('Number of testing data: ', len(df[df['training'] == 0]))
             df = df[df['training'] == 0]
 
+    elif dataset == 12:
+        dataset_path = 'Dataset/Dataset-processed'
+        if is_train:
+            raise ValueError('Not implemented yet')
+        else:
+            df = pd.read_csv('Dataset/synth_eye_perspetive_test.csv')
+            # count number of rows that df['training'] == 0
+            print('Test synthetic perspective eye dataset')
+            print('Number of testing data: ', len(df[df['training'] == 0]))
+            df = df[df['training'] == 0]
     # elif dataset == 4:
     #     # synthetic shape dataset
     #     dataset_path = 'Dataset/synthetic_shape_dataset'
@@ -342,7 +352,7 @@ def datagen(dataset, is_train, sup, batch_size=1):
     #     return dataloader
 
     else:
-        raise ValueError('Input dataset parameter 1-11')
+        raise ValueError('Input dataset parameter 1-12')
 
     if batch_size == 1:
         dataset = MyDataset(dataset_path, df, is_train, sup)

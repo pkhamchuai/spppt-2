@@ -388,7 +388,8 @@ class ModelParams:
                 'Actual eye hard (9)' if self.dataset == 9 else \
                 'Actual eye hard (10)' if self.dataset == 10 else \
                 'Actual eye hard (11)' if self.dataset == 11 else \
-                'There are only datasets 1-11.')
+                'Synthetic perspective' if self.dataset == 12 else \
+                'There are only datasets 1-12.')
         print('Supervised or unsupervised model: ', 'Supervised' if self.sup else 'Unsupervised')
         print('Loss image type: ', 'Loss image not used' if self.image == 0 else \
                 'Image used')

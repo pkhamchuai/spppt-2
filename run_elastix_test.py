@@ -90,7 +90,7 @@ def run(model_params, method='affine', plot=1, num_iter=0):
     time_list = []
 
     for i, data in enumerate(testbar, 0):
-        if i == 2 or i == 28:
+        if i == 2 or i == 28 or i == 90:
             # collect time
             start_time = time.time()
             # Get images and affine parameters
