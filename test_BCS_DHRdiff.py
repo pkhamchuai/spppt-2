@@ -7,7 +7,7 @@ import os
 # sups = [1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
-dataset = [10]
+dataset = [12]
 sups = [0]
 
 # models = ['Attention']
@@ -105,9 +105,9 @@ learning_rate = 1e-3
 #                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
 #                                 ])
 for dataset_, sup in zip(dataset, sups):
-    runs.append(['python', 'test_ensemble_1way_reverse0.py', '--model', str(models), '--sup', str(sup),
-                     '--dataset', str(dataset_),
-                    '--model_path', str(model_path), '--plot', '2', '--verbose', '0'
+    runs.append(['python', 'test_BCS_1way_reverse0.py', '--model', str(models), '--sup', str(sup),
+                     '--dataset', str(dataset_), '--beam', '1',
+                    '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
                                 ])
         
 # sort runs by element 1, then 11, then 7
