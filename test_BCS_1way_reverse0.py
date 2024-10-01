@@ -180,8 +180,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                             mse12_image = results[6]
                             # ssim12_image = results[8]
 
-                            metrics_points.append(tre12)
-                            mse_images.append(mse12_image)
+                            metrics_points_forward.append(tre12)
+                            metrics_images_forward.append(mse12_image)
 
                             if j == 0 and k == 0:
                                 mse_before_first, tre_before_first, mse12_image_before_first, \
@@ -223,28 +223,33 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                             mse12_image = results[6]
                             # ssim21_image = results[8]
 
-                            metrics_points[2*k+1] = tre12
-                            mse_images[2*k+1] = mse12_image
+                            metrics_points_reverse.append(tre12)
+                            metrics_images_reverse.append(mse12_image)
 
-                    print(f"Pair {i}, Rep {j}: {metrics_points}, {mse_images}")
+                        # join the metrics of the forward and reverse directions
+                        metrics_points = np.array(metrics_points_forward) + np.array(metrics_points_reverse)
+                        metrics_images = np.array(metrics_images_forward) + np.array(metrics_images_reverse)
+
+                    print(f"Pair {i}, Rep {j}: {metrics_points}, {metrics_images}")
                     # break
                     
                     # choose the best 'beam' models
                     best_index_points = np.argsort(metrics_points)[:beam]
-                    best_index_images = np.argsort(mse_images)[:beam]
+                    best_index_images = np.argsort(metrics_images)[:beam]
                     min_metrics_points = np.min([metrics_points])
-                    min_mse_images = np.min([mse_images])
+                    min_mse_images = np.min([metrics_images])
                     # best_mse_images = np.argmin([mse_images])
                     # best_metrics_points = np.argmin([metrics_points])
                     
                     # if any element in tre_list is nan, use the model with the lowest mse
+                    # ++++++++++++++++ this part must be changed to be cases later ++++++++++++++++
                     if np.isnan(min_metrics_points) or np.isinf(min_metrics_points):
-                        best_index = best_mse_images
+                        best_index = best_index_images
                     else:
-                        best_index = best_metrics_points
+                        best_index = best_index_points
 
                     if verbose:
-                        print(f"Pair {i}, Rep {j}, best model index: {best_index}")
+                        print(f"Pair {i}, Rep {j}, best model index: {best_index} (change this later)")
                     
                     # best_model = best_index//2
                     for b in range(beam):
@@ -459,7 +464,8 @@ if __name__ == '__main__':
     
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
-                               learning_rate=args.learning_rate, decay_rate=args.decay_rate, plot=args.plot)
+                               learning_rate=args.learning_rate, decay_rate=args.decay_rate, 
+                               plot=args.plot)
     model_params.print_explanation()
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")

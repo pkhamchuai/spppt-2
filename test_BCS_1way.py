@@ -64,11 +64,38 @@ def tensor_affine_transform0(image, matrix):
 
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
-def test(model_name, models, model_params, timestamp):
+def test(model_name, models, model_params, timestamp, verbose=False, plot=1, beam=1):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
     # timestamp: timestamp of the model
+
+    def reg(model, source_image, target_image, points1, i, j, output_dir):
+        # Get the predicted affine parameters and transformed source image
+        outputs = model(source_image, target_image, points1)
+        transformed_source_affine = outputs[0]
+        affine_params_predicted = outputs[1]
+        points1_2_predicted = outputs[2]
+
+        # if i is an odd number
+        if i % 2 == 1 and i < 10 and model_params.plot == 0:
+            plot_ = True
+        else:
+            plot_ = False
+
+        results = DL_affine_plot(f"test_{i}", output_dir,
+            f"{i+1}", f"rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
+            target_image[0, 0, :, :].cpu().numpy(), 
+            transformed_source_affine[0, 0, :, :].cpu().numpy(),
+            points1[0].cpu().detach().numpy().T, 
+            points2[0].cpu().detach().numpy().T, 
+            points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
+            affine_params_true=affine_params_true,
+            affine_params_predict=affine_params_predicted, 
+            heatmap1=None, heatmap2=None, plot=plot_)
+
+        return results
+
     print('Test 1-way ensemble model')
     print('Function input:', model_name, models, model_params, timestamp)
 
@@ -111,7 +138,7 @@ def test(model_name, models, model_params, timestamp):
             # Get images and affine parameters
             source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
 
-            source_image = source_image.requires_grad_(True).to(device)
+            source_image0 = source_image.requires_grad_(True).to(device)
             target_image = target_image.requires_grad_(True).to(device)
             # add gradient to the matches
             points1 = points1.requires_grad_(True).to(device)
@@ -126,135 +153,153 @@ def test(model_name, models, model_params, timestamp):
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
             mse_points_best, mse_images_best = np.inf, np.inf
+            mse12 = np.inf
+            tre12 = np.inf
 
             mse_before_first, tre_before_first, mse12_image_before_first, \
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 20
+            rep = 5  # Number of repetitions
             votes = [np.inf] * rep  # Initialize a list to store the votes for each model
-            tre_points = [np.inf] * 5
-            mse_images = [np.inf] * 5
+            
             no_improve = 0
             # accepted parameters
             M = np.array([[1, 0, 0], [0, 1, 0]], dtype=np.float32)
             M = torch.from_numpy(M).unsqueeze(0)#.to(device)
+            # intermediate source images
+            source_beam = [source_image0.clone().to(device)] * beam 
+            points1_beam = [points1.clone().to(device)] * beam
+            # save search path as a list of lists
+            search_path = list(list() for _ in range(beam))
+            print(f"Search path: {search_path}")
 
             for j in range(rep):
-                for k in range(len(models)):
-                    # Forward + backward + optimize
-                    outputs = model[k](source_image, target_image, points1)
+
+                metrics_points_forward = []
+                metrics_images_forward = []
+
+                for b in range(beam):
+                    if j == 0 and b != 0:
+                        print(f"Rep {j}, Beam {b+1}")
+                        print('Pass')
+                        pass
+                    else:
+                        print(f"Rep {j}, Beam {b+1}: doing registration")
+                        
+                        source_image = source_beam[b]
+                        points1 = points1_beam[b]
+
+                        for k in range(len(models)):
+                            results = reg(model[k], source_image, target_image, points1, i, j, output_dir)
+                            
+                            mse_before = results[1]
+                            tre_before = results[3]
+                            mse12_image_before = results[5]
+                            ssim12_image_before = results[7]
+
+                            mse12 = results[2]
+                            tre12 = results[4]
+                            mse12_image = results[6]
+                            ssim12_image = results[8]
+
+                            metrics_points_forward.append(tre12)
+                            metrics_images_forward.append(mse12_image)
+
+                            if j == 0 and k == 0:
+                                mse_before_first, tre_before_first, mse12_image_before_first, \
+                                    ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
+                                # print(mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first)
+                        
+                    # join the metrics of the forward and reverse directions
+                    metrics_points = np.array(metrics_points_forward)
+                    metrics_images = np.array(metrics_images_forward)
+                    
+                print(f"Pair {i}, Rep {j}: {metrics_points}, {metrics_images}")
+                # break
+                
+                # choose the best 'beam' models
+                best_index_points = np.argsort(metrics_points)[:beam]
+                best_index_images = np.argsort(metrics_images)[:beam]
+                min_metrics_points = np.min([metrics_points])
+                min_mse_images = np.min([metrics_images])
+
+                if verbose:
+                    print(f"Pair {i}, Rep {j}, best model: points {best_index_points}, images {best_index_images}")
+                
+                # if any element in tre_list is nan, use the model with the lowest mse
+                # ++++++++++++++++ this part must be changed to be cases later ++++++++++++++++
+                if np.isnan(min_metrics_points) or np.isinf(min_metrics_points):
+                    best_index = best_index_images
+                else:
+                    best_index = best_index_points
+
+                if verbose:
+                    print(f"Pair {i}, Rep {j}, best model index: {best_index} (change this later)")
+
+                for b in range(beam):
+                    search_path[b].append(best_index[b])
+                    model_number = best_index[b]//len(models)
+                    outputs = model[model_number](source_beam[b], target_image, points1_beam[b])
                     transformed_source_affine = outputs[0]
                     affine_params_predicted = outputs[1]
                     points1_2_predicted = outputs[2]
 
-                    # if i is an odd number
-                    if i % 2 == 1 and i < 10 and model_params.plot == 0:
+                    if model_params.plot == 1 and i < 50:
                         plot_ = True
                     else:
                         plot_ = False
-
                     results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"{i+1}", f"rep{j:02d}_{k}", source_image[0, 0, :, :].cpu().numpy(), 
-                        target_image[0, 0, :, :].cpu().numpy(), 
+                        f"{i+1}", f"{b}_{search_path[b]}",
+                        source_beam[b][0, 0, :, :].cpu().numpy(),
+                        target_image[0, 0, :, :].cpu().numpy(),
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                        points1[0].cpu().detach().numpy().T, 
-                        points2[0].cpu().detach().numpy().T, 
-                        points1_2_predicted[0].cpu().detach().numpy().T, None, None, 
+                        points1[0].cpu().detach().numpy().T,
+                        points2[0].cpu().detach().numpy().T,
+                        points1_2_predicted[0].cpu().detach().numpy().T, None, None,
                         affine_params_true=affine_params_true,
-                        affine_params_predict=affine_params_predicted, 
+                        affine_params_predict=affine_params_predicted,
                         heatmap1=None, heatmap2=None, plot=plot_)
 
-                    mse_before = results[1]
-                    tre_before = results[3]
-                    mse12_image_before = results[5]
-                    ssim12_image_before = results[7]
+                    source_beam[b] = tensor_affine_transform0(source_beam[b], affine_params_predicted)
+                    points1_beam[b] = points1_2_predicted.clone()
 
-                    mse12 = results[2]
-                    tre12 = results[4]
-                    mse12_image = results[6]
-                    ssim12_image = results[8]
+                    if b == 0:
+                        # get the best results
+                        mse_before = results[1]
+                        tre_before = results[3]
+                        mse12_image_before = results[5]
+                        ssim12_image_before = results[7]
 
-                    tre_points[k] = tre12
-                    mse_images[k] = mse12_image
-
-                    if j == 0 and k == 0:
-                        mse_before_first, tre_before_first, mse12_image_before_first, \
-                            ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
-                        # print(mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first)
-                
-                print(f"Pair {i}, Rep {j}: {tre_points}, {mse_images}")
-                # the lowset mse12 and tre12 and its index
-                # min_mse_points = np.min([mse_points])
-                # min_mse_images = np.min([mse_images])
-                best_tre_points = np.argmin([tre_points]) # Find the index of the model with the best results
-                best_mse_images = np.argmin([mse_images])
-
-                print(f"Pair {i}, Rep {j}, best model: {best_tre_points} {best_mse_images}")
-                
-                # if any element in tre_list is nan, use the model with the lowest mse
-                if np.isnan(mse12):
-                    best_index = best_mse_images
-                else:
-                    best_index = best_tre_points
-
-                # print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_tre} {best_mse}")
-
-                outputs = model[best_index](source_image, target_image, points1)
-                transformed_source_affine = outputs[0]
-                affine_params_predicted = outputs[1]
-                points1_2_predicted = outputs[2]
-                
-                if model_params.plot == 1 and i < 50:
-                    plot_ = True
-                else:
-                    plot_ = False
-
-                results = DL_affine_plot(f"test_{i}", output_dir,
-                    f"{i+1}", f"rep{j:02d}_{best_index}", source_image[0, 0, :, :].cpu().numpy(),
-                    target_image[0, 0, :, :].cpu().numpy(),
-                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                    points1[0].cpu().detach().numpy().T,
-                    points2[0].cpu().detach().numpy().T,
-                    points1_2_predicted[0].cpu().detach().numpy().T, None, None,
-                    affine_params_true=affine_params_true,
-                    affine_params_predict=affine_params_predicted,
-                    heatmap1=None, heatmap2=None, plot=plot_)
-                    
-                mse_before = results[1]
-                tre_before = results[3]
-                mse12_image_before = results[5]
-                ssim12_image_before = results[7]
-
-                mse12 = results[2]
-                tre12 = results[4]
-                mse12_image = results[6]
-                ssim12_image = results[8]
+                        mse12 = results[2]
+                        tre12 = results[4]
+                        mse12_image = results[6]
+                        ssim12_image = results[8]
 
                 # apply the best model to this pair
                 # if mse12 < mse_before or mse12_image < mse12_image_before:
                 if mse12 < mse_points_best or mse12_image < mse_images_best:
                     mse_points_best = mse12
                     mse_images_best = mse12_image
-                    votes[j] = best_index
+                    # votes[j] = best_index
 
                     # update M
                     # print(affine_params_predicted.shape)
-                    M = combine_matrices(M, affine_params_predicted).to(device)
-                    # print(M)
-                    points1 = points1_2_predicted.clone()
-                    source_image = tensor_affine_transform0(data[0].to(device), M)
+                    # M = combine_matrices(M, affine_params_predicted).to(device)
+                    # # print(M)
+                    # points1 = points1_2_predicted.clone()
+                    # source_image = tensor_affine_transform0(data[0].to(device), M)
 
                     if no_improve > 0: 
                         no_improve -= 1
 
-                
                 else:
                     print(f"No improvement for {no_improve+1} reps")
                     no_improve += 1
                     votes[j] = -1
 
-                print(f"Pair {i}, Rep {j}: {mse12}, {tre12}, best model: {best_index}, {mse_points_best}, {mse_images_best}")
+                if verbose:
+                    print(f"Pair {i}, Rep {j}: search path {search_path}")
 
                 # if there is no improvement for 2 reps, stop the iteration
                 if no_improve > 2:
@@ -320,6 +365,8 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--plot', type=int, default=1, help='plot the results')
+    parser.add_argument('--verbose', type=int, default=0, help='verbose output')
+    parser.add_argument('--beam', type=int, default=1, help='beam search width')
     args = parser.parse_args()
 
     # model_path = 'trained_models/' + args.model_path
@@ -342,7 +389,8 @@ if __name__ == '__main__':
     
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
-                               learning_rate=args.learning_rate, decay_rate=args.decay_rate, plot=args.plot)
+                               learning_rate=args.learning_rate, decay_rate=args.decay_rate, 
+                               plot=args.plot)
     model_params.print_explanation()
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -352,5 +400,8 @@ if __name__ == '__main__':
 
     print(f"\nTesting the trained model: {args.model} +++++++++++++++++++++++")
 
-    test(args.model, model_path, model_params, timestamp)
+    args.verbose = int(args.verbose)
+    print(f"verbose: {args.verbose}")
+    test(args.model, model_path, model_params, timestamp, 
+         verbose=args.verbose, plot=args.plot, beam=args.beam)
     print("Test model finished +++++++++++++++++++++++++++++")

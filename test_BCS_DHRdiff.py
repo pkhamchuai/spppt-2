@@ -105,9 +105,13 @@ learning_rate = 1e-3
 #                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
 #                                 ])
 for dataset_, sup in zip(dataset, sups):
-    runs.append(['python', 'test_BCS_1way_reverse0.py', '--model', str(models), '--sup', str(sup),
-                     '--dataset', str(dataset_), '--beam', '1',
-                    '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
+    # runs.append(['python', 'test_BCS_1way_reverse0.py', '--model', str(models), '--sup', str(sup),
+    #                  '--dataset', str(dataset_), '--beam', '1',
+    #                 '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
+    #                             ])
+    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sup),
+                     '--dataset', str(dataset_), '--beam', '3',
+                    '--model_path', str(model_path), '--plot', '1', '--verbose', '1'
                                 ])
         
 # sort runs by element 1, then 11, then 7
