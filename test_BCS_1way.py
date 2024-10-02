@@ -302,8 +302,10 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                     print(f"Pair {i}, Rep {j}: search path {search_path}")
 
                 # if there is no improvement for 2 reps, stop the iteration
-                if no_improve > 2:
-                    break
+                if no_improve > 2 or j == rep - 1:
+                    # do final things
+                    
+                    
 
             # print(f'\nEnd register pair {i}')
             # print(f'Votes: {votes}\n')
