@@ -3,11 +3,11 @@ import os
 
 # dataset = range(0, 6)
 # sups = [0, 1, 1, 1, 1, 1]
-# dataset = range(1, 6)
+dataset = range(13)
 # sups = [1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
-dataset = [12]
+# dataset = [12]
 sups = [0]
 
 # models = ['Attention']
@@ -105,13 +105,21 @@ learning_rate = 1e-3
 #                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
 #                                 ])
 for dataset_, sup in zip(dataset, sups):
-    # runs.append(['python', 'test_BCS_1way_reverse0.py', '--model', str(models), '--sup', str(sup),
-    #                  '--dataset', str(dataset_), '--beam', '1',
-    #                 '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
-    #                             ])
+    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sup),
+                     '--dataset', str(dataset_), '--beam', '1',
+                    '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
+                                ])
+    
+for dataset_, sup in zip(dataset, sups):
+    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sup),
+                     '--dataset', str(dataset_), '--beam', '2',
+                    '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
+                                ])
+    
+for dataset_, sup in zip(dataset, sups):
     runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sup),
                      '--dataset', str(dataset_), '--beam', '3',
-                    '--model_path', str(model_path), '--plot', '1', '--verbose', '1'
+                    '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
                                 ])
         
 # sort runs by element 1, then 11, then 7
