@@ -3,7 +3,7 @@ import os
 
 # dataset = range(0, 6)
 # sups = [0, 1, 1, 1, 1, 1]
-dataset = range(13)
+dataset = range(1, 13)
 # sups = [1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
@@ -104,20 +104,20 @@ learning_rate = 1e-3
 #                      '--dataset', str(dataset_),
 #                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
 #                                 ])
-for dataset_, sup in zip(dataset, sups):
-    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sup),
+for dataset_ in dataset:
+    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(0),
                      '--dataset', str(dataset_), '--beam', '1',
                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
                                 ])
     
-for dataset_, sup in zip(dataset, sups):
-    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sup),
+for dataset_ in dataset:
+    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(0),
                      '--dataset', str(dataset_), '--beam', '2',
                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
                                 ])
     
-for dataset_, sup in zip(dataset, sups):
-    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sup),
+for dataset_ in dataset:
+    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(0),
                      '--dataset', str(dataset_), '--beam', '3',
                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
                                 ])

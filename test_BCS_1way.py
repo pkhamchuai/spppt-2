@@ -56,7 +56,7 @@ def tensor_affine_transform0(image, matrix):
     # Get the image size
     _, _, H, W = image.size()
     # Generate a grid of (x,y) coordinates
-    grid = F.affine_grid(matrix, [1, 1, H, W])
+    grid = F.affine_grid(matrix, [1, 1, H, W], align_corners=False)
     # Sample the input image at the grid points
     transformed_image = F.grid_sample(image, grid, align_corners=False)
     return transformed_image
@@ -160,7 +160,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 5  # Number of repetitions
+            rep = 10  # Number of repetitions
             votes = []
             
             no_improve = 0
@@ -283,7 +283,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                     else:
                         plot_ = False
                     results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"{i+1}", f"{b}_{active_beams[b]}",
+                        i+1, f"{b}_{active_beams[b]}",
                         source_beam[b][0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
@@ -346,34 +346,36 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                     if verbose:
                         print(f"Pair {i}, Rep {j}: final search path {active_beams}")
 
-                    src = source_image.clone().to(device)
+                    src = source_image0.clone().to(device)
                     points1 = points1_0.clone().to(device)
                     # perform the final registration using the models in active_beams
                     for k in range(len(active_beams[0])):
                         outputs = model[active_beams[0][k]](src, target_image, points1)
                         M = combine_matrices(M, outputs[1]).to(device)
                         points1 = outputs[2].clone()
-                        src = tensor_affine_transform0(src, outputs[1])
+                        src = outputs[0].clone()
                     
-                    # get the final results
-                    source_image = tensor_affine_transform0(data[0].to(device), M)
-                    points1 = points1_0.clone().to(device)
-                    # transform the points using M
-                    points1_2_predicted = transform_points_DVF(points1_0, M, source_image)
+                    break
+                
+            # get the final results
+            transformed_source_affine = tensor_affine_transform0(data[0].to(device), M.to(device))
+            # points1 = points1_0.clone().to(device)
+            # transform the points using M
+            # points1_2_predicted = transform_points_DVF(points1.cpu(), M.cpu(), source_image0)
 
-                    plot_ = 0
-                    best_model_text = f"final_rep{j:02d}_{active_beams[0]}"
-                    results = DL_affine_plot(f"test", output_dir,
-                        f"{i}", best_model_text, source_image[0, 0, :, :].cpu().numpy(),
-                        target_image[0, 0, :, :].cpu().numpy(),
-                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                        points1[0].clone().cpu().detach().numpy().T,
-                        points2[0].cpu().detach().numpy().T,
-                        points1_2_predicted[0].cpu().detach().numpy().T, None, None,
-                        affine_params_true=affine_params_true,
-                        affine_params_predict=affine_params_predicted,
-                        heatmap1=None, heatmap2=None, plot=plot_)
-                    votes = active_beams[0]
+            plot_ = 1
+            best_model_text = f"final_rep{j:02d}_{active_beams[0]}"
+            results = DL_affine_plot(f"test_{i}", output_dir,
+                i+1, best_model_text, source_image0[0, 0, :, :].cpu().numpy(),
+                target_image[0, 0, :, :].cpu().numpy(),
+                transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                points1_0[0].cpu().detach().numpy().T,
+                points2[0].cpu().detach().numpy().T,
+                points1[0].cpu().detach().numpy().T, None, None,
+                affine_params_true=affine_params_true,
+                affine_params_predict=affine_params_predicted,
+                heatmap1=None, heatmap2=None, plot=plot_)
+            votes = active_beams[0]
 
             # print(f'\nEnd register pair {i}')
             # print(f'Votes: {votes}\n')
