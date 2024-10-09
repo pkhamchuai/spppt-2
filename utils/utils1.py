@@ -1029,6 +1029,206 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
     return matches3, mse_before, mse12, tre_before, tre12, \
         mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
 
+def DL_affine_plot_image(name, dir_name, image1_name, image2_name, image1, image2, image3,
+                       matches1, matches2, matches3, desc1, desc2, affine_params_true=None, 
+                       affine_params_predict=None, heatmap1=None, heatmap2=None, plot=0):
+    
+    # plot = 0: no plot
+    # plot = 1: plot the output table
+    # plot = 2: plot the images only 
+
+    # print("matches1 shape:", matches1.shape)
+    # print("matches2 shape:", matches2.shape)
+    # print("matches3 shape:", matches3.shape)
+    # print("desc1 shape:", desc1.shape)
+    # print("desc2 shape:", desc2.shape)
+
+    # try:
+    #     # MSE and TRE before transformation (points)
+    #     mse_before = mse(matches1, matches2)
+    #     tre_before = tre(matches1, matches2)
+        
+    #     # matches3 = cv2.transform(matches1.T[None, :, :], affine_params[0])
+    #     # matches3 = matches3[0].T
+    #     # print("matches3 shape:", matches3.shape)
+    #     # print("matches2 shape:", matches2.shape)
+
+    #     mse12 = mse(matches3, matches2)
+    #     tre12 = tre(matches3, matches2)
+    # except:
+    #     mse_before = np.nan
+    #     tre_before = np.nan
+    #     mse12 = np.nan
+    #     tre12 = np.nan
+
+    # calculate the MSE between image3 and image2
+    mse12_image_before = mse(image1, image2)
+    mse12_image = mse(image3, image2)
+
+    # calculate SSIM between image3 and image2
+    ssim12_image_before = ssim(image1, image2)
+    ssim12_image = ssim(image3, image2)
+
+    # Part 3 - Plotting
+    # if plot == True or plot == 'image':
+    if plot == 1:
+        try:
+            # Create a subplot with 2 rows and 2 columns
+            # fig, axes = plt.subplot_mosaic("AADE;BCFG", figsize=(20, 10))
+            fig, axes = plt.subplot_mosaic("BCFD;AGHE", figsize=(20, 10))
+
+            red = (255, 0, 0)
+            green = (0, 255, 0)
+            orange = (255, 165, 0)
+            blue = (0, 0, 155)
+            overlaid1 = overlay_points(image1.copy(), matches1, color=red, radius=1)
+            overlaid2 = overlay_points(image2.copy(), matches2, color=green, radius=1)
+            overlaid3 = overlay_points(image3.copy(), matches3, color=orange, radius=1)
+
+            overlaidD = overlay_points(overlaid2.copy(), matches3, color=orange, radius=1)
+            overlaidD = overlay_points(overlaidD.copy(), matches1, color=red, radius=1)
+
+            overlaidE = overlay_points(overlaid2.copy(), matches3, color=orange, radius=1)
+            overlaidH = overlay_points(overlaid2.copy(), matches1, color=red, radius=1)
+
+            axes["F"].imshow(overlaid3, cmap='gray')
+            axes["F"].set_title(f"Warped, {affine_params_predict}")
+            axes["F"].axis('off')
+            axes['F'].grid(True)
+
+            # axe B shows source image
+            axes["B"].imshow(overlaid1, cmap='gray')
+            try:
+                axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}\n{matches1.shape}, {matches2.shape}, {matches3.shape}") 
+            except:
+                axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}")
+            axes["B"].axis('off')
+            axes['B'].grid(True)
+
+            # axe C shows target image
+            axes["C"].imshow(overlaid2, cmap='gray')
+            if affine_params_true is not None:
+                axes["C"].set_title(f"Target, {affine_params_true}")
+            else:
+                axes["C"].set_title(f"Target (unsupervised)")
+            axes["C"].axis('off')
+            axes['C'].grid(True)
+
+            # New subplot for the transformed points
+            # Blue: from original locations from image 2/1 to the affine-transformed locations
+            # Red: from affine-transformed locations of points from image 2/1 to 
+            # the locations they supposed to be in image 1/2
+            # Green: from affine-transformed locations of points from image 2/1 to
+            
+            '''try:
+                imgH = draw_lines_one_image(overlaidH, matches2, matches1, line_color=blue)
+                axes["H"].imshow(imgH)
+            except:
+                axes["H"].imshow(overlaidH)
+            axes["H"].set_title(f"Before, Error lines. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}")
+            axes["H"].axis('off')'''
+
+            # show different image in axes H
+            axes["H"].imshow(np.abs(image1 - image2), cmap='gray')
+            axes["H"].set_title(f"Abs. diff. before")
+
+            # show different image in axes E
+            axes["E"].imshow(np.abs(image3 - image2), cmap='gray')
+            axes["E"].set_title(f"Abs. diff. after")
+
+            try:
+                imgD = draw_lines_one_image(overlaidD, matches3, matches1, line_color=blue)
+                axes["D"].imshow(imgD)
+            except:
+                axes["D"].imshow(overlaidD)
+            # img2 = draw_lines_one_image(img2, matches2, matches3, line_color=(255, 0, 0))
+            try:
+                axes["D"].set_title(f"Source -> Warped, Transformation. {mse(matches1, matches3):.4f}, {tre(matches1, matches3):.4f}")
+            except:
+                axes["D"].set_title(f"Source -> Warped, Transformation.")
+            axes["D"].axis('off')
+
+            # img2 = draw_lines_one_image(overlaid2, matches3, matches1, line_color=(0, 0, 155))
+            '''try:
+                imgE = draw_lines_one_image(overlaidE, matches2, matches3, line_color=blue)
+                axes["E"].imshow(imgE)
+            except:
+                axes["E"].imshow(overlaidE)
+            axes["E"].set_title(f"After, Error lines. MSE: {mse12:.4f}, TRE: {tre12:.4f}")
+            axes["E"].axis('off')'''
+
+            # Display the checkerboard image 1 original to 2
+            checkerboard = create_checkerboard(image1, image2)
+            axes["A"].imshow(checkerboard, cmap='gray')
+            axes["A"].set_title(f"Original - Target, MSE: {mse12_image_before:.4f}, SSIM: {ssim12_image_before:.4f}")
+            axes["A"].axis('off')
+
+            # Display the checkerboard image 1 transformed to 2
+            checkerboard = create_checkerboard(image3, image2)
+            axes["G"].imshow(checkerboard, cmap='gray')
+            axes["G"].set_title(f"Warped - Target, MSE: {mse12_image:.4f}, SSIM: {ssim12_image:.4f}")
+            axes["G"].axis('off')
+
+            # show also MSE and SSIM between the two images
+            # imgA = draw_lines(overlaid1, overlaid2, matches1, matches2, match=None)
+            # axes["A"].imshow(imgA)
+            # axes["A"].set_title(f"Pair {image1_name}. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}, {matches1.shape[1]} matches")
+            # axes["A"].axis('off')
+
+            # axes G shows edge of image 1 over image 2
+            # find the edges of the transformed image
+            '''kernel = np.ones((3, 3), np.uint8)
+            edges = cv2.Canny((image3*255).astype(np.uint8), 15, 200)
+            # edges = cv2.dilate(edges, kernel, iterations=1)
+            edge_overlay = blend_img(edges, image2)
+            print("E")
+            axes["E"].imshow(edge_overlay)
+            axes["E"].set_title(f"Edges of source over target")
+            axes["E"].axis('off')'''
+
+            
+            plt.tight_layout()  # Adjust the layout to leave space for the histogram
+            # if the directory does not exist, create it
+            # dir_name = f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}"
+            if not os.path.exists(dir_name):
+                os.makedirs(dir_name) 
+            save_file_name = os.path.join(dir_name, f"{name}_{int(image1_name):04d}_{image2_name}.png")
+            # Check if the file already exists
+            if os.path.exists(save_file_name):
+                suffix = 1
+                while True:
+                    # Add a suffix to the file name
+                    new_file_name = os.path.join(dir_name, f"{name}_{int(image1_name):04d}_{image2_name}_{suffix}.png")
+                    if not os.path.exists(new_file_name):
+                        save_file_name = new_file_name
+                        break
+                    suffix += 1
+
+            signaturebar_gray(fig, f"{name}, S: {int(image1_name):04d}, T: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
+                    rect_kw={"facecolor": "gray", "edgecolor": None},
+                    text_kw={"color": "w"})
+            fig.savefig(save_file_name)
+            
+            # save images to output folder
+            '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image3*255)
+            cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_2.png", image2_transformed*255)'''
+            plt.close(fig)
+            
+        except TypeError:
+            print("TypeError in plotting")
+            pass
+
+    elif plot == 2:
+        # save images to output folder
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_source.png", image1*255)
+        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_target.png", image2*255)
+        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_warped.png", image3*255)
+
+    return mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
+
+
 def signaturebar(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
                  rect_kw={"facecolor": None, "edgecolor": None},
                  text_kw={"color": "w"}):

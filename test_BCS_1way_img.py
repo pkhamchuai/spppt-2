@@ -61,38 +61,17 @@ def tensor_affine_transform0(image, matrix):
     transformed_image = F.grid_sample(image, grid, align_corners=False)
     return transformed_image
 
-def transform_points(points, H, center=None):
+def transform_points(points, H):
     """
     Transform a single point using a homography matrix.
     """
     # if points are not in homogeneous form, convert them
+    # print(points.shape)
     if len(points) == 2:
         points = np.array([points[0], points[1], np.ones_like(points[0])], dtype=np.float32)
-    
-    print(points.shape, H.shape)
-
-    if center is not None:
-        # Translate points to the origin
-        translation_matrix = np.array([
-            [1, 0, -center[0]],
-            [0, 1, -center[1]],
-            [0, 0, 1]
-        ], dtype=np.float32)
-        points = np.dot(translation_matrix, points)
-    
     transformed_point = np.dot(H, points)
-    transformed_point = np.array([transformed_point[0], transformed_point[1], np.ones_like(transformed_point[0])], dtype=np.float32)
-    # print(transformed_point.shape)
-    
-    if center is not None:
-        # Translate points back from the origin
-        translation_matrix = np.array([
-            [1, 0, center[0]],
-            [0, 1, center[1]],
-            [0, 0, 1]
-        ], dtype=np.float32)
-        transformed_point = np.dot(translation_matrix, transformed_point)
-    
+    # transformed_point /= transformed_point[2]
+    # print(transformed_point[:2])
     return transformed_point[:2]
 
 
@@ -104,20 +83,12 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     # model_params: model parameters
     # timestamp: timestamp of the model
 
-    def reg(model, source_image, target_image, points1, points2, i, j, b, k, output_dir):
+    def reg(model, source_image, target_image, i, j, b, k, output_dir, points1=None, points2=None):
         # Get the predicted affine parameters and transformed source image
         outputs = model(source_image, target_image)
         transformed_source_affine = outputs[0]
         affine_params_predicted = outputs[1]
         # print(points1.shape)
-
-        # check type of points1, if it's a tensor, convert it to numpy
-        if isinstance(points1, torch.Tensor):
-            points1 = points1.cpu().detach().numpy()
-        print(points1.shape)
-        points1_2_predicted = transform_points(points1.T, affine_params_predicted[0].cpu().detach().numpy(), 
-                                               center=[image_size/2, image_size/2]).T
-        print(points1_2_predicted.shape, points2.shape, points1.shape)
 
         # if i is an odd number
         if i < 10 and model_params.plot == 0:
@@ -125,13 +96,11 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
         else:
             plot_ = False
 
-        results = DL_affine_plot(f"test_{i}", output_dir,
+        results = DL_affine_plot_image(f"test_{i}", output_dir,
             f"{i+1}", f"rep{j:02d}_beam{b}_model{k}", source_image[0, 0, :, :].cpu().numpy(), 
             target_image[0, 0, :, :].cpu().numpy(), 
             transformed_source_affine[0, 0, :, :].cpu().numpy(),
-            points1.T, 
-            points2, 
-            points1_2_predicted.T, 
+            points1, points2, None,
             None, None, 
             affine_params_true=affine_params_true,
             affine_params_predict=affine_params_predicted, 
@@ -165,7 +134,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
         model[i].eval()
 
     # Create output directory
-    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_ensemble_1way_test"
+    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_BCS_1way_image_test"
     os.makedirs(output_dir, exist_ok=True)
 
     # Validate model
@@ -178,11 +147,11 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
-            if i > 3:
-                break
+            # if i > 3:
+            #     break
 
             # Get images and affine parameters
-            source_image, target_image, affine_params_true, points1_0, points2, points1_2_true = data
+            source_image, target_image, affine_params_true, _, _, _ = data
 
             source_image0 = source_image.requires_grad_(True).to(device)
             target_image = target_image.requires_grad_(True).to(device)
@@ -190,10 +159,10 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             # points1 = points1_0.requires_grad_(True).to(device)
             # points2 = points2.requires_grad_(True).to(device)
             # print(points1_0.shape)
-            if isinstance(points1_0, torch.Tensor):
-                points1_0 = points1_0[0].cpu().detach().numpy()
-                points2 = points2[0].cpu().detach().numpy()
-            print(points1_0.shape, points2.shape)
+            # if isinstance(points1_0, torch.Tensor):
+            #     points1_0 = points1_0[0].cpu().detach().numpy()
+            #     points2 = points2[0].cpu().detach().numpy()
+            # print(points1_0.shape, points2.shape)
 
             # TODO: how to repeat the test?
             # 1. until the affine parameters are not change anymore
@@ -204,21 +173,21 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
             mse_points_best, mse_images_best = np.inf, np.inf
-            mse12 = np.inf
-            tre12 = np.inf
+            # mse12 = np.inf
+            # tre12 = np.inf
 
             mse_before_first, tre_before_first, mse12_image_before_first, \
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 5 # Number of repetitions
+            rep = 10 # Number of repetitions
             votes = []
             
             no_improve = 0
             # intermediate source images
             source_beam = [source_image0.clone().to(device)] * beam 
-            points1_beam = [points1_0] * beam
-            print('points1_beam', points1_beam[0].shape)
+            # points1_beam = [points1_0] * beam
+            # print('points1_beam', points1_beam[0].shape)
             
             # Active beams will track which beams are still active
             # Defined as a dictionary with the beam index as the key and the number of votes as the value
@@ -241,7 +210,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 if verbose:
                     print(f"\nRep {j}: beam_info {beam_info}")
 
-                metrics_points_forward = []
+                # metrics_points_forward = []
                 metrics_images_forward = []
 
                 for b in range(beam):
@@ -258,20 +227,14 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                         # points1 = points1_beam[b].clone()
 
                         for k in range(len(models)):
-                            print(points1_beam[b].shape, points2.shape)
                             results = reg(model[k], source_beam[b].clone(), 
-                                          target_image, points1_beam[b].copy(), points2,
+                                          target_image, 
                                           i, j, b, k, output_dir)
                             
-                            mse_before = results[1]
-                            tre_before = results[3]
-                            mse12_image_before = results[5]
-                            ssim12_image_before = results[7]
-
-                            mse12 = results[2]
-                            tre12 = results[4]
-                            mse12_image = results[6]
-                            ssim12_image = results[8]
+                            mse12_image_before = results[0]
+                            mse12_image = results[1]
+                            ssim12_image_before = results[2]
+                            ssim12_image = results[3]
 
                             # beam identifiers
                             # print(beam_info, b, b*len(models)+k, len(beam_info))
@@ -283,42 +246,39 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                                 # print(beam_info[b*len(models)+k])
                                 # beam_info[b*len(models)+k] = [b, k, mse12, tre12, mse12_image, ssim12_image]
 
-                            metrics_points_forward.append(tre12)
+                            # metrics_points_forward.append(tre12)
                             metrics_images_forward.append(mse12_image)
                             if verbose:
-                                print(f"Pair {i}, Rep {j}, Beam {b}, Model {k}: {tre12}, {mse12_image}")
+                                print(f"Pair {i}, Rep {j}, Beam {b}, Model {k}: {mse12_image}")
 
                             if j == 0 and k == 0:
-                                mse_before_first, tre_before_first, mse12_image_before_first, \
-                                    ssim12_image_before_first = mse_before, tre_before, mse12_image_before, ssim12_image_before
+                                mse12_image_before_first, \
+                                    ssim12_image_before_first = mse12_image_before, ssim12_image_before
                                 # print(mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first)
                     if verbose:
                         print(beam_info, '\n')
                     # join the metrics of the forward and reverse directions
-                    metrics_points = np.array(metrics_points_forward)
+                    # metrics_points = np.array(metrics_points_forward)
                     metrics_images = np.array(metrics_images_forward)
                     
                 if verbose:
-                    print(f"Pair {i}, Rep {j}: {metrics_points}, {metrics_images}")
+                    print(f"Pair {i}, Rep {j}: {metrics_images}")
                 
                 # choose the best 'beam' models
-                best_index_points = np.argsort(metrics_points)[:beam]
+                # best_index_points = np.argsort(metrics_points)[:beam]
                 best_index_images = np.argsort(metrics_images)[:beam]
-                min_metrics_points = np.min([metrics_points])
+                # min_metrics_points = np.min([metrics_points])
                 min_mse_images = np.min([metrics_images])
 
                 if verbose:
-                    print(f"Pair {i}, Rep {j}, best model: points {best_index_points}, images {best_index_images}")
+                    print(f"Pair {i}, Rep {j}, best model (images): {best_index_images}")
                 
                 # if any element in tre_list is nan, use the model with the lowest mse
                 # ++++++++++++++++ this part must be changed to be cases later ++++++++++++++++
-                if np.isnan(min_metrics_points) or np.isinf(min_metrics_points):
-                    best_index = best_index_images
-                else:
-                    best_index = best_index_points
+                best_index = best_index_images
 
                 if verbose:
-                    print(f"Pair {i}, Rep {j}, best model index: {best_index} (change this later)")
+                    print(f"Pair {i}, Rep {j}, best model index: {best_index} (image only)")
 
                 for b in range(beam):
                     active_beams_index[b] = best_index[b]
@@ -338,29 +298,18 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                         M = combine_matrices(M, affine_params_predicted).to(device)
                         src = tensor_affine_transform0(source_image0, M)
 
-                    # get the final results
-                    # print(points1_beam[b].shape)
-                    if points1_beam[b].shape[0] == 2 and points1_beam[b].shape[-1] == 1:
-                        points1_beam[b] = points1_beam[b].T
-
-                    print('points1_beam[b].shape', points1_beam[b].shape)
                     transformed_source_affine = tensor_affine_transform0(source_image0, M)
-                    points1_2_predicted = transform_points(points1_beam[b].T, M[0].cpu().detach().numpy(), 
-                                                           center=[image_size/2, image_size/2]).T
-                    print(points1_beam[b].shape, points1_0.shape, points1_2_predicted.shape, points2.shape)
 
                     if model_params.plot == 1 and i < 50:
                         plot_ = True
                     else:
                         plot_ = False
-                    results = DL_affine_plot(f"test_{i}", output_dir,
+                    results = DL_affine_plot_image(f"test_{i}", output_dir,
                         i+1, f"{b}_{active_beams[b]}",
                         source_beam[b][0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                        points1_beam[b].T,
-                        points2.T,
-                        points1_2_predicted.T,
+                        None, None, None,
                         None, None,
                         affine_params_true=affine_params_true,
                         affine_params_predict=affine_params_predicted,
@@ -368,19 +317,14 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
 
                     # update the source image and points
                     source_beam[b] = transformed_source_affine.clone()
-                    points1_beam[b] = points1_2_predicted.copy()
+                    # points1_beam[b] = points1_2_predicted.copy()
 
                     if b == 0:
                         # get the best results
-                        mse_before = results[1]
-                        tre_before = results[3]
-                        mse12_image_before = results[5]
-                        ssim12_image_before = results[7]
-
-                        mse12 = results[2]
-                        tre12 = results[4]
-                        mse12_image = results[6]
-                        ssim12_image = results[8]
+                        mse12_image_before = results[0]
+                        mse12_image = results[1]
+                        ssim12_image_before = results[2]
+                        ssim12_image = results[3]
                 
                 if verbose:
                     for b in range(beam):
@@ -389,8 +333,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
 
                 # apply the best model to this pair
                 # if mse12 < mse_before or mse12_image < mse12_image_before:
-                if mse12 < mse_points_best or mse12_image < mse_images_best:
-                    mse_points_best = mse12
+                if mse12_image < mse_images_best:
+                    # mse_points_best = mse12
                     mse_images_best = mse12_image
                     # votes[j] = best_index
 
@@ -406,19 +350,23 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
 
                 else:
                     if verbose:
-                        print(f"No improvement for {no_improve+1} reps")
+                        print(f"No improvement for {no_improve} reps")
                     no_improve += 1
                     # votes[j] = -1
 
                 if verbose:
                     print(f"Pair {i}, Rep {j}: search path {active_beams}")
 
-
-                if no_improve > 2 or j == rep - 1:
+                if no_improve > 2:
                     # do final things
                     if verbose:
-                        print(f"Pair {i}, Rep {j}: final search path {active_beams}")
-
+                        print(f"Pair {i}, Rep {j}: DONE (no improve) final search path {active_beams}")
+                    active_beams = active_beams[0][0:-2]
+                    break
+                elif j == rep-1:
+                    if verbose:
+                        print(f"Pair {i}, Rep {j}: DONE (end iter) final search path {active_beams}")
+                    active_beams = active_beams[0]
                     break
 
             # Finalize the results
@@ -431,8 +379,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             if verbose:
                 print(f"Finalizing pair {i}: {active_beams}")
 
-            for k in range(len(active_beams[0])):
-                model_number = active_beams[0][k]
+            for k in range(len(active_beams)):
+                model_number = active_beams[k]
                 outputs = model[model_number](src, target_image)
                 affine_params_predicted = outputs[1]
                 M = combine_matrices(M, affine_params_predicted).to(device)
@@ -441,31 +389,32 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 
             # get the final results
             transformed_source_affine = tensor_affine_transform0(source_image0, M)
-            points1_2_predicted = transform_points(points1_0[0].cpu().detach().numpy().T, M.cpu().detach().numpy(),
-                                                    center=[image_size/2, image_size/2]).T
+            # points1_2_predicted = transform_points(points1_0[0].cpu().detach().numpy().T, M.cpu().detach().numpy()).T
 
             plot_ = 1
-            best_model_text = f"final_rep{j:02d}_{active_beams[0]}"
-            results = DL_affine_plot(f"test_{i}", output_dir,
+            best_model_text = f"final_rep{j:02d}_{active_beams}"
+            results = DL_affine_plot_image(f"test_{i}", output_dir,
                 i+1, best_model_text, source_image0[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(),
                 transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                points1_0[0].cpu().detach().numpy().T,
-                points2[0].cpu().detach().numpy().T,
-                points1_2_predicted.T,
+                None, None, None,
                 None, None,
                 affine_params_true=affine_params_true,
                 affine_params_predict=M,
                 heatmap1=None, heatmap2=None, plot=plot_)
-            votes = active_beams[0]
 
             # print(f'\nEnd register pair {i}')
             # print(f'Votes: {votes}\n')
             # break
 
+            mse12_image_before = results[0]
+            mse12_image = results[1]
+            ssim12_image_before = results[2]
+            ssim12_image = results[3]
+
             # append metrics to metrics list
-            new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
-                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes]
+            new_entry = [i, mse12_image_before_first, mse12_image, \
+                            ssim12_image_before_first, ssim12_image, [], active_beams]
             metrics.append(new_entry)
             # print(f"Pair {i}: {new_entry}")
             # print('\n')
@@ -474,13 +423,14 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     with open(csv_file, 'w', newline='') as file:
 
         writer = csv.writer(file)
-        writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", 
+        writer.writerow(["index", "mse12_image_before", "mse12_image", 
                          "ssim12_image_before", "ssim12_image", "num_points", "votes"])
         for i in range(len(metrics)):
             writer.writerow(metrics[i])
         
         # drop the last column of the array 'metrics'
-        metrics = [metrics[i][0:-1] for i in range(len(metrics))]
+        metrics = [metrics[i][0:-2] for i in range(len(metrics))]
+        # print(metrics)
         metrics = np.array(metrics)
 
         # metrics = metrics[:, :8]
@@ -488,9 +438,9 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
         metrics = metrics[~nan_mask]
 
         avg = ["average", np.mean(metrics[:, 1]), np.mean(metrics[:, 2]), np.mean(metrics[:, 3]), np.mean(metrics[:, 4]), 
-            np.mean(metrics[:, 5]), np.mean(metrics[:, 6]), np.mean(metrics[:, 7]), np.mean(metrics[:, 8])]
+            ]
         std = ["std", np.std(metrics[:, 1]), np.std(metrics[:, 2]), np.std(metrics[:, 3]), np.std(metrics[:, 4]),
-            np.std(metrics[:, 5]), np.std(metrics[:, 6]), np.std(metrics[:, 7]), np.std(metrics[:, 8])]
+            ]
         writer.writerow(avg)
         writer.writerow(std)
 
