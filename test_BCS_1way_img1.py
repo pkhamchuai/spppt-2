@@ -410,7 +410,10 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             #     points1_2_predicted = None
             # print(points1_0.shape, points2.shape, points1.shape)
 
-            plot_ = 1
+            if i < 200:
+                plot_ = 1
+            else:
+                plot_ = 0
             best_model_text = f"final_rep{j:02d}_{active_beams}"
             results = DL_affine_plot(f"test_{i}", output_dir,
                 i+1, best_model_text, source_image0[0, 0, :, :].cpu().numpy(),
