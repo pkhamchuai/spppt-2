@@ -447,7 +447,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     with open(csv_file, 'w', newline='') as file:
 
         writer = csv.writer(file)
-        writer.writerow(["index", "mse_before", "mse12", "tre_before", "tre12", "mse12_image_before", "mse12_image", 
+        writer.writerow(["index", "mse12_image_before", "mse12_image", 
                          "ssim12_image_before", "ssim12_image", "num_points", "search_path"])
         for i in range(len(metrics)):
             writer.writerow(metrics[i])
