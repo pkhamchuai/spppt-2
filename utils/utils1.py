@@ -837,6 +837,12 @@ def plot_grid(ax, gridx, gridy, **kwargs):
     for i in range(gridx.shape[1]):
         ax.plot(gridx[:, i], gridy[:, i], **kwargs)
 
+def mse_torch(points1, points2):
+    return torch.mean((points1 - points2)**2)
+
+def tre_torch(points1, points2):
+    return torch.mean(torch.sqrt(torch.sum((points1 - points2)**2, dim=0)))
+
 def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, image3,
                        matches1, matches2, matches3, desc1, desc2, affine_params_true=None, 
                        affine_params_predict=None, heatmap1=None, heatmap2=None, plot=0):
@@ -853,16 +859,23 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
 
     try:
         # MSE and TRE before transformation (points)
-        mse_before = mse(matches1, matches2)
-        tre_before = tre(matches1, matches2)
+        # print("matches1:", matches1.shape)
+        # print("matches2:", matches2.shape)
+        # print("matches3:", matches3.shape)
+        mse_before = mse_torch(matches1, matches2).numpy()
+        tre_before = tre_torch(matches1, matches2).numpy()
+        
+        # print("MSE before:", mse_before)
+        # print("TRE before:", tre_before)
         
         # matches3 = cv2.transform(matches1.T[None, :, :], affine_params[0])
         # matches3 = matches3[0].T
         # print("matches3 shape:", matches3.shape)
         # print("matches2 shape:", matches2.shape)
 
-        mse12 = mse(matches3, matches2)
-        tre12 = tre(matches3, matches2)
+        mse12 = mse_torch(matches3, matches2).numpy()
+        tre12 = tre_torch(matches3, matches2).numpy()
+
     except:
         mse_before = np.nan
         tre_before = np.nan
@@ -907,7 +920,7 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # axe B shows source image
             axes["B"].imshow(overlaid1, cmap='gray')
             try:
-                axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}\n{matches1.shape}, {matches2.shape}, {matches3.shape}") 
+                axes["B"].set_title(f"Source, {matches1.shape}, {matches2.shape}, {matches3.shape}") 
             except:
                 axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}")
             axes["B"].axis('off')

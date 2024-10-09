@@ -15,6 +15,7 @@ print('Seed:', torch.seed())
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, print_summary
+from utils.utils2 import *
 from utils import test
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -96,16 +97,28 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
         else:
             plot_ = False
 
-        results = DL_affine_plot_image(f"test_{i}", output_dir,
-            f"{i+1}", f"rep{j:02d}_beam{b}_model{k}", source_image[0, 0, :, :].cpu().numpy(), 
-            target_image[0, 0, :, :].cpu().numpy(), 
-            transformed_source_affine[0, 0, :, :].cpu().numpy(),
-            points1, points2, None,
-            None, None, 
-            affine_params_true=affine_params_true,
-            affine_params_predict=affine_params_predicted, 
-            heatmap1=None, heatmap2=None, plot=plot_)
-
+        if points1 is not None and points2 is not None:
+            points1_2_predicted = transform_points_DVF(points1[0].cpu().detach().numpy().T, affine_params_predicted[0].cpu().detach().numpy()).T
+            results = DL_affine_plot(f"test_{i}", output_dir,
+                f"{i+1}", f"rep{j:02d}_beam{b}_model{k}", source_image[0, 0, :, :].cpu().numpy(), 
+                target_image[0, 0, :, :].cpu().numpy(), 
+                transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                points1, points2, points1_2_predicted,
+                None, None, 
+                affine_params_true=affine_params_true,
+                affine_params_predict=affine_params_predicted, 
+                heatmap1=None, heatmap2=None, plot=plot_)
+        else:
+            points1_2_predicted = None
+            results = DL_affine_plot_image(f"test_{i}", output_dir,
+                i+1, f"rep{j:02d}_beam{b}_model{k}", source_image[0, 0, :, :].cpu().numpy(),
+                target_image[0, 0, :, :].cpu().numpy(),
+                transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                None, None, None,
+                None, None,
+                affine_params_true=affine_params_true,
+                affine_params_predict=affine_params_predicted,
+                heatmap1=None, heatmap2=None, plot=plot_)
         return results
 
     print('Test 1-way ensemble model')
@@ -134,7 +147,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
         model[i].eval()
 
     # Create output directory
-    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_BCS_1way_image_test"
+    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_BCS_1way_beam{beam}_image_test"
     os.makedirs(output_dir, exist_ok=True)
 
     # Validate model
@@ -151,7 +164,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             #     break
 
             # Get images and affine parameters
-            source_image, target_image, affine_params_true, _, _, _ = data
+            source_image, target_image, affine_params_true, points1_0, points2, _ = data
 
             source_image0 = source_image.requires_grad_(True).to(device)
             target_image = target_image.requires_grad_(True).to(device)
@@ -347,7 +360,6 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
 
                     if no_improve > 0: 
                         no_improve -= 1
-
                 else:
                     if verbose:
                         print(f"No improvement for {no_improve} reps")
@@ -374,30 +386,37 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             M = np.array([[1, 0, 0], [0, 1, 0]], dtype=np.float32)
             M = torch.from_numpy(M).unsqueeze(0)#.to(device)
             src = source_image0.clone().to(device)
-            # points1 = points1_0.clone().to(device)
+            points1 = points1_0.clone().to(device)
 
             if verbose:
                 print(f"Finalizing pair {i}: {active_beams}")
 
             for k in range(len(active_beams)):
                 model_number = active_beams[k]
-                outputs = model[model_number](src, target_image)
+                outputs = model[model_number](src, target_image, points1)
                 affine_params_predicted = outputs[1]
+                points1 = outputs[2]
                 M = combine_matrices(M, affine_params_predicted).to(device)
                 src = tensor_affine_transform0(source_image0, M).clone()
                 # points1 = transform_points_DVF(points1_0.cpu(), M.cpu(), source_image0)
                 
             # get the final results
             transformed_source_affine = tensor_affine_transform0(source_image0, M)
-            # points1_2_predicted = transform_points(points1_0[0].cpu().detach().numpy().T, M.cpu().detach().numpy()).T
+            # try:
+            #     points1_2_predicted = transform_points(points1_0[0].cpu().numpy().T, M.cpu().numpy())
+            #     points1_2_predicted = torch.from_numpy(points1_2_predicted).view(1, -1, 2).to(device)
+            #     points1_2_predicted = points1_2_predicted[0].T
+            # except RuntimeError:
+            #     points1_2_predicted = None
+            # print(points1_0.shape, points2.shape, points1.shape)
 
             plot_ = 1
             best_model_text = f"final_rep{j:02d}_{active_beams}"
-            results = DL_affine_plot_image(f"test_{i}", output_dir,
+            results = DL_affine_plot(f"test_{i}", output_dir,
                 i+1, best_model_text, source_image0[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(),
                 transformed_source_affine[0, 0, :, :].cpu().numpy(),
-                None, None, None,
+                points1_0[0].T, points2[0].T, points1[0].T,
                 None, None,
                 affine_params_true=affine_params_true,
                 affine_params_predict=M,
@@ -407,18 +426,20 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             # print(f'Votes: {votes}\n')
             # break
 
-            mse12_image_before = results[0]
-            mse12_image = results[1]
-            ssim12_image_before = results[2]
-            ssim12_image = results[3]
+            mse_before = results[1]
+            tre_before = results[3]
+            mse12_image_before = results[5]
+            ssim12_image_before = results[7]
+
+            mse12 = results[2]
+            tre12 = results[4]
+            mse12_image = results[6]
+            ssim12_image = results[8]
 
             # append metrics to metrics list
-            new_entry = [i, mse12_image_before_first, mse12_image, \
-                            ssim12_image_before_first, ssim12_image, [], active_beams]
+            new_entry = [i, mse_before, mse12, tre_before, tre12, mse12_image_before, mse12_image, \
+                            ssim12_image_before, ssim12_image, np.max(points1_0.shape), active_beams]
             metrics.append(new_entry)
-            # print(f"Pair {i}: {new_entry}")
-            # print('\n')
-            # break
 
     with open(csv_file, 'w', newline='') as file:
 
@@ -438,9 +459,9 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
         metrics = metrics[~nan_mask]
 
         avg = ["average", np.mean(metrics[:, 1]), np.mean(metrics[:, 2]), np.mean(metrics[:, 3]), np.mean(metrics[:, 4]), 
-            ]
+            np.mean(metrics[:, 5]), np.mean(metrics[:, 6]), np.mean(metrics[:, 7]), np.mean(metrics[:, 8])]
         std = ["std", np.std(metrics[:, 1]), np.std(metrics[:, 2]), np.std(metrics[:, 3]), np.std(metrics[:, 4]),
-            ]
+            np.std(metrics[:, 5]), np.std(metrics[:, 6]), np.std(metrics[:, 7]), np.std(metrics[:, 8])]
         writer.writerow(avg)
         writer.writerow(std)
 
