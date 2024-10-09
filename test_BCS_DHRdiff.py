@@ -105,7 +105,7 @@ learning_rate = 1e-3
 #                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
 #                                 ])
 
-for i in range(1, 4):
+for i in range(2, 4):
     for dataset_ in dataset:
         runs.append(['python', 'test_BCS_1way_img1.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i),

@@ -920,9 +920,9 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # axe B shows source image
             axes["B"].imshow(overlaid1, cmap='gray')
             try:
-                axes["B"].set_title(f"Source, {matches1.shape}, {matches2.shape}, {matches3.shape}") 
+                axes["B"].set_title(f"Source,\n{matches1.shape}, {matches2.shape}, {matches3.shape}") 
             except:
-                axes["B"].set_title(f"Source, MSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}")
+                axes["B"].set_title(f"Source,\nMSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}")
             axes["B"].axis('off')
             axes['B'].grid(True)
 
