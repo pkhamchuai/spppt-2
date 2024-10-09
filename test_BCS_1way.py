@@ -444,7 +444,10 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             points1_2_predicted = transform_points(points1_0[0].cpu().detach().numpy().T, M.cpu().detach().numpy(),
                                                     center=[image_size/2, image_size/2]).T
 
-            plot_ = 1
+            if i < 200:
+                plot_ = 1
+            else:
+                plot_ = 0
             best_model_text = f"final_rep{j:02d}_{active_beams[0]}"
             results = DL_affine_plot(f"test_{i}", output_dir,
                 i+1, best_model_text, source_image0[0, 0, :, :].cpu().numpy(),
