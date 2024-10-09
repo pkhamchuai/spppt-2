@@ -8,7 +8,7 @@ import os
 # dataset = [4, 5]
 # sups = [1, 1]
 dataset = [3]
-sups = [0]
+sups = [1]
 
 # models = ['Attention']
 # , 'AIRNet', 'SP_AffineNet4'
@@ -104,23 +104,24 @@ learning_rate = 1e-3
 #                      '--dataset', str(dataset_),
 #                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
 #                                 ])
+
 for dataset_ in dataset:
-    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(0),
+    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sups[0]),
                      '--dataset', str(dataset_), '--beam', '1',
                     '--model_path', str(model_path), '--plot', '1', '--verbose', '1'
                                 ])
     
-for dataset_ in dataset:
-    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(0),
-                     '--dataset', str(dataset_), '--beam', '2',
-                    '--model_path', str(model_path), '--plot', '1', '--verbose', '1'
-                                ])
+# for dataset_ in dataset:
+#     runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(0),
+#                      '--dataset', str(dataset_), '--beam', '2',
+#                     '--model_path', str(model_path), '--plot', '0', '--verbose', '1'
+#                                 ])
     
-for dataset_ in dataset:
-    runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(0),
-                     '--dataset', str(dataset_), '--beam', '3',
-                    '--model_path', str(model_path), '--plot', '1', '--verbose', '1'
-                                ])
+# for dataset_ in dataset:
+#     runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(0),
+#                      '--dataset', str(dataset_), '--beam', '3',
+#                     '--model_path', str(model_path), '--plot', '1', '--verbose', '1'
+#                                 ])
         
 # sort runs by element 1, then 11, then 7
 # runs.sort(key=lambda x: x[3])

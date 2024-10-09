@@ -28,7 +28,7 @@ class SP_DHR_Net(nn.Module):
         # inputs = torch.rand((1, 1, image_size, image_size)), torch.rand((1, 1, image_size, image_size))
         # summary(self.affineNet, *inputs, show_input=True, show_hierarchical=True, print_summary=True)
 
-    def forward(self, source_image, target_image, points):
+    def forward(self, source_image, target_image, points=None):
         # if self.model_params.points == 1:
         affine_params = self.affineNet(source_image, target_image)
         
@@ -36,9 +36,13 @@ class SP_DHR_Net(nn.Module):
         #     print("This part is not yet implemented.")
             # affine_params = self.affineNet(source_image, target_image, heatmap1, heatmap2)
         transformed_source_image = tensor_affine_transform(source_image, affine_params)
-        transformed_points = points.clone()
-        transformed_points = transform_points_DVF(transformed_points.cpu().detach().T, 
-            affine_params.cpu().detach(), transformed_source_image.cpu().detach())
+        
+        if points is None:
+            return transformed_source_image, affine_params, None
+        else:
+            transformed_points = points.clone()
+            transformed_points = transform_points_DVF(transformed_points.cpu().detach().T, 
+                affine_params.cpu().detach(), transformed_source_image.cpu().detach())
 
-        return transformed_source_image, affine_params, transformed_points.T
+            return transformed_source_image, affine_params, transformed_points.T
     
