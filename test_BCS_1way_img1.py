@@ -193,7 +193,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 20 # Number of repetitions
+            rep = 10 # Number of repetitions
             # votes = []
             
             no_improve = 0
