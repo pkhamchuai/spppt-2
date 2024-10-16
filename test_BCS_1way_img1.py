@@ -84,7 +84,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     # model_params: model parameters
     # timestamp: timestamp of the model
 
-    def reg(model, source_image, target_image, i, j, b, k, output_dir, points1=None, points2=None):
+    def reg(model, source_image, target_image, i, j, b, k, output_dir, 
+            points1=None, points2=None):
         # Get the predicted affine parameters and transformed source image
         outputs = model(source_image, target_image)
         transformed_source_affine = outputs[0]
@@ -121,7 +122,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 heatmap1=None, heatmap2=None, plot=plot_)
         return results
 
-    print('Test 1-way ensemble model')
+    print('Test 1-way BCS using only images')
     print('Function input:', model_name, models, model_params, timestamp)
 
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
@@ -203,7 +204,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             # print('points1_beam', points1_beam[0].shape)
             
             # Active beams will track which beams are still active
-            # Defined as a dictionary with the beam index as the key and the number of votes as the value
+            # Defined as a dictionary with the beam index as 
+            # the key and the number of votes as the value
             active_beams_index = list(i for i in range(beam))
             active_beams = [0]*beam
             if verbose:
