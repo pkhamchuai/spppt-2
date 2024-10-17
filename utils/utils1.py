@@ -862,8 +862,8 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
         # print("matches1:", matches1.shape)
         # print("matches2:", matches2.shape)
         # print("matches3:", matches3.shape)
-        mse_before = mse_torch(matches1, matches2).numpy()
-        tre_before = tre_torch(matches1, matches2).numpy()
+        mse_before = mse(matches1, matches2)
+        tre_before = tre(matches1, matches2)
         
         # print("MSE before:", mse_before)
         # print("TRE before:", tre_before)
@@ -873,8 +873,8 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
         # print("matches3 shape:", matches3.shape)
         # print("matches2 shape:", matches2.shape)
 
-        mse12 = mse_torch(matches3, matches2).numpy()
-        tre12 = tre_torch(matches3, matches2).numpy()
+        mse12 = mse(matches3, matches2)
+        tre12 = tre(matches3, matches2)
 
     except:
         mse_before = np.nan

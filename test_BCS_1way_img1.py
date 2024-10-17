@@ -391,7 +391,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             points1 = points1_0.clone().to(device)
 
             if verbose:
-                print(f"Finalizing pair {i}: {active_beams}")
+                print(f"\nFinalizing pair {i}: {active_beams}")
 
             for k in range(len(active_beams)):
                 model_number = active_beams[k]
