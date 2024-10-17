@@ -389,7 +389,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
 
                             M = combine_matrices(M, affine_params_predicted).to(device)
                             src = tensor_affine_transform0(source_image0, M)
-                            src = torch.tensor(src, requires_grad=True).to(device)
+                            # src = torch.tensor(src).requires_grad_(True).to(device)
 
                             if k != len(active_beams[b])-1:
                                 # if this is not the last model in the beam
@@ -446,28 +446,15 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 if mse12 < mse_points_best: #or mse12_image < mse_images_best:
                     mse_points_best = mse12
                     # mse_images_best = mse12_image
-
-                    # votes[j] = best_index
-
-                    # update M
-                    # print(affine_params_predicted.shape)
-                    # M = combine_matrices(M, affine_params_predicted).to(device)
-                    # # print(M)
-                    # points1 = points1_2_predicted.clone()
-                    # source_image = tensor_affine_transform0(data[0].to(device), M)
-
                     if no_improve > 0: 
                         no_improve -= 1
-
                 else:
                     if verbose:
                         print(f"No improvement for {no_improve+1} reps")
                     no_improve += 1
-                    # votes[j] = -1
 
                 if verbose:
                     print(f"Done: Pair {i}, Rep {j}: search path {active_beams}")
-
 
                 if no_improve > 2:
                     # do final things
@@ -508,7 +495,6 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             transformed_source_affine = tensor_affine_transform0(source_image0, M)
             points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
                                                          M.cpu().detach(), source_image0).T
-            # print(points1_2_predicted.shape, points2.shape, points1.shape)
 
             if i < 200:
                 plot_ = 1
@@ -537,17 +523,10 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             ssim12_image_before_first = results[7]
             ssim12_image = results[8]
 
-            # print(f'\nEnd register pair {i}')
-            # print(f'Votes: {votes}\n')
-            # break
-
             # append metrics to metrics list
             new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
                             ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes]
             metrics.append(new_entry)
-            # print(f"Pair {i}: {new_entry}")
-            # print('\n')
-            # break
 
     with open(csv_file, 'w', newline='') as file:
 
