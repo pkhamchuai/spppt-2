@@ -113,6 +113,9 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
         points1_2_predicted = outputs[2]
         # print(points1.shape)
 
+        if points1.shape[0] == 2:
+            points1 = points1.T
+
         # # check type of points1, if it's a tensor, convert it to numpy
         # if isinstance(points1, torch.Tensor):
         #     points1 = points1.cpu().detach().numpy()
@@ -193,8 +196,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
-            # if i > 3:
-            #     break
+            if i > 3:
+                break
 
             # Get images and affine parameters
             source_image, target_image, affine_params_true, points1_0, points2, points1_2_true = data
@@ -219,7 +222,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
-            mse_points_best, mse_images_best = np.inf, np.inf
+            metric_points_best, mse_images_best = np.inf, np.inf
             mse12 = np.inf
             tre12 = np.inf
 
@@ -227,7 +230,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 10 # Number of repetitions
+            rep = 5 # Number of repetitions
             votes = []
             
             no_improve = 0
@@ -259,6 +262,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
 
                 if verbose:
                     print(f"\nRep {j}: beam_info {beam_info}")
+                    print(f"Lenght of beam_info: {len(beam_info)}")
 
                 metrics_points_forward = []
                 metrics_images_forward = []
@@ -298,10 +302,11 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                         source_image = tensor_affine_transform0(source_image0, M)
                         # points1 = torch.tensor(results[0], requires_grad=True).to(device)
                         points1 = transform_points_DVF(points1_0.cpu().detach().T,
-                                                         M.cpu().detach(), source_image0)
+                                        M.cpu().detach(), source_image0).T
                         
-                        metrics_points_forward.append(tre12)
-                        metrics_images_forward.append(mse12_image)
+                        if k == len(b)-1:
+                            metrics_points_forward.append(tre12)
+                            metrics_images_forward.append(mse12_image)
 
                         if verbose:
                             print(f"Pair {i}, Rep {j}, Beam {b}, Model {[b[k]]}: {tre12}, {mse12_image}")
@@ -313,19 +318,20 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                     # print(points1)
                     # print(transform_points_DVF(points1_0.cpu().detach().T, 
                     #                            M.cpu().detach(), source_image0).flatten())
-                    if verbose:
-                        print(beam_info, '\n')
+                    
                     # join the metrics of the forward and reverse directions
                     metrics_points = np.array(metrics_points_forward)
                     metrics_images = np.array(metrics_images_forward)
                     
                 if verbose:
                     print(f"Pair {i}, Rep {j}: {metrics_points}, {metrics_images}")
+                    print(f"Length of metrics_points: {len(metrics_points)}")
                 
                 # choose the best 'beam' models
                 best_index_points = np.argsort(metrics_points)[:beam]
                 best_index_images = np.argsort(metrics_images)[:beam]
                 min_metrics_points = np.min([metrics_points])
+                # metric_points_best = min_metrics_points
                 min_mse_images = np.min([metrics_images])
 
                 if verbose:
@@ -344,6 +350,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
 
                 if verbose:
                     print(f"Pair {i}, Rep {j}, best model index: {best_index}")
+
+                # print(beam_info, best_index)
 
                 for b in range(beam):
                     active_beams_index[b] = best_index[b]
@@ -443,8 +451,9 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
 
                 # apply the best model to this pair
                 # if mse12 < mse_before or mse12_image < mse12_image_before:
-                if mse12 < mse_points_best: #or mse12_image < mse_images_best:
-                    mse_points_best = mse12
+                # TODO: if mse12 is not available, use tre12
+                if tre12 < metric_points_best:
+                    metric_points_best = tre12
                     # mse_images_best = mse12_image
                     if no_improve > 0: 
                         no_improve -= 1
