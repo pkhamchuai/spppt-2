@@ -105,7 +105,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     # timestamp: timestamp of the model
 
     def reg(model, source_image, target_image, i, j, b, k, output_dir, 
-            points1=None, points2=None):
+            points1=None, points2=None, plot_=False):
         # Get the predicted affine parameters and transformed source image
         outputs = model(source_image, target_image, points=points1)
         transformed_source_affine = outputs[0]
@@ -124,16 +124,10 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
         #                                        center=[image_size/2, image_size/2]).T
         # print(points1_2_predicted.shape, points2.shape, points1.shape)
 
-        # if i is an odd number
-        if i < 10 and model_params.plot == 0:
-            plot_ = True
-        else:
-            plot_ = False
-
         if points1 is not None and points2 is not None:
             # print(points1.shape, points2.shape, points1_2_predicted.shape)
             results = DL_affine_plot(f"test_{i}", output_dir,
-                f"{i+1}", f"rep{j:02d}_beam{b}_model{k}", source_image[0, 0, :, :].cpu().numpy(), 
+                f"{i+1}", f"rep{j:02d}_beam{b}_branch_{k}", source_image[0, 0, :, :].cpu().numpy(), 
                 target_image[0, 0, :, :].cpu().numpy(), 
                 transformed_source_affine[0, 0, :, :].cpu().numpy(),
                 points1[0].cpu().detach().numpy().T,
@@ -147,7 +141,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
         else:
             points1_2_predicted = None
             results = DL_affine_plot_image(f"test_{i}", output_dir,
-                i+1, f"rep{j:02d}_beam{b}_model{k}", source_image[0, 0, :, :].cpu().numpy(),
+                i+1, f"rep{j:02d}_beam{b}_branch_{k}", source_image[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(),
                 transformed_source_affine[0, 0, :, :].cpu().numpy(),
                 None, None, None,
@@ -281,9 +275,14 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                             source_image = source_image0.clone().to(device)
                         # print(f"{k}, Pair {i}, Rep {j}, Beam {b}, Model {[b[k]]}")
                         # print(points1.shape, points2.shape)
+                        if model_params.plot == 0 and i < 10 and k == len(b)-1:
+                            plot_ = True
+                        else:
+                            plot_ = False
                         results, affine_params_predicted = reg(
                             model[b[k]], source_image, target_image, 
-                            i, j, b, k, output_dir, points1=points1, points2=points2)
+                            i, j, b, k, output_dir, points1=points1, points2=points2,
+                            plot_=plot_)
                         
                         # for a in results:
                         #     print(a)
