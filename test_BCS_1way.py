@@ -224,7 +224,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 5 # Number of repetitions
+            rep = 10 # Number of repetitions
             votes = []
             
             no_improve = 0
@@ -398,21 +398,22 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                             points1_2_predicted = outputs[2].clone()
 
                             M = combine_matrices(M, affine_params_predicted).to(device)
-                            src = tensor_affine_transform0(source_image0, M)
+                            
                             # src = torch.tensor(src).requires_grad_(True).to(device)
 
                             if k != len(active_beams[b])-1:
                                 # if this is not the last model in the beam
                                 # then we need to keep the points
                                 points1 = outputs[2].clone()
-                                transformed_source_affine = src.clone()
-                            else:
+                                src = tensor_affine_transform0(source_image0, M).clone()
+                                # transformed_source_affine = src.clone()
+                            elif k == len(active_beams[b])-1:
                                 # if this is the last model in the beam
                                 # then we need to keep the points 
                                 # and the source image of the last model 
                                 # to plot the results of this model
                                 points1_2_predicted = outputs[2].clone()
-                                source_beam = src.clone()
+                                source_beam = src.clone() # the source image of the last rep
                                 transformed_source_affine = tensor_affine_transform0(source_image0, M).clone()
 
                     if model_params.plot == 1 and i < 50:
@@ -420,7 +421,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                     else:
                         plot_ = False
                     results = DL_affine_plot(f"test_{i}", output_dir,
-                        i+1, f"{b}_{active_beams[b]}",
+                        i+1, f"beam{b}_rep{j}_{active_beams[b]}",
                         source_beam[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
@@ -529,7 +530,9 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             
             votes = active_beams
             mse_before_first = results[1]
+            mse12 = results[2]
             tre_before_first = results[3]
+            tre12 = results[4]
             mse12_image_before_first = results[5]
             mse12_image = results[6]
             ssim12_image_before_first = results[7]
