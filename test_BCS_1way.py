@@ -190,8 +190,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
-            # if i > 3:
-            #     break
+            if i > 3:
+                break
 
             # Get images and affine parameters
             source_image, target_image, affine_params_true, points1_0, points2, points1_2_true = data
@@ -216,7 +216,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
-            metric_points_best, mse_images_best = np.inf, np.inf
+            metric_best = np.inf
             mse12 = np.inf
             tre12 = np.inf
 
@@ -224,7 +224,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 10 # Number of repetitions
+            rep = 5 # Number of repetitions
             votes = []
             
             no_improve = 0
@@ -331,7 +331,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 best_index_images = np.argsort(metrics_images)[:beam]
                 min_metrics_points = np.min([metrics_points])
                 # metric_points_best = min_metrics_points
-                min_mse_images = np.min([metrics_images])
+                # min_mse_images = np.min([metrics_images])
+                # metric_this_rep = np.inf
 
                 if verbose:
                     print(f"Pair {i}, Rep {j}, best model: points {best_index_points}, images {best_index_images}")
@@ -340,12 +341,14 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 # ++++++++++++++++ this part must be changed to be cases later ++++++++++++++++
                 if np.isnan(min_metrics_points):
                     best_index = best_index_images
+                    metric_this_rep = np.min([metrics_images])
                     if verbose:
-                        print(f"using images: {best_index}")
+                        print(f"using images: {metric_this_rep}")
                 else:
                     best_index = best_index_points
+                    metric_this_rep = min_metrics_points
                     if verbose:
-                        print(f"using points: {best_index}")
+                        print(f"using points: {metric_this_rep}")
 
                 if verbose:
                     print(f"Pair {i}, Rep {j}, best model index: {best_index}")
@@ -452,8 +455,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 # if mse12 < mse_before or mse12_image < mse12_image_before:
                 # TODO: if tre12 is not available, use mse12_image instead
                 
-                if tre12 < metric_points_best:
-                    metric_points_best = tre12
+                if metric_this_rep < metric_best:
+                    metric_best = metric_this_rep
                     # mse_images_best = mse12_image
                     if no_improve > 0: 
                         no_improve -= 1
@@ -469,7 +472,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                     # do final things
                     if verbose:
                         print(f"Pair {i}, Rep {j}: DONE (no improve) final search path {active_beams}")
-                    active_beams = active_beams[0][0:-3]
+                    active_beams = active_beams[0][0:-3] # if no improvement, need to set back 3 steps to get the best result
                     break
                 elif j == rep-1:
                     if verbose:

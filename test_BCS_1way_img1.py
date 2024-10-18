@@ -186,12 +186,12 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
-            mse_points_best, mse_images_best = np.inf, np.inf
+            mse_images_best = np.inf
             # mse12 = np.inf
             # tre12 = np.inf
 
-            mse_before_first, tre_before_first, mse12_image_before_first, \
-                ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
+            # mse_before_first, tre_before_first, mse12_image_before_first, \
+            #     ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
             rep = 10 # Number of repetitions
