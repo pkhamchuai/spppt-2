@@ -266,9 +266,9 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                             if verbose:
                                 print(f"Pair {i}, Rep {j}, Beam {b}, Model {k}: {mse12_image}")
 
-                            if j == 0 and k == 0:
-                                mse12_image_before_first, \
-                                    ssim12_image_before_first = mse12_image_before, ssim12_image_before
+                            # if j == 0 and k == 0:
+                            #     mse12_image_before_first, \
+                            #         ssim12_image_before_first = mse12_image_before, ssim12_image_before
                                 # print(mse_before_first, tre_before_first, mse12_image_before_first, ssim12_image_before_first)
                     if verbose:
                         print(beam_info, '\n')
@@ -375,7 +375,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                     # do final things
                     if verbose:
                         print(f"Pair {i}, Rep {j}: DONE (no improve) final search path {active_beams}")
-                    active_beams = active_beams[0][0:-2]
+                    active_beams = active_beams[0][0:-3]
                     break
                 elif j == rep-1:
                     if verbose:
@@ -412,7 +412,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             #     points1_2_predicted = None
             # print(points1_0.shape, points2.shape, points1.shape)
 
-            if i < 200:
+            if i < 100:
                 plot_ = 1
             else:
                 plot_ = 0

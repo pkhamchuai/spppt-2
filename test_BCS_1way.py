@@ -190,8 +190,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
-            if i > 3:
-                break
+            # if i > 3:
+            #     break
 
             # Get images and affine parameters
             source_image, target_image, affine_params_true, points1_0, points2, points1_2_true = data
@@ -224,7 +224,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 5 # Number of repetitions
+            rep = 10 # Number of repetitions
             votes = []
             
             no_improve = 0
@@ -450,7 +450,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
 
                 # apply the best model to this pair
                 # if mse12 < mse_before or mse12_image < mse12_image_before:
-                # TODO: if mse12 is not available, use tre12
+                # TODO: if tre12 is not available, use mse12_image instead
+                
                 if tre12 < metric_points_best:
                     metric_points_best = tre12
                     # mse_images_best = mse12_image
@@ -504,7 +505,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
                                                          M.cpu().detach(), source_image0).T
 
-            if i < 200:
+            if i < 100:
                 plot_ = 1
             else:
                 plot_ = 0
