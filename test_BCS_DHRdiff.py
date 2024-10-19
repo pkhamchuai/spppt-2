@@ -1,13 +1,13 @@
 import subprocess
 import os
 
-# dataset = range(6, 12)
+dataset = range(1, 12)
 # sups = [0, 1, 1, 1, 1, 1]
 # dataset = range(1, 6)
 # sups = [1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
-dataset = [10]
+# dataset = [10]
 sups = [0]
 
 # models = ['Attention']
@@ -109,7 +109,7 @@ for i in range(1, 4):
     for dataset_ in dataset:
         runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i),
-                        '--model_path', str(model_path), '--plot', '1', '--verbose', '0'])
+                        '--model_path', str(model_path), '--plot', '3', '--verbose', '0'])
     
 # for dataset_ in dataset:
 #     runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(0),
