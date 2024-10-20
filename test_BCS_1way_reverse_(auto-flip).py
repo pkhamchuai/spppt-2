@@ -234,8 +234,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             # Active beams will track which beams are still active
             # Defined as a dictionary with the beam index as 
             # the key and the number of votes as the value
-            active_beams_index = list(b for b in range(beam))
-            active_beams = [0]*beam
+            active_beams_index = list(b for b in range(2*beam))
+            active_beams = [0]*beam*2
 
             for j in range(rep):
                 if verbose:
@@ -282,60 +282,55 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                         else:
                             plot_ = False
 
-                        # forward registration
-                        _, affine_params_predicted = reg(
-                            model[b[k]], source_image, target_image, 
-                            i, j, b, k, output_dir, points1=points1, points2=points2,
-                            plot_=plot_)
-                        M_fw = combine_matrices(M, affine_params_predicted).to(device)
-                        source_image_fw = tensor_affine_transform0(source_image0, M_fw)
-                        points1_fw = transform_points_DVF(points1_0.cpu().detach().T,
-                                        M_fw.cpu().detach(), source_image0).T
+                        if k < (len(b)-1)/2:
+                            # forward registration
+                            _, affine_params_predicted = reg(
+                                model[b[k]], source_image, target_image, 
+                                i, j, b, k, output_dir, points1=points1, points2=points2,
+                                plot_=plot_)
+                            M_fw = combine_matrices(M, affine_params_predicted).to(device)
+                            source_image_fw = tensor_affine_transform0(source_image0, M_fw)
+                            points1_fw = transform_points_DVF(points1_0.cpu().detach().T,
+                                            M_fw.cpu().detach(), source_image0).T
+                            
+                            # calculate the metrics
+                            tre12 = tre(points1_fw.cpu().detach().numpy(), points2.cpu().detach().numpy())
+                            mse12_image = mse(source_image_fw[0, 0, :, :].cpu().detach().numpy(), 
+                                            target_image[0, 0, :, :].cpu().detach().numpy())
                         
-                        # calculate the metrics
-                        tre12 = tre(points1_fw.cpu().detach().numpy(), points2.cpu().detach().numpy())
-                        mse12_image = mse(source_image_fw[0, 0, :, :].cpu().detach().numpy(), 
-                                          target_image[0, 0, :, :].cpu().detach().numpy())
-                        
-                        # reverse registration
-                        _, affine_params_predicted = reg(
-                            model[b[k]], target_image, source_image, 
-                            i, j, b, k, output_dir, points1=points2, points2=points1,
-                            plot_=plot_)
-                        affine_params_predicted = matrix_to_params(
-                            torch.inverse(params_to_matrix(affine_params_predicted)))
-                        M_rv = combine_matrices(M, affine_params_predicted).to(device)
-                        source_image_rv = tensor_affine_transform0(source_image0, M_rv)
-                        points1_rv = transform_points_DVF(points1_0.cpu().detach().T,
-                                        M_rv.cpu().detach(), target_image).T
-                        
-                        # calculate the metrics
-                        tre21 = tre(points1_rv.cpu().detach().numpy(), points1.cpu().detach().numpy())
-                        mse21_image = mse(source_image_rv[0, 0, :, :].cpu().detach().numpy(),
-                                            source_image[0, 0, :, :].cpu().detach().numpy())
-                        
-                        # compare the metrics
-                        if tre12 < tre21:
-                            tre12 = tre12
-                            mse12_image = mse12_image
-                        else:
-                            tre12 = tre21
-                            mse12_image = mse21_image
+                        elif k > (len(b)-1)/2:
+                            # reverse registration
+                            model_number = b[k]
+                            _, affine_params_predicted = reg(
+                                model[b[k]], target_image, source_image, 
+                                i, j, b, k, output_dir, points1=points2, points2=points1,
+                                plot_=plot_)
+                            affine_params_predicted = matrix_to_params(
+                                torch.inverse(params_to_matrix(affine_params_predicted)))
+                            M_rv = combine_matrices(M, affine_params_predicted).to(device)
+                            source_image_rv = tensor_affine_transform0(source_image0, M_rv)
+                            points1_rv = transform_points_DVF(points1_0.cpu().detach().T,
+                                            M_rv.cpu().detach(), target_image).T
+                            
+                            # calculate the metrics
+                            tre12 = tre(points1_rv.cpu().detach().numpy(), points1.cpu().detach().numpy())
+                            mse12_image = mse(source_image_rv[0, 0, :, :].cpu().detach().numpy(),
+                                                source_image[0, 0, :, :].cpu().detach().numpy())
                         
                         if k == len(b)-1:
-                            tre12 = tre(points1.cpu().detach().numpy(), points2.cpu().detach().numpy())
-                            mse12_image = mse(source_image[0, 0, :, :].cpu().detach().numpy(), 
-                                              target_image[0, 0, :, :].cpu().detach().numpy())
+                            # tre12 = tre(points1.cpu().detach().numpy(), points2.cpu().detach().numpy())
+                            # mse12_image = mse(source_image[0, 0, :, :].cpu().detach().numpy(), 
+                            #                   target_image[0, 0, :, :].cpu().detach().numpy())
                         
-                            metrics_points_forward.append(tre12)
-                            metrics_images_forward.append(mse12_image)
+                            metrics_points.append(tre12)
+                            metrics_images.append(mse12_image)
 
                         if verbose:
                             print(f"Pair {i}, Rep {j}, Beam {b}, Model {[b[k]]}: {tre12}, {mse12_image}")
                     
                     # join the metrics of the forward and reverse directions
-                    metrics_points = np.array(metrics_points_forward)
-                    metrics_images = np.array(metrics_images_forward)
+                    metrics_points = np.array(metrics_points)
+                    metrics_images = np.array(metrics_images)
                     
                 if verbose:
                     print(f"Pair {i}, Rep {j}, points: {metrics_points}")
@@ -388,6 +383,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                                 points1 = points1_0.clone().to(device)
                                 source_image = source_image0.clone().to(device)
 
+                            # forward registration
                             model_number = active_beams[b][k]
                             outputs = model[model_number](source_image, target_image, points=points1)
                             # transformed_source_affine = outputs[0]
