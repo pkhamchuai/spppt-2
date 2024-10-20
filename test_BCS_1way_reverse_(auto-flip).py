@@ -282,15 +282,45 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                         else:
                             plot_ = False
 
+                        # forward registration
                         _, affine_params_predicted = reg(
                             model[b[k]], source_image, target_image, 
                             i, j, b, k, output_dir, points1=points1, points2=points2,
                             plot_=plot_)
-
-                        M = combine_matrices(M, affine_params_predicted).to(device)
-                        source_image = tensor_affine_transform0(source_image0, M)
-                        points1 = transform_points_DVF(points1_0.cpu().detach().T,
-                                        M.cpu().detach(), source_image0).T
+                        M_fw = combine_matrices(M, affine_params_predicted).to(device)
+                        source_image_fw = tensor_affine_transform0(source_image0, M_fw)
+                        points1_fw = transform_points_DVF(points1_0.cpu().detach().T,
+                                        M_fw.cpu().detach(), source_image0).T
+                        
+                        # calculate the metrics
+                        tre12 = tre(points1_fw.cpu().detach().numpy(), points2.cpu().detach().numpy())
+                        mse12_image = mse(source_image_fw[0, 0, :, :].cpu().detach().numpy(), 
+                                          target_image[0, 0, :, :].cpu().detach().numpy())
+                        
+                        # reverse registration
+                        _, affine_params_predicted = reg(
+                            model[b[k]], target_image, source_image, 
+                            i, j, b, k, output_dir, points1=points2, points2=points1,
+                            plot_=plot_)
+                        affine_params_predicted = matrix_to_params(
+                            torch.inverse(params_to_matrix(affine_params_predicted)))
+                        M_rv = combine_matrices(M, affine_params_predicted).to(device)
+                        source_image_rv = tensor_affine_transform0(source_image0, M_rv)
+                        points1_rv = transform_points_DVF(points1_0.cpu().detach().T,
+                                        M_rv.cpu().detach(), target_image).T
+                        
+                        # calculate the metrics
+                        tre21 = tre(points1_rv.cpu().detach().numpy(), points1.cpu().detach().numpy())
+                        mse21_image = mse(source_image_rv[0, 0, :, :].cpu().detach().numpy(),
+                                            source_image[0, 0, :, :].cpu().detach().numpy())
+                        
+                        # compare the metrics
+                        if tre12 < tre21:
+                            tre12 = tre12
+                            mse12_image = mse12_image
+                        else:
+                            tre12 = tre21
+                            mse12_image = mse21_image
                         
                         if k == len(b)-1:
                             tre12 = tre(points1.cpu().detach().numpy(), points2.cpu().detach().numpy())

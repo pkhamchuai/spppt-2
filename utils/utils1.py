@@ -312,7 +312,7 @@ class ModelParams:
     
     def get_model_code(self):
         # model code
-        model_code = str(self.dataset) + str(self.sup) + str(self.image) + \
+        model_code = str(self.dataset) + '_' + str(self.sup) + str(self.image) + \
             str(self.points) + str(self.loss_image_case) + \
             '_' + str(self.learning_rate) + '_' + str(self.start_epoch) + '_' + \
                 str(self.num_epochs) + '_' + str(self.batch_size)
@@ -344,26 +344,26 @@ class ModelParams:
     #     loss_image_case = int(model_name.split('_')[4][10:]) if model_name.split('_')[4][10:] else 0
     #     return cls(sup, dataset, image, heatmaps, loss_image_case)
 
-    @classmethod
-    def model_code_from_model_path(cls, model_code):
-        # print(model_code.split('/')[-1].split('_')[0:-1])
-        split_string = model_code.split('/')[-1].split('_')[0:-1]
-        dataset = int(split_string[0][0])
-        sup = int(split_string[0][1])
-        image = int(split_string[0][2])
-        points = int(split_string[0][3])
-        loss_image_case = int(split_string[0][4])
-        learning_rate = float(split_string[1])
-        if len(split_string) == 5:
-            start_epoch = int(split_string[2])
-            num_epochs = int(split_string[3])
-            batch_size = int(split_string[4])
-        else:
-            start_epoch = 0
-            num_epochs = int(split_string[2])
-            batch_size = int(split_string[3])
-        # decay_rate = 0.96
-        return cls(dataset, sup, image, points, loss_image_case, learning_rate, start_epoch, num_epochs, batch_size)
+    # @classmethod # FIXME: this is obsolete at the moment
+    # def model_code_from_model_path(cls, model_code):
+    #     # print(model_code.split('/')[-1].split('_')[0:-1])
+    #     split_string = model_code.split('/')[-1].split('_')[0:-1]
+    #     dataset = int(split_string[0][0])
+    #     sup = int(split_string[0][1])
+    #     image = int(split_string[0][2])
+    #     points = int(split_string[0][3])
+    #     loss_image_case = int(split_string[0][4])
+    #     learning_rate = float(split_string[1])
+    #     if len(split_string) == 5:
+    #         start_epoch = int(split_string[2])
+    #         num_epochs = int(split_string[3])
+    #         batch_size = int(split_string[4])
+    #     else:
+    #         start_epoch = 0
+    #         num_epochs = int(split_string[2])
+    #         batch_size = int(split_string[3])
+    #     # decay_rate = 0.96
+    #     return cls(dataset, sup, image, points, loss_image_case, learning_rate, start_epoch, num_epochs, batch_size)
     
     @classmethod
     def from_dict(cls, model_dict):

@@ -1,13 +1,13 @@
 import subprocess
 import os
 
-dataset = range(1, 12)
+dataset = range(1, 13)
 # sups = [0, 1, 1, 1, 1, 1]
 # dataset = range(1, 6)
 # sups = [1, 1, 1, 1, 1]
 # dataset = [4, 5]
 # sups = [1, 1]
-# dataset = [10]
+# dataset = [12]
 sups = [0]
 
 # models = ['Attention']
@@ -105,7 +105,7 @@ learning_rate = 1e-3
 #                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
 #                                 ])
 
-for i in range(1, 4):
+for i in range(2, 4):
     for dataset_ in dataset:
         runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i),
