@@ -5,26 +5,32 @@ import os
 import cv2
 import torch
 import matplotlib.pyplot as plt
-
 from datetime import datetime
 
 import torch
 torch.manual_seed(9793047918980052389)
 print('Seed:', torch.seed())
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+from socket import gethostname
 
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, print_summary
 from utils import test
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f'Device: {device}')
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# print(f'Device: {device}')
 
 # Stub to warn about opencv version.
 if int(cv2.__version__[0]) < 3: # pragma: no cover
   print('Warning: OpenCV 3 is not installed')
 
 image_size = 256
+
+def setup(rank, world_size):
+    # initialize the process group
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
 # Convert 1x2x3 parameters to 3x3 affine transformation matrices
 def params_to_matrix(params):
@@ -68,8 +74,6 @@ def transform_points(points, H, center=None):
     # if points are not in homogeneous form, convert them
     if len(points) == 2:
         points = np.array([points[0], points[1], np.ones_like(points[0])], dtype=np.float32)
-    
-    print(points.shape, H.shape)
 
     if center is not None:
         # Translate points to the origin
@@ -103,6 +107,23 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     # model: model to be tested
     # model_params: model parameters
     # timestamp: timestamp of the model
+
+    #-----------------------------------------------------------------------------
+    world_size    = int(os.environ["WORLD_SIZE"])
+    rank          = int(os.environ["SLURM_PROCID"])
+    gpus_per_node = int(os.environ["SLURM_GPUS_ON_NODE"])
+
+    assert gpus_per_node == torch.cuda.device_count()
+    print(f"Hello from rank {rank} of {world_size} on {gethostname()} where there are" \
+          f" {gpus_per_node} allocated GPUs per node.", flush=True)
+
+    setup(rank, world_size)
+    if rank == 0: print(f"Group initialized? {dist.is_initialized()}", flush=True)
+
+    device = rank - gpus_per_node * (rank // gpus_per_node)
+    torch.cuda.set_device(device)
+    print(f"host: {gethostname()}, rank: {rank}, local_rank: {device}\n", flush=True)
+    #-----------------------------------------------------------------------------
 
     def reg(model, source_image, target_image, i, j, b, output_dir, 
             points1=None, points2=None, plot_=False):
@@ -164,11 +185,12 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
         # if model is a loaded model, use the model
         if isinstance(models[i], str):
             print(f"\nLoading model: {models[i]}")
-            model[i] = model_loader(model_name, model_params)
+            model[i] = model_loader(model_name, model_params, device)
             buffer = io.BytesIO()
             torch.save(model[i].state_dict(), buffer)
             buffer.seek(0)
             model[i].load_state_dict(torch.load(models[i]))
+            model[i] = DDP(model[i], device_ids=[device])
             # print(f'Loaded model from {model[i]}')
         elif isinstance(models[i], nn.Module):
             print(f'Using model {model_name}')
@@ -195,7 +217,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             #     break
 
             # Get images and affine parameters
-            source_image, target_image, affine_params_true, points1_0, points2, _ = data
+            source_image, target_image, affine_params_true, points1_0, points2, points1_2_true = data
 
             source_image0 = source_image.requires_grad_(True).to(device)
             target_image = target_image.requires_grad_(True).to(device)
@@ -528,6 +550,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     # extra_text = f"Test model {model_name} at {model_} with dataset {model_params.dataset}. "
     # print_summary(model_name, model_, model_params, 
     #               None, timestamp, test=True)
+    dist.destroy_process_group()
 
 if __name__ == '__main__':
     # get the arguments
@@ -573,8 +596,7 @@ if __name__ == '__main__':
     
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
-                               learning_rate=args.learning_rate, decay_rate=args.decay_rate, 
-                               plot=args.plot)
+                               learning_rate=args.learning_rate, decay_rate=args.decay_rate)
     model_params.print_explanation()
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
