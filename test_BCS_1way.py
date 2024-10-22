@@ -453,7 +453,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                     points1 = transform_points_DVF(points1_0.cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
 
-            if i < 100 and plot == 2:
+            if i < 100 and (plot == 1 or plot == 2):
                 plot_ = True
             elif plot == 3:
                 plot_ = False

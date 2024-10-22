@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-dataset = range(1, 13)
+dataset = range(8, 13)
 # sups = [0, 1, 1, 1, 1, 1]
 # dataset = range(1, 6)
 # sups = [1, 1, 1, 1, 1]
