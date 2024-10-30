@@ -194,8 +194,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
-            if i > 3:
-                break
+            # if i > 3:
+            #     break
 
             # Get images and affine parameters
             source_image, target_image, affine_params_true, points1_0, points2, _ = data
