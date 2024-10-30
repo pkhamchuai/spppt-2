@@ -99,7 +99,7 @@ def transform_points(points, H, center=None):
 
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
-def test(model_name, models, model_params, timestamp, verbose=False, plot=1, beam=1):
+def test(model_name, models, model_params, timestamp, verbose=False, plot=1, beam=1, rep=10):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
@@ -228,7 +228,6 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 10 # Number of repetitions
             votes = []
             
             no_improve = 0
@@ -571,6 +570,7 @@ if __name__ == '__main__':
     '''
     parser.add_argument('--verbose', type=int, default=0, help='verbose output')
     parser.add_argument('--beam', type=int, default=1, help='beam search width')
+    parser.add_argument('--rep', type=int, default=10, help='number of repetitions')
     args = parser.parse_args()
 
     # model_path = 'trained_models/' + args.model_path
@@ -594,7 +594,7 @@ if __name__ == '__main__':
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
                                learning_rate=args.learning_rate, decay_rate=args.decay_rate,
-                               plot=args.plot)
+                               plot=args.plot, rep=args.rep)
     model_params.print_explanation()
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")

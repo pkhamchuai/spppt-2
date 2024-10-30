@@ -571,6 +571,7 @@ if __name__ == '__main__':
     '''
     parser.add_argument('--verbose', type=int, default=0, help='verbose output')
     parser.add_argument('--beam', type=int, default=1, help='beam search width')
+    parser.add_argument('--rep', type=int, default=10, help='number of repetitions')
     args = parser.parse_args()
 
     # model_path = 'trained_models/' + args.model_path
@@ -594,7 +595,7 @@ if __name__ == '__main__':
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
                                learning_rate=args.learning_rate, decay_rate=args.decay_rate,
-                               plot=args.plot)
+                               plot=args.plot, rep=args.rep)
     model_params.print_explanation()
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
