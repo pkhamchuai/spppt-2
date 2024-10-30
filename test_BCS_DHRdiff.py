@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-dataset = range(8, 13)
+dataset = range(1, 13)
 # sups = [0, 1, 1, 1, 1, 1]
 # dataset = range(1, 6)
 # sups = [1, 1, 1, 1, 1]
@@ -105,11 +105,11 @@ learning_rate = 1e-3
 #                     '--model_path', str(model_path), '--plot', '1', '--verbose', '0'
 #                                 ])
 
-for i in range(3, 4):
+for i in range(1, 2):
     for dataset_ in dataset:
-        runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(sups[0]),
+        runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i),
-                        '--model_path', str(model_path), '--plot', '1', '--verbose', '0'])
+                        '--model_path', str(model_path), '--plot', '0', '--verbose', '1'])
     
 # for dataset_ in dataset:
 #     runs.append(['python', 'test_BCS_1way.py', '--model', str(models), '--sup', str(0),
