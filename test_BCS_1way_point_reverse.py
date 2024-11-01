@@ -594,7 +594,7 @@ if __name__ == '__main__':
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
                                learning_rate=args.learning_rate, decay_rate=args.decay_rate,
-                               plot=args.plot, rep=args.rep)
+                               plot=args.plot)
     model_params.print_explanation()
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -607,5 +607,5 @@ if __name__ == '__main__':
     args.verbose = int(args.verbose)
     print(f"verbose: {args.verbose}")
     test(args.model, model_path, model_params, timestamp, 
-         verbose=args.verbose, plot=args.plot, beam=args.beam)
+         verbose=args.verbose, plot=args.plot, beam=args.beam, rep=args.rep)
     print("Test model finished +++++++++++++++++++++++++++++")
