@@ -1,0 +1,2 @@
+source_image,target_image,keypoints_file
+Dataset/Dataset-processed/03-03-2560/3220394-1RL/b2/3220394_20170303_before_b1_R_01.jpg,Dataset/Dataset-processed/03-03-2560/3220394-1RL/b2/3220394_20170303_before_b2-1_R_01.jpg,/home/pkhamchuai/codes/spppt-2/Dataset/manual dataset 7/img_000_keypoints.csv
