@@ -1,0 +1,3 @@
+source_image,target_image,keypoints_file
+Dataset/Dataset-processed/17-03-2560/3788391-1RL/b2/3788391_20170317_b2-1_after_L_01.jpg,Dataset/Dataset-processed/17-03-2560/3788391-1RL/b2/3788391_20170317_b2-1_before_L_01.jpg,/home/pkhamchuai/codes/spppt-2/Dataset/manual dataset 6/img_000_keypoints.csv
+Dataset/Dataset-processed/30-12-2559/3236468/b/3236468_20161230__R_b1.jpg,Dataset/Dataset-processed/30-12-2559/3236468/b/3236468_20161230__R_b3.jpg,/home/pkhamchuai/codes/spppt-2/Dataset/manual dataset 6/img_001_keypoints.csv
