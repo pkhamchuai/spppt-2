@@ -13,7 +13,7 @@ output_folder = ""
 img_index = 0
 img_data = None
 output_log = "image_pair_log.csv"
-main_log_df = pd.DataFrame(columns=["source_image", "target_image", "keypoints_file"])
+main_log_df = pd.DataFrame(columns=["source", "target", "keypoints"])
 
 # Global variable to store the selected keypoint index
 selected_point_index = None
