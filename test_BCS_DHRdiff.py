@@ -106,11 +106,17 @@ learning_rate = 1e-3
 
 # dataset = range(1, 13)
 dataset = [18]
-for i in range(3, 4):
+for i in range(1, 4):
     for dataset_ in dataset:
-        runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+        runs.append(['python', 'test_BCS_1way_img.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i),
-                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '10'])
+                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '20'])
+        
+# for i in range(1, 4):
+#     for dataset_ in dataset:
+#         runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+#                         '--dataset', str(dataset_), '--beam', str(i),
+#                         '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '20'])
     
 # dataset = range(1, 13)
 # for i in range(1, 2):

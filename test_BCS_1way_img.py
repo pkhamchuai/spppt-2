@@ -62,23 +62,9 @@ def tensor_affine_transform0(image, matrix):
     transformed_image = F.grid_sample(image, grid, align_corners=False)
     return transformed_image
 
-# def transform_points(points, H):
-#     """
-#     Transform a single point using a homography matrix.
-#     """
-#     # if points are not in homogeneous form, convert them
-#     # print(points.shape)
-#     if len(points) == 2:
-#         points = np.array([points[0], points[1], np.ones_like(points[0])], dtype=np.float32)
-#     transformed_point = np.dot(H, points)
-#     # transformed_point /= transformed_point[2]
-#     # print(transformed_point[:2])
-#     return transformed_point[:2]
-
-
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
-def test(model_name, models, model_params, timestamp, verbose=False, plot=1, beam=1):
+def test(model_name, models, model_params, timestamp, verbose=False, plot=1, beam=1, rep=10):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
@@ -206,7 +192,6 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             #     ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 10 # Number of repetitions
             # votes = []
             
             no_improve = 0
@@ -507,8 +492,15 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--plot', type=int, default=1, help='plot the results')
+    '''
+    plot = 0: plot every steps
+    plot = 1: plot only the search path
+    plot = 2: plot only the final result
+    plot = 3: plot nothing
+    '''
     parser.add_argument('--verbose', type=int, default=0, help='verbose output')
     parser.add_argument('--beam', type=int, default=1, help='beam search width')
+    parser.add_argument('--rep', type=int, default=10, help='number of repetitions')
     args = parser.parse_args()
 
     # model_path = 'trained_models/' + args.model_path
@@ -531,7 +523,7 @@ if __name__ == '__main__':
     
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, 
                                loss_image=args.loss_image, num_epochs=args.num_epochs, 
-                               learning_rate=args.learning_rate, decay_rate=args.decay_rate, 
+                               learning_rate=args.learning_rate, decay_rate=args.decay_rate,
                                plot=args.plot)
     model_params.print_explanation()
 
@@ -545,5 +537,5 @@ if __name__ == '__main__':
     args.verbose = int(args.verbose)
     print(f"verbose: {args.verbose}")
     test(args.model, model_path, model_params, timestamp, 
-         verbose=args.verbose, plot=args.plot, beam=args.beam)
+         verbose=args.verbose, plot=args.plot, beam=args.beam, rep=args.rep)
     print("Test model finished +++++++++++++++++++++++++++++")

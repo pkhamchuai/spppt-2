@@ -62,41 +62,6 @@ def tensor_affine_transform0(image, matrix):
     transformed_image = F.grid_sample(image, grid, align_corners=False)
     return transformed_image
 
-def transform_points(points, H, center=None):
-    """
-    Transform a single point using a homography matrix.
-    """
-    # if points are not in homogeneous form, convert them
-    if len(points) == 2:
-        points = np.array([points[0], points[1], np.ones_like(points[0])], dtype=np.float32)
-    
-    print(points.shape, H.shape)
-
-    if center is not None:
-        # Translate points to the origin
-        translation_matrix = np.array([
-            [1, 0, -center[0]],
-            [0, 1, -center[1]],
-            [0, 0, 1]
-        ], dtype=np.float32)
-        points = np.dot(translation_matrix, points)
-    
-    transformed_point = np.dot(H, points)
-    transformed_point = np.array([transformed_point[0], transformed_point[1], np.ones_like(transformed_point[0])], dtype=np.float32)
-    # print(transformed_point.shape)
-    
-    if center is not None:
-        # Translate points back from the origin
-        translation_matrix = np.array([
-            [1, 0, center[0]],
-            [0, 1, center[1]],
-            [0, 0, 1]
-        ], dtype=np.float32)
-        transformed_point = np.dot(translation_matrix, transformed_point)
-    
-    return transformed_point[:2]
-
-
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
 def test(model_name, models, model_params, timestamp, verbose=False, plot=1, beam=1, rep=10):
