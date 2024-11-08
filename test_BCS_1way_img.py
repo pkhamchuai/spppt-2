@@ -168,8 +168,8 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
             source_image0 = source_image.requires_grad_(True).to(device)
             target_image = target_image.requires_grad_(True).to(device)
             # add gradient to the matches
-            # points1 = points1_0.requires_grad_(True).to(device)
-            # points2 = points2.requires_grad_(True).to(device)
+            points1 = points1_0.requires_grad_(True).to(device)
+            points2 = points2.requires_grad_(True).to(device)
             # print(points1_0.shape)
             # if isinstance(points1_0, torch.Tensor):
             #     points1_0 = points1_0[0].cpu().detach().numpy()
@@ -239,9 +239,14 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                         # points1 = points1_beam[b].clone()
 
                         for k in range(len(models)):
-                            results = reg(model[k], source_beam[b].clone(), 
-                                          target_image, 
-                                          i, j, b, k, output_dir)
+                            if plot == 0 and i < 10 and k == len(b)-1:
+                                plot_ = True
+                            else:
+                                plot_ = False
+
+                            results, _ = reg(model[k], source_beam[b].clone(), 
+                                target_image, 
+                                i, j, b, k, output_dir, points1=points1, points2=points2, plot_=plot_)
                             
                             mse12_image_before = results[0]
                             mse12_image = results[1]
