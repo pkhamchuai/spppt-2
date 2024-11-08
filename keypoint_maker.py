@@ -13,7 +13,7 @@ output_folder = ""
 img_index = 0
 img_data = None
 output_log = "image_pair_log.csv"
-main_log_df = pd.DataFrame(columns=["source", "target", "keypoints"])
+main_log_df = pd.DataFrame(columns=["source", "target", "keypoints", "training"])
 
 # Global variable to store the selected keypoint index
 selected_point_index = None
@@ -25,6 +25,10 @@ color_index = 0
 # Initialize GUI
 root = tk.Tk()
 root.title("Image Keypoint Matching Tool")
+
+canvas_size = 600 # for 1080p screen
+# canvas_size = 400 # for 900p screen
+canvas_center = canvas_size // 2
 
 # Functions to set output folder and CSV file
 def set_output_folder():
@@ -73,14 +77,13 @@ def load_image_pair():
 
     def load_image(img_path):
         img = Image.open(img_path)
-        img = img.resize((600, 600), Image.LANCZOS)
+        img = img.resize((canvas_size, canvas_size), Image.LANCZOS)
         return ImageTk.PhotoImage(img)
 
     source_img = load_image(source_file)
     target_img = load_image(target_file)
-    source_canvas.create_image(300, 300, image=source_img, anchor="center")
-    target_canvas.create_image(300, 300, image=target_img, anchor="center")
-
+    source_canvas.create_image(canvas_center, canvas_center, image=source_img, anchor="center")
+    target_canvas.create_image(canvas_center, canvas_center, image=target_img, anchor="center")
     keypoints_file = os.path.join(output_folder, f"img_{img_index:03d}_keypoints.csv")
 
     # Check for keypoints file existence, fallback to img_data["keypoints"]
@@ -103,23 +106,32 @@ def load_image_pair():
     update_table()
     image_pair_label.config(text=f"Image Pair {img_index + 1} / {len(img_data)}")
 
+def trim_to_last_two_levels(path):
+    # keep only the last two levels of the path
+    path = path.split('/')
+    path = path[-3:]
+    path = '/'.join(path)
+    return path
+    
 def load_keypoints_from_file(keypoints_file):
     global source_points, target_points
     points_df = pd.read_csv(keypoints_file)
-    source_points = [(int(row["x1"] * 600 / 256), int(row["y1"] * 600 / 256)) for idx, row in points_df.iterrows()]
-    target_points = [(int(row["x2"] * 600 / 256), int(row["y2"] * 600 / 256)) for idx, row in points_df.iterrows()]
+    source_points = [(int(row["x1"] * canvas_size / 256), int(row["y1"] * canvas_size / 256)) for idx, row in points_df.iterrows()]
+    target_points = [(int(row["x2"] * canvas_size / 256), int(row["y2"] * canvas_size / 256)) for idx, row in points_df.iterrows()]
 
 def save_keypoints():
     global img_index
     keypoints_file = os.path.join(output_folder, f"img_{img_index:03d}_keypoints.csv")
+    keypoints_file = trim_to_last_two_levels(keypoints_file)
+
     points_df = pd.DataFrame({
-        "x1": [p[0] * 256 / 600 for p in source_points],
-        "y1": [p[1] * 256 / 600 for p in source_points],
-        "x2": [p[0] * 256 / 600 for p in target_points],
-        "y2": [p[1] * 256 / 600 for p in target_points]
+        "x1": [p[0] * 256 / canvas_size for p in source_points],
+        "y1": [p[1] * 256 / canvas_size for p in source_points],
+        "x2": [p[0] * 256 / canvas_size for p in target_points],
+        "y2": [p[1] * 256 / canvas_size for p in target_points]
     })
     points_df.to_csv(keypoints_file, index=False)
-    main_log_df.loc[img_index] = [source_file, target_file, keypoints_file]
+    main_log_df.loc[img_index] = [source_file, target_file, keypoints_file, 0]
     main_log_df.to_csv(os.path.join(output_folder, output_log), index=False)
 
 def next_image_pair():
@@ -203,8 +215,8 @@ def display_existing_points():
             target_canvas.create_oval(tp[0] - 5, tp[1] - 5, tp[0] + 5, tp[1] + 5, outline="white", width=2, tags="point")
 
 # GUI layout
-source_canvas = tk.Canvas(root, width=600, height=600, bg="white")
-target_canvas = tk.Canvas(root, width=600, height=600, bg="white")
+source_canvas = tk.Canvas(root, width=canvas_size, height=canvas_size, bg="white")
+target_canvas = tk.Canvas(root, width=canvas_size, height=canvas_size, bg="white")
 source_canvas.bind("<Button-1>", source_click)
 target_canvas.bind("<Button-1>", target_click)
 source_canvas.grid(row=0, column=0, padx=10, pady=10)
