@@ -64,7 +64,8 @@ def tensor_affine_transform0(image, matrix):
 
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
-def test(model_name, models, model_params, timestamp, verbose=False, plot=1, beam=1, rep=10):
+def test(model_name, models, model_params, timestamp, 
+         verbose=False, plot=1, beam=1, rep=10):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
@@ -119,7 +120,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 heatmap1=None, heatmap2=None, plot=plot_)
             return results
 
-    print('Test 1-way BCS with reverse registration')
+    print('Test 1-way BCS using points with reverse registration')
     print(f"Function input:', {model_name},\n{model_params},\n{timestamp}")
     print(f"Plot: {plot}, Beam: {beam}")
 

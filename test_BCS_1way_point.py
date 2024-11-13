@@ -15,6 +15,7 @@ print('Seed:', torch.seed())
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, print_summary
+from utils.utils2 import *
 from utils import test
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -61,44 +62,10 @@ def tensor_affine_transform0(image, matrix):
     transformed_image = F.grid_sample(image, grid, align_corners=False)
     return transformed_image
 
-def transform_points(points, H, center=None):
-    """
-    Transform a single point using a homography matrix.
-    """
-    # if points are not in homogeneous form, convert them
-    if len(points) == 2:
-        points = np.array([points[0], points[1], np.ones_like(points[0])], dtype=np.float32)
-    
-    print(points.shape, H.shape)
-
-    if center is not None:
-        # Translate points to the origin
-        translation_matrix = np.array([
-            [1, 0, -center[0]],
-            [0, 1, -center[1]],
-            [0, 0, 1]
-        ], dtype=np.float32)
-        points = np.dot(translation_matrix, points)
-    
-    transformed_point = np.dot(H, points)
-    transformed_point = np.array([transformed_point[0], transformed_point[1], np.ones_like(transformed_point[0])], dtype=np.float32)
-    # print(transformed_point.shape)
-    
-    if center is not None:
-        # Translate points back from the origin
-        translation_matrix = np.array([
-            [1, 0, center[0]],
-            [0, 1, center[1]],
-            [0, 0, 1]
-        ], dtype=np.float32)
-        transformed_point = np.dot(translation_matrix, transformed_point)
-    
-    return transformed_point[:2]
-
-
 # from utils.SuperPoint import SuperPointFrontend
-from utils.utils1 import transform_points_DVF
-def test(model_name, models, model_params, timestamp, verbose=False, plot=1, beam=1):
+# from utils.utils1 import transform_points_DVF
+def test(model_name, models, model_params, timestamp, 
+         verbose=False, plot=1, beam=1, rep=10):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
@@ -153,7 +120,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 heatmap1=None, heatmap2=None, plot=plot_)
             return results
 
-    print('Test 1-way BCS using images and points')
+    print('Test 1-way BCS using points')
     print(f"Function input:', {model_name},\n{model_params},\n{timestamp}")
     print(f"Plot: {plot}, Beam: {beam}")
 
@@ -227,7 +194,6 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1, bea
                 ssim12_image_before_first = np.inf, np.inf, np.inf, np.inf
             # mse_before, tre_before, mse12_image, ssim12_image = 0, 0, 0, 0
 
-            rep = 10 # Number of repetitions
             votes = []
             
             no_improve = 0
@@ -551,6 +517,7 @@ if __name__ == '__main__':
     '''
     parser.add_argument('--verbose', type=int, default=0, help='verbose output')
     parser.add_argument('--beam', type=int, default=1, help='beam search width')
+    parser.add_argument('--rep', type=int, default=10, help='number of repetitions')
     args = parser.parse_args()
 
     # model_path = 'trained_models/' + args.model_path
@@ -587,5 +554,5 @@ if __name__ == '__main__':
     args.verbose = int(args.verbose)
     print(f"verbose: {args.verbose}")
     test(args.model, model_path, model_params, timestamp, 
-         verbose=args.verbose, plot=args.plot, beam=args.beam)
+         verbose=args.verbose, plot=args.plot, beam=args.beam, rep=args.rep)
     print("Test model finished +++++++++++++++++++++++++++++")
