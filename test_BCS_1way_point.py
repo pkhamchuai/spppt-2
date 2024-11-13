@@ -253,7 +253,7 @@ def test(model_name, models, model_params, timestamp,
 
                         _, affine_params_predicted = reg(
                             model[b[k]], source_image, target_image, 
-                            i, j, b, output_dir, points1=points1, points2=points2,
+                            i, j, b, k, output_dir, points1=points1, points2=points2,
                             plot_=plot_)
 
                         M = combine_matrices(M, affine_params_predicted).to(device)

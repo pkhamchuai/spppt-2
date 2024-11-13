@@ -126,19 +126,19 @@ for i in range(2, 3):
     for dataset_ in dataset:
         runs.append(['python', 'test_BCS_1way_img.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i),
-                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '20'])
+                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '30'])
         
 for i in range(2, 3):
     for dataset_ in dataset:
         runs.append(['python', 'test_BCS_1way_point.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i),
-                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '20'])
+                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '30'])
         
 for i in range(2, 3):
     for dataset_ in dataset:
         runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i),
-                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '20'])
+                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '30'])
 
         
 # dataset = range(9, 13)

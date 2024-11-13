@@ -124,6 +124,8 @@ def save_keypoints():
     keypoints_file = os.path.join(output_folder, f"img_{img_index:03d}_keypoints.csv")
     keypoints_file = trim_to_last_two_levels(keypoints_file)
 
+    # if number of points from both images are not equal, discard the exceed points
+
     points_df = pd.DataFrame({
         "x1": [p[0] * 256 / canvas_size for p in source_points],
         "y1": [p[1] * 256 / canvas_size for p in source_points],

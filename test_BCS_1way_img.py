@@ -147,7 +147,7 @@ def test(model_name, models, model_params, timestamp,
         model[i].eval()
 
     # Create output directory
-    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_BCS_1way_beam{beam}_point_test"
+    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_BCS_1way_beam{beam}_image_test"
     os.makedirs(output_dir, exist_ok=True)
 
     # Validate model
@@ -253,7 +253,7 @@ def test(model_name, models, model_params, timestamp,
 
                         _, affine_params_predicted = reg(
                             model[b[k]], source_image, target_image, 
-                            i, j, b, output_dir, points1=points1, points2=points2,
+                            i, j, b, k, output_dir, points1=points1, points2=points2,
                             plot_=plot_)
 
                         M = combine_matrices(M, affine_params_predicted).to(device)
