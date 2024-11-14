@@ -120,11 +120,14 @@ def load_keypoints_from_file(keypoints_file):
     target_points = [(int(row["x2"] * canvas_size / 256), int(row["y2"] * canvas_size / 256)) for idx, row in points_df.iterrows()]
 
 def save_keypoints():
-    global img_index
+    global img_index, source_points, target_points
     keypoints_file = os.path.join(output_folder, f"img_{img_index:03d}_keypoints.csv")
     keypoints_file = trim_to_last_two_levels(keypoints_file)
 
     # if number of points from both images are not equal, discard the exceed points
+    min_points = min(len(source_points), len(target_points))
+    source_points = source_points[:min_points]
+    target_points = target_points[:min_points]
 
     points_df = pd.DataFrame({
         "x1": [p[0] * 256 / canvas_size for p in source_points],
