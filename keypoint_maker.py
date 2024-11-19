@@ -26,8 +26,8 @@ color_index = 0
 root = tk.Tk()
 root.title("Image Keypoint Matching Tool")
 
-# canvas_size = 600 # for 1080p screen
-canvas_size = 360 # for 900p screen
+canvas_size = 600 # for 1080p screen
+# canvas_size = 360 # for 900p screen
 canvas_center = canvas_size // 2
 
 # Functions to set output folder and CSV file

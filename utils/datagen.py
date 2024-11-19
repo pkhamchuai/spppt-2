@@ -341,6 +341,16 @@ def datagen(dataset, is_train, sup, batch_size=1):
     # dataset 11 with manual keypoints -> dataset 18
     # dataset 12 with manual keypoints -> dataset 19
 
+    elif dataset == 16:
+        dataset_path = 'Dataset/Dataset-processed'
+        if is_train:
+            raise ValueError('Not implemented yet')
+        else:
+            df = pd.read_csv('Dataset/eye_manual_9/image_pair_log.csv')
+            # count number of rows that df['training'] == 0
+            print('Test real eye dataset (9) with manual keypoints (16)')
+            print('Number of testing data: ', len(df))
+
     elif dataset == 17:
         dataset_path = 'Dataset/Dataset-processed'
         if is_train:

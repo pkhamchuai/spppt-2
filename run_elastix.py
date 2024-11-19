@@ -15,7 +15,7 @@ from skimage.transform import FundamentalMatrixTransform, AffineTransform
 import warnings
 import csv
 import sys
-from IPython.utils.capture import capture_output
+# from IPython.utils.capture import capture_output
 from datetime import datetime
 # install from here https://pypi.org/project/SimpleITK-SimpleElastix/
 # pip install SimpleITK-SimpleElastix
