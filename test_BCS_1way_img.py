@@ -147,7 +147,7 @@ def test(model_name, models, model_params, timestamp,
         model[i].eval()
 
     # Create output directory
-    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_BCS_1way_beam{beam}_image_test"
+    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_BCS_1way_beam{beam}_image_{metric}_test"
     os.makedirs(output_dir, exist_ok=True)
 
     # Validate model
@@ -186,7 +186,10 @@ def test(model_name, models, model_params, timestamp,
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
-            metric_best = np.inf
+            if metric == 'mse':
+                metric_best = np.inf
+            elif metric == 'ssim':
+                metric_best = 0
             mse12 = np.inf
             tre12 = np.inf
 
@@ -228,7 +231,7 @@ def test(model_name, models, model_params, timestamp,
                     print(f"\nRep {j}: beam_info {beam_info}")
                     print(f"Lenght of beam_info: {len(beam_info)}")
 
-                metrics_points_forward = []
+                # metrics_points_forward = []
                 metrics_images_forward = []
 
                 for b in beam_info:
@@ -288,8 +291,11 @@ def test(model_name, models, model_params, timestamp,
                 
                 # choose the best 'beam' models
                 # best_index_points = np.argsort(metrics_points)[:beam]
-                best_index_images = np.argsort(metrics_images)[:beam]
-                min_metrics_images = np.min([metrics_images])
+                if metric == 'mse':
+                    best_index_images = np.argsort(metrics_images)[:beam]
+                elif metric == 'ssim':
+                    best_index_images = np.argsort(metrics_images)[::-1][:beam]
+                # min_metrics_images = np.min([metrics_images])
                 # metric_points_best = min_metrics_points
                 # min_mse_images = np.min([metrics_images])
                 # metric_this_rep = np.inf
@@ -367,15 +373,25 @@ def test(model_name, models, model_params, timestamp,
                 # if mse12 < mse_before or mse12_image < mse12_image_before:
                 # TODO: if tre12 is not available, use mse12_image instead
                 
-                if metric_this_rep < metric_best:
-                    metric_best = metric_this_rep
-                    # mse_images_best = mse12_image
-                    if no_improve > 0: 
-                        no_improve -= 1
-                else:
-                    if verbose:
-                        print(f"No improvement for {no_improve+1} reps")
-                    no_improve += 1
+                if metric == 'mse':
+                    if metric_this_rep < metric_best:
+                        metric_best = metric_this_rep
+                        # mse_images_best = mse12_image
+                        if no_improve > 0: 
+                            no_improve -= 1
+                    else:
+                        if verbose:
+                            print(f"No improvement for {no_improve+1} reps")
+                        no_improve += 1
+                elif metric == 'ssim':
+                    if metric_this_rep > metric_best:
+                        metric_best = metric_this_rep
+                        if no_improve > 0: 
+                            no_improve -= 1
+                    else:
+                        if verbose:
+                            print(f"No improvement for {no_improve+1} reps")
+                        no_improve += 1
 
                 # if verbose:
                 #     print(f"Done: Pair {i}, Rep {j}: search path {active_beams}")
