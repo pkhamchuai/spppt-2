@@ -6,12 +6,13 @@ import matplotlib.colors as mcolors
 import random
 import math
 from skimage.metrics import structural_similarity as ssim_fc
-from utils.SuperPoint import PointTracker
+# from utils.SuperPoint import PointTracker
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
+# import torch.optim as optim
+# import torch.nn.functional as F
 from torchir.metrics import NCC
+import SimpleITK as sitk
 
 import sys
 from tqdm import tqdm
@@ -846,7 +847,7 @@ def tre_torch(points1, points2):
 
 def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, image3,
                        matches1, matches2, matches3, desc1, desc2, affine_params_true=None, 
-                       affine_params_predict=None, heatmap1=None, heatmap2=None, plot=0):
+                       affine_params_predict=None, heatmap1=None, heatmap2=None, plot=0, alpha=0.3):
     
     # plot = 0: no plot
     # plot = 1: plot the output table
@@ -896,7 +897,6 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
     if plot == 1:
         try:
             # Create a subplot with 2 rows and 2 columns
-            # fig, axes = plt.subplot_mosaic("AADE;BCFG", figsize=(20, 10))
             fig, axes = plt.subplot_mosaic("BCFD;AGHE", figsize=(20, 10))
 
             red = (255, 0, 0)
@@ -949,17 +949,39 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
                 axes["H"].imshow(overlaidH)
             axes["H"].set_title(f"Before, Error lines. MSE: {mse_before:.4f}, TRE: {tre_before:.4f}")
             axes["H"].axis('off')
-
+            
             try:
                 imgD = draw_lines_one_image(overlaidD, matches3, matches1, line_color=blue)
                 axes["D"].imshow(imgD)
+                
             except:
                 axes["D"].imshow(overlaidD)
             # img2 = draw_lines_one_image(img2, matches2, matches3, line_color=(255, 0, 0))
+
+            # overlay the grid on the image using plot_grid
+            skip = 8
+            X, Y = np.meshgrid(np.arange(0, 256), np.arange(0, 256))
+            DVF = transform_to_displacement_field(torch.zeros(1, 1, 256, 256), affine_params_predict[0].view(1, 2, 3).cpu())
+            U = -1 * DVF[0, :, :].numpy()
+            V = 1 * DVF[1, :, :].numpy()
+
+            # plot_grid(axes["D"], X[::skip, ::skip], Y[::skip, ::skip], linewidth=0.5, color="lightgrey", alpha=0.3)
+            # # print("X shape:", X.shape, "Y shape:", Y.shape, "U shape:", U.shape, "V shape:", V.shape)
+            # XU = X + (1 * U)
+            # YV = Y + (1 * V)
+            # plot_grid(axes["D"], XU[::skip, ::skip], YV[::skip, ::skip], linewidth=0.5, color="fuchsia", alpha=0.3)
+
+            axes["D"].quiver(X[::skip, ::skip], Y[::skip, ::skip], U[::skip, ::skip], V[::skip, ::skip], 
+                             color='r', scale=1, scale_units='xy', alpha=alpha)
+
+            # set plot limit of axes["D"] to the image size
+            axes["D"].set_xlim(0, 255)
+            axes["D"].set_ylim(255, 0)
+
             try:
-                axes["D"].set_title(f"Source -> Warped, Transformation. {mse(matches1, matches3):.4f}, {tre(matches1, matches3):.4f}")
+                axes["D"].set_title(f"Source -> Warped, Xformation.\nMSE: {mse(matches1, matches3):.4f}, TRE: {tre(matches1, matches3):.4f}")
             except:
-                axes["D"].set_title(f"Source -> Warped, Transformation.")
+                axes["D"].set_title(f"Source -> Warped, Xformation.")
             axes["D"].axis('off')
 
             # img2 = draw_lines_one_image(overlaid2, matches3, matches1, line_color=(0, 0, 155))
@@ -1153,13 +1175,14 @@ def DL_affine_plot_image(name, dir_name, image1_name, image2_name, image1, image
             try:
                 imgD = draw_lines_one_image(overlaidD, matches3, matches1, line_color=blue)
                 axes["D"].imshow(imgD)
+                
             except:
                 axes["D"].imshow(overlaidD)
             # img2 = draw_lines_one_image(img2, matches2, matches3, line_color=(255, 0, 0))
             try:
-                axes["D"].set_title(f"Source -> Warped, Transformation. {mse(matches1, matches3):.4f}, {tre(matches1, matches3):.4f}")
+                axes["D"].set_title(f"Source -> Warped, Xformation.\nMSE: {mse(matches1, matches3):.4f}, TRE: {tre(matches1, matches3):.4f}")
             except:
-                axes["D"].set_title(f"Source -> Warped, Transformation.")
+                axes["D"].set_title(f"Source -> Warped, Xformation.")
             axes["D"].axis('off')
 
             # img2 = draw_lines_one_image(overlaid2, matches3, matches1, line_color=(0, 0, 155))

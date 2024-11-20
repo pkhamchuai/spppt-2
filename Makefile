@@ -14,6 +14,7 @@ install-python-package:
 	@$(PYTHON) -m venv .venv
 	@.venv/bin/pip install -r requirements.txt
 	@.venv/bin/pip install matplotlib scikit-image
+	@.venv/bin/pip install SimpleITK-SimpleElastix
 	@.venv/bin/pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 	@.venv/bin/pip install torchsummary pytorch_model_summary
 

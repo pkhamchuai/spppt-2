@@ -160,7 +160,7 @@ def test(model_name, models, model_params, timestamp,
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
-            # if i > 3:
+            # if i > 2:
             #     break
 
             # Get images and affine parameters
@@ -345,7 +345,7 @@ def test(model_name, models, model_params, timestamp,
                             if k == len(active_beams[b])-1:
                                 # plot_ = 1
                                 _ = DL_affine_plot(f"test_{i}", output_dir,
-                                    i+1, f"b{b}_{active_beams[b]}",
+                                    i+1, f"beam{b}_rep_{k}_{active_beams[b]}",
                                     source_image[0, 0, :, :].cpu().numpy(),
                                     target_image[0, 0, :, :].cpu().numpy(),
                                     transformed_source_affine[0, 0, :, :].cpu().numpy(),
@@ -356,7 +356,7 @@ def test(model_name, models, model_params, timestamp,
                                     affine_params_true=affine_params_true,
                                     affine_params_predict=affine_params_predicted,
                                     # affine_params_predict=M,
-                                    heatmap1=None, heatmap2=None, plot=True)
+                                    heatmap1=None, heatmap2=None, plot=True, alpha=0.5)
                 
                 if verbose:
                     for b in range(beam):
@@ -436,7 +436,7 @@ def test(model_name, models, model_params, timestamp,
                 None, None,
                 affine_params_true=affine_params_true,
                 affine_params_predict=M,
-                heatmap1=None, heatmap2=None, plot=plot_)
+                heatmap1=None, heatmap2=None, plot=plot_, alpha=0.3)
             
             points1_0 = points1_0.cpu().detach().numpy().T
             points1_2_predicted = points1_2_predicted.cpu().detach().numpy().T
