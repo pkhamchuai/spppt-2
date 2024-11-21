@@ -383,6 +383,7 @@ class ModelParams:
                 'Synthetic eye shear' if self.dataset == 4 else \
                 'Synthetic eye mix 1-4' if self.dataset == 5 else \
                 # 'Synthetic eye mix 1-4 + new images' if self.dataset == 6 else \
+                
                 'Actual eye mix' if self.dataset == 6 else \
                 'Actual eye easy' if self.dataset == 7 else \
                 'Actual eye medium' if self.dataset == 8 else \
@@ -390,8 +391,17 @@ class ModelParams:
                 'Actual eye hard (10)' if self.dataset == 10 else \
                 'Actual eye hard (11)' if self.dataset == 11 else \
                 'Synthetic perspective' if self.dataset == 12 else \
+                
+                'Actual eye hard (9) with manual keypoints (16)' if self.dataset == 16 else \
+                'Actual eye hard (10) with manual keypoints (17)' if self.dataset == 17 else \
                 'Actual eye hard (11) with manual keypoints (18)' if self.dataset == 18 else \
-                'There are only datasets 1-12, and 18.')
+                'Synthetic eye translate with large deformations (21)' if self.dataset == 21 else \
+                'Synthetic eye scaling with large deformations (22)' if self.dataset == 22 else \
+                'Synthetic eye rotation with large deformations (23)' if self.dataset == 23 else \
+                'Synthetic eye shear with large deformations (24)' if self.dataset == 24 else \
+                'Synthetic eye mix 1-4 with manual keypoints (25)' if self.dataset == 25 else \
+                'There are only datasets 1-12, 16-18, 21-25')
+        
         print('Supervised or unsupervised model: ', 'Supervised' if self.sup else 'Unsupervised')
         print('Loss image type: ', 'Loss image not used' if self.image == 0 else \
                 'Image used')

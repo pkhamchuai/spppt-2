@@ -378,7 +378,8 @@ def datagen(dataset, is_train, sup, batch_size=1):
             dataset_path = 'Dataset/synth_eye_translate_train_2'
             df = pd.read_csv('Dataset/synth_eye_translate_train_2.csv')
         else:
-            print('Test synthetic eye dataset translation (2) has no test data')
+            dataset_path = 'Dataset/synthetic_eye_translate_test'
+            df = pd.read_csv('Dataset/synth_eye_translate_test.csv')
 
     elif dataset == 22:
         if is_train:
@@ -386,7 +387,8 @@ def datagen(dataset, is_train, sup, batch_size=1):
             dataset_path = 'Dataset/synth_eye_scaling_train_2'
             df = pd.read_csv('Dataset/synth_eye_scaling_train_2.csv')
         else:
-            print('Test synthetic eye dataset scaling (2) has no test data')
+            dataset_path = 'Dataset/synthetic_eye_scaling_test'
+            df = pd.read_csv('Dataset/synth_eye_scaling_test.csv')
 
     elif dataset == 23:
         if is_train:
@@ -394,7 +396,8 @@ def datagen(dataset, is_train, sup, batch_size=1):
             dataset_path = 'Dataset/synth_eye_rotate_train_2'
             df = pd.read_csv('Dataset/synth_eye_rotate_train_2.csv')
         else:
-            print('Test synthetic eye dataset rotation (2) has no test data')
+            dataset_path = 'Dataset/synthetic_eye_rotate_test'
+            df = pd.read_csv('Dataset/synth_eye_rotate_test.csv')
 
     elif dataset == 24:
         # new easy dataset
@@ -402,7 +405,8 @@ def datagen(dataset, is_train, sup, batch_size=1):
             dataset_path = 'Dataset/synth_eye_shear_train_2'
             df = pd.read_csv('Dataset/synth_eye_shear_train_2.csv')
         else:
-            print('Test synthetic eye dataset shear (2) has no test data')
+            dataset_path = 'Dataset/synthetic_eye_shear_test'
+            df = pd.read_csv('Dataset/synth_eye_shear_test.csv')
 
     elif dataset == 25:
         # new medium dataset
@@ -410,7 +414,8 @@ def datagen(dataset, is_train, sup, batch_size=1):
             dataset_path = 'Dataset/synth_eye_mix0_train_2'
             df = pd.read_csv('Dataset/synth_eye_mix0_train_2.csv')
         else:
-            print('Test synthetic eye dataset mix0 (2) has no test data')
+            dataset_path = 'Dataset/synthetic_eye_mix0_test'
+            df = pd.read_csv('Dataset/synth_eye_mix0_test.csv')
     
     # elif dataset == 4:
     #     # synthetic shape dataset
