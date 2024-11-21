@@ -1,6 +1,6 @@
 import subprocess
 
-dataset = [18]
+dataset = [17]
 # dataset = [3, 4, 5, 6, 7, 8, 9, 11]
 # dataset = [11, 9, 8, 7, 6, 5, 4, 3]
 # method = ['perspective']
@@ -12,19 +12,19 @@ for i in dataset:
     #                 '--dataset', str(i), '--plot', '1',
     #                 '--method', 'LMEDS',
     #                 ])
-    # # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
-    # #                 '--dataset', str(i), '--plot', '2',
-    # #                 '--method', 'LMEDS',
-    # #                 ])
+    subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
+                    '--dataset', str(i), '--plot', '2',
+                    '--method', 'LMEDS',
+                    ])
 
     # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
     #                 '--dataset', str(i), '--plot', '1',
     #                 '--method', 'RANSAC',
     #                 ])
-    # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
-    #                 '--dataset', str(i), '--plot', '2',
-    #                 '--method', 'RANSAC',
-    #                 ])
+    subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
+                    '--dataset', str(i), '--plot', '2',
+                    '--method', 'RANSAC',
+                    ])
 
     # subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
     #                 '--sup', '0', '--dataset', str(i), '--plot', '1',

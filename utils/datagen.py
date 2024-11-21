@@ -371,6 +371,47 @@ def datagen(dataset, is_train, sup, batch_size=1):
             print('Test real eye dataset (11) with manual keypoints (18)')
             print('Number of testing data: ', len(df))
             # df = df[df['training'] == 0]
+
+    elif dataset == 21:
+        if is_train:
+            # tranlation
+            dataset_path = 'Dataset/synth_eye_translate_train_2'
+            df = pd.read_csv('Dataset/synth_eye_translate_train_2.csv')
+        else:
+            print('Test synthetic eye dataset translation (2) has no test data')
+
+    elif dataset == 22:
+        if is_train:
+            # scaling
+            dataset_path = 'Dataset/synth_eye_scaling_train_2'
+            df = pd.read_csv('Dataset/synth_eye_scaling_train_2.csv')
+        else:
+            print('Test synthetic eye dataset scaling (2) has no test data')
+
+    elif dataset == 23:
+        if is_train:
+            # rotation
+            dataset_path = 'Dataset/synth_eye_rotate_train_2'
+            df = pd.read_csv('Dataset/synth_eye_rotate_train_2.csv')
+        else:
+            print('Test synthetic eye dataset rotation (2) has no test data')
+
+    elif dataset == 24:
+        # new easy dataset
+        if is_train:
+            dataset_path = 'Dataset/synth_eye_shear_train_2'
+            df = pd.read_csv('Dataset/synth_eye_shear_train_2.csv')
+        else:
+            print('Test synthetic eye dataset shear (2) has no test data')
+
+    elif dataset == 25:
+        # new medium dataset
+        if is_train:
+            dataset_path = 'Dataset/synth_eye_mix0_train_2'
+            df = pd.read_csv('Dataset/synth_eye_mix0_train_2.csv')
+        else:
+            print('Test synthetic eye dataset mix0 (2) has no test data')
+    
     # elif dataset == 4:
     #     # synthetic shape dataset
     #     dataset_path = 'Dataset/synthetic_shape_dataset'
@@ -391,7 +432,7 @@ def datagen(dataset, is_train, sup, batch_size=1):
     #     return dataloader
 
     else:
-        raise ValueError('Input dataset parameter 1-12')
+        raise ValueError('Input dataset parameter 1-12, 16-18, 21-25')
 
     if batch_size == 1:
         dataset = MyDataset(dataset_path, df, is_train, sup)

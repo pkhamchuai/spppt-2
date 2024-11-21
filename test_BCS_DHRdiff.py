@@ -121,12 +121,15 @@ learning_rate = 1e-3
 # until here
 
 # dataset = range(1, 13)
-dataset = [16, 17]
+dataset = [16]
 # dataset = [18]
-for i in range(1, 2):
+for i in range(2, 4):
 
     for dataset_ in dataset:
-        runs.append(['python', 'test_BCS_1way_img.py', '--model', str(models), '--sup', str(sups[0]),
+        if i == 2:
+            pass
+        else:
+            runs.append(['python', 'test_BCS_1way_img.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i), '--metric', 'mse',
                         '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '30'])
 
