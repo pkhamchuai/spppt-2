@@ -155,7 +155,7 @@ def test(model_name, models, model_params, timestamp,
 
     metrics = []
     # create a csv file to store the metrics
-    csv_file = f"{output_dir}/metrics.csv"
+    csv_file = f"{output_dir}/metrics_{timestamp}.csv"
 
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')

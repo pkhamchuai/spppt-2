@@ -121,14 +121,14 @@ learning_rate = 1e-3
 # until here
 
 # dataset = range(1, 13)
-# dataset = [16, 17]
-dataset = [18]
+dataset = [16, 17]
+# dataset = [18]
 for i in range(1, 2):
 
     for dataset_ in dataset:
         runs.append(['python', 'test_BCS_1way_img.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i), '--metric', 'mse',
-                        '--model_path', str(model_path), '--plot', '1', '--verbose', '0', '--rep', '30'])
+                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '30'])
 
     # for dataset_ in dataset:
     #     runs.append(['python', 'test_BCS_1way_img.py', '--model', str(models), '--sup', str(sups[0]),
@@ -138,12 +138,12 @@ for i in range(1, 2):
     for dataset_ in dataset:
         runs.append(['python', 'test_BCS_1way_point.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i),
-                        '--model_path', str(model_path), '--plot', '1', '--verbose', '0', '--rep', '30'])
+                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '30'])
         
     for dataset_ in dataset:
         runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i),
-                        '--model_path', str(model_path), '--plot', '1', '--verbose', '0', '--rep', '30'])
+                        '--model_path', str(model_path), '--plot', '2', '--verbose', '0', '--rep', '30'])
 
 # dataset = [10]
 # for i in range(2, 3):
