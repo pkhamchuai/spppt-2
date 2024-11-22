@@ -295,15 +295,16 @@ def train(model_name, model_path, model_params, timestamp):
                     # print(f"points1: {points1.shape}, points2: {points2.shape}")
                     
                         
-                    DL_affine_plot(f"epoch{epoch+1}_valid", output_dir, f"{i}", f"{i+1}", 
+                    DL_affine_plot(f"epoch{epoch+1}_valid", output_dir, 
+                        f"{i}", f"{i+1}", 
                         source_image[0, 0, :, :].cpu().numpy(), 
                         target_image[0, 0, :, :].cpu().numpy(), 
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
                         points1[0].cpu().detach().numpy().T, 
                         points2[0].cpu().detach().numpy().T, 
                         points1_2_predicted[0].numpy().T, None, None, 
-                        affine_params_true=affine_params_true[0],
-                        affine_params_predict=affine_params_predicted[0], 
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=affine_params_predicted, 
                         heatmap1=None, heatmap2=None, plot=True)
 
         # Print validation statistics

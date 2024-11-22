@@ -16,18 +16,20 @@ runs = []
 files = ['train_img_batch.py']
 # files = ['train_stage.py']
 # files = ['train_points_rigid_img', 'train_points_rigid_pt', 'train_img_batch.py', 'train_one_sample.py']
-batch_size = 100 # 2, 3, 4, 5
+batch_size = 50 # 2, 3, 4, 5
 lr = 1e-3
 decay_rate = 0.96
+epochs = 10
 
 # generate run commands
 for file in files:
     sup = 1
     for dataset in dataset:
         runs.append(['python', str(file), '--dataset', str(dataset),
-            '--model', str(model), '--num_epochs', str(10), 
+            '--model', str(model), '--num_epochs', str(epochs), 
             '--learning_rate', str(lr), '--decay_rate', str(decay_rate),
-            '--image', str(1), '--points', str(0), '--sup', str(sup), # '--model_path', 'DHR_51100_0.001_0_5_100_20240509-140837.pth',
+            '--image', str(1), '--points', str(0), '--sup', str(sup), 
+            # '--model_path', 'DHR_51100_0.001_0_5_100_20240509-140837.pth',
             '--batch_size', str(batch_size)])
 
     # for data in dataset:
