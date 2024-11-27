@@ -60,7 +60,7 @@ def test(model_name, models, model_params, timestamp, verbose=False, plot=1):
         model[i].eval()
 
     # Create output directory
-    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_ensemble_1way_reverse_test"
+    output_dir = f"output/{model_name}_{model_params.get_model_code()}_ensemble_1way_reverse_test_{timestamp}"
     os.makedirs(output_dir, exist_ok=True)
 
     # Validate model

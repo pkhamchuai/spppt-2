@@ -147,7 +147,7 @@ def test(model_name, models, model_params, timestamp,
         model[i].eval()
 
     # Create output directory
-    output_dir = f"output/{model_name}_{model_params.get_model_code()}_{timestamp}_BCS_1way_beam{beam}_point_reverse_test"
+    output_dir = f"output/{model_name}_{model_params.get_model_code()}_BCS_1way_beam{beam}_point_reverse_test_{timestamp}"
     os.makedirs(output_dir, exist_ok=True)
 
     # Validate model
