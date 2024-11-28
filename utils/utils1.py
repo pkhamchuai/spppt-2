@@ -859,6 +859,9 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
                        matches1, matches2, matches3, desc1, desc2, affine_params_true=None, 
                        affine_params_predict=None, heatmap1=None, heatmap2=None, plot=0, alpha=0.3):
     
+    # image1_name: use for file name
+    # image2_name: use for printing on the image
+    
     # plot = 0: no plot
     # plot = 1: plot the output table
     # plot = 2: plot the images only 
@@ -1038,19 +1041,19 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
             # dir_name = f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}"
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name) 
-            save_file_name = os.path.join(dir_name, f"{name}_{int(image1_name):04d}_{image2_name}.png")
+            save_file_name = os.path.join(dir_name, f"{name}_{image1_name}.png")
             # Check if the file already exists
             if os.path.exists(save_file_name):
                 suffix = 1
                 while True:
                     # Add a suffix to the file name
-                    new_file_name = os.path.join(dir_name, f"{name}_{int(image1_name):04d}_{image2_name}_{suffix}.png")
+                    new_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{suffix}.png")
                     if not os.path.exists(new_file_name):
                         save_file_name = new_file_name
                         break
                     suffix += 1
 
-            signaturebar_gray(fig, f"{name}, S: {int(image1_name):04d}, T: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
+            signaturebar_gray(fig, f"{name}: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
                     rect_kw={"facecolor": "gray", "edgecolor": None},
                     text_kw={"color": "w"})
             fig.savefig(save_file_name)
@@ -1068,9 +1071,9 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
         # save images to output folder
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
-        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_source.png", image1*255)
-        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_target.png", image2*255)
-        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_warped.png", image3*255)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_source.png", image1*255)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_target.png", image2*255)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_warped.png", image3*255)
 
     return matches3, mse_before, mse12, tre_before, tre12, \
         mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
@@ -1078,6 +1081,9 @@ def DL_affine_plot(name, dir_name, image1_name, image2_name, image1, image2, ima
 def DL_affine_plot_image(name, dir_name, image1_name, image2_name, image1, image2, image3,
                        matches1, matches2, matches3, desc1, desc2, affine_params_true=None, 
                        affine_params_predict=None, heatmap1=None, heatmap2=None, plot=0):
+    
+    # image1_name: use for file name
+    # image2_name: use for printing on the image
     
     # plot = 0: no plot
     # plot = 1: plot the output table
@@ -1239,19 +1245,19 @@ def DL_affine_plot_image(name, dir_name, image1_name, image2_name, image1, image
             # dir_name = f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}"
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name) 
-            save_file_name = os.path.join(dir_name, f"{name}_{int(image1_name):04d}_{image2_name}.png")
+            save_file_name = os.path.join(dir_name, f"{name}_{image1_name}.png")
             # Check if the file already exists
             if os.path.exists(save_file_name):
                 suffix = 1
                 while True:
                     # Add a suffix to the file name
-                    new_file_name = os.path.join(dir_name, f"{name}_{int(image1_name):04d}_{image2_name}_{suffix}.png")
+                    new_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{suffix}.png")
                     if not os.path.exists(new_file_name):
                         save_file_name = new_file_name
                         break
                     suffix += 1
 
-            signaturebar_gray(fig, f"{name}, S: {int(image1_name):04d}, T: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
+            signaturebar_gray(fig, f"{name}: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
                     rect_kw={"facecolor": "gray", "edgecolor": None},
                     text_kw={"color": "w"})
             fig.savefig(save_file_name)
@@ -1269,9 +1275,9 @@ def DL_affine_plot_image(name, dir_name, image1_name, image2_name, image1, image
         # save images to output folder
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
-        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_source.png", image1*255)
-        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_target.png", image2*255)
-        cv2.imwrite(f"{dir_name}/{name}_{int(image1_name):04d}_{image2_name}_warped.png", image3*255)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_source.png", image1*255)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_target.png", image2*255)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_warped.png", image3*255)
 
     return mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
 

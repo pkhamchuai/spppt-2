@@ -109,7 +109,7 @@ def test(model_name, models, model_params, timestamp,
         else:
             points1_2_predicted = None
             results = DL_affine_plot_image(f"test_{i}", output_dir,
-                i+1, f"rep{j:02d}_beam{b}_branch_{k}", 
+                f"{i+1}", f"rep{j:02d}_beam{b}_branch_{k}", 
                 source_image[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(),
                 transformed_source_affine[0, 0, :, :].cpu().numpy(),
@@ -356,8 +356,10 @@ def test(model_name, models, model_params, timestamp,
 
                             if k == len(active_beams[b])-1:
                                 # plot_ = 1
+                                image1_name = f"beam{b}_rep_{k}"
+                                image2_name = f"beam{b}_rep_{k}_{active_beams[b][-20:]}"
                                 _ = DL_affine_plot(f"test_{i}", output_dir,
-                                    i+1, f"beam{b}_rep_{k}_{active_beams[b]}",
+                                    image1_name, image2_name,
                                     source_image[0, 0, :, :].cpu().numpy(),
                                     target_image[0, 0, :, :].cpu().numpy(),
                                     transformed_source_affine[0, 0, :, :].cpu().numpy(),
@@ -443,9 +445,10 @@ def test(model_name, models, model_params, timestamp,
             elif plot == 3:
                 plot_ = False
 
-            best_model_text = f"final_{active_beams}"
+            image1_name = f"final"
+            image2_name = f"beam{b}_rep_{k}_{active_beams[-20:]}"
             _ = DL_affine_plot(f"test_{i}", output_dir,
-                i+1, best_model_text, 
+                image1_name, image2_name,
                 source_image0[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(),
                 source_image[0, 0, :, :].cpu().numpy(),
