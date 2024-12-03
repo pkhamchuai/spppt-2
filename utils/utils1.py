@@ -1282,6 +1282,224 @@ def DL_affine_plot_image(name, dir_name, image1_name, image2_name, image1, image
     return mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
 
 
+def DL_affine_plot_2way(name, dir_name, image1_name, image2_name, image1, image2, image3, image4,
+                       matches1, matches2, matches3, matches4, 
+                       desc1, desc2, affine_params_true=None, 
+                       affine_params_fw=None, affine_params_rv=None,
+                       heatmap1=None, heatmap2=None, plot=0, alpha=0.3):
+    
+    # image1_name: use for file name
+    # image2_name: use for printing on the image
+    
+    # plot = 0: no plot
+    # plot = 1: plot the output table
+    # plot = 2: plot the images only 
+
+    # print("matches1 shape:", matches1.shape)
+    # print("matches2 shape:", matches2.shape)
+    # print("matches3 shape:", matches3.shape)
+    # print("desc1 shape:", desc1.shape)
+    # print("desc2 shape:", desc2.shape)
+
+    try:
+        # MSE and TRE before transformation (points)
+        # print("matches1:", matches1.shape)
+        # print("matches2:", matches2.shape)
+        # print("matches3:", matches3.shape)
+        mse_before = mse(matches1, matches2)
+        tre_before = tre(matches1, matches2)
+        
+        # print("MSE before:", mse_before)
+        # print("TRE before:", tre_before)
+        
+        # matches3 = cv2.transform(matches1.T[None, :, :], affine_params[0])
+        # matches3 = matches3[0].T
+        # print("matches3 shape:", matches3.shape)
+        # print("matches2 shape:", matches2.shape)
+
+        mse12 = mse(matches3, matches4)
+        tre12 = tre(matches3, matches4)
+
+    except:
+        mse_before = np.nan
+        tre_before = np.nan
+        mse12 = np.nan
+        tre12 = np.nan
+
+    # calculate the MSE between image3 and image2
+    mse12_image_before = mse(image1, image2)
+    mse12_image = mse(image3, image4)
+
+    # calculate SSIM between image3 and image2
+    ssim12_image_before = ssim(image1, image2)
+    ssim12_image = ssim(image3, image4)
+
+    # Part 3 - Plotting
+    # if plot == True or plot == 'image':
+    if plot == 1:
+        try:
+            # Create a subplot with 2 rows and 2 columns
+            fig, axes = plt.subplot_mosaic("ABCD;EFGH", figsize=(20, 10)) # "BCFD;AGHE"
+
+            red = (255, 0, 0)
+            green = (0, 255, 0)
+            orange = (255, 165, 0)
+            blue = (0, 0, 155)
+            pink = (255, 105, 180)
+
+            overlaid1 = overlay_points(image1.copy(), matches1, color=red, radius=1)
+            overlaid2 = overlay_points(image2.copy(), matches2, color=green, radius=1)
+            overlaid3 = overlay_points(image3.copy(), matches3, color=orange, radius=1)
+            overlaid4 = overlay_points(image4.copy(), matches4, color=pink, radius=1)
+
+            overlaidD = overlay_points(overlaid2.copy(), matches3, color=orange, radius=1)
+            overlaidD = overlay_points(overlaidD.copy(), matches1, color=red, radius=1)
+
+            overlaidH = overlay_points(overlaid1.copy(), matches2, color=green, radius=1)
+            overlaidH = overlay_points(overlaidH.copy(), matches4, color=pink, radius=1)
+
+            # axe A shows source image
+            axes["A"].imshow(overlaid1, cmap='gray')
+            try:
+                axes["A"].set_title(f"Source,\n{matches1.shape}, {matches2.shape}, {matches3.shape}") 
+            except:
+                axes["A"].set_title(f"Source,\nMSE: {mse12_image_before:.4f} SSIM: {ssim12_image_before:.4f}")
+            axes["A"].axis('off')
+            axes['A'].grid(True)
+
+            # axe B shows target image
+            axes["B"].imshow(overlaid2, cmap='gray')
+            if affine_params_true is not None:
+                axes["B"].set_title(f"Target, {affine_params_true}")
+            else:
+                axes["B"].set_title(f"Target (unsupervised)")
+            axes["B"].axis('off')
+            axes['B'].grid(True)
+
+            axes["E"].imshow(overlaid3, cmap='gray')
+            axes["E"].set_title(f"Source\', {affine_params_fw}")
+            axes["E"].axis('off')
+            axes['E'].grid(True)
+
+            axes["F"].imshow(overlaid4, cmap='gray')
+            axes["F"].set_title(f"Target\', {affine_params_rv}")
+            axes["F"].axis('off')
+            axes['F'].grid(True)
+
+            # New subplot for the transformed points
+            # Blue: from original locations from image 2/1 to the affine-transformed locations
+            # Red: from affine-transformed locations of points from image 2/1 to 
+            # the locations they supposed to be in image 1/2
+            # Green: from affine-transformed locations of points from image 2/1 to
+            
+
+            try:
+                imgD = draw_lines_one_image(overlaidD, matches3, matches1, line_color=blue)
+                axes["D"].imshow(imgD)
+            except:
+                axes["D"].imshow(overlaidD)
+            # img2 = draw_lines_one_image(img2, matches2, matches3, line_color=(255, 0, 0))
+
+            # overlay the grid on the image using plot_grid
+            skip = 8
+            X, Y = np.meshgrid(np.arange(0, 256), np.arange(0, 256))
+            DVF = transform_to_displacement_field(torch.zeros(1, 1, 256, 256), affine_params_fw[0].view(1, 2, 3).cpu())
+            U = -1 * DVF[0, :, :].numpy()
+            V = 1 * DVF[1, :, :].numpy()
+            axes["D"].quiver(X[::skip, ::skip], Y[::skip, ::skip], U[::skip, ::skip], V[::skip, ::skip], 
+                             color='r', scale=1, scale_units='xy', alpha=alpha)
+
+            # set plot limit of axes["D"] to the image size
+            axes["D"].set_xlim(0, 255)
+            axes["D"].set_ylim(255, 0)
+
+            try:
+                axes["D"].set_title(f"Source -> Source\', Xformation.\nMSE: {mse(matches1, matches3):.4f}, TRE: {tre(matches1, matches3):.4f}")
+            except:
+                axes["D"].set_title(f"Source -> Source\', Xformation.")
+            axes["D"].axis('off')
+
+            try:
+                imgH = draw_lines_one_image(overlaidH, matches2, matches4, line_color=blue)
+                axes["H"].imshow(imgH)
+            except:
+                axes["H"].imshow(overlaidH)
+            # img2 = draw_lines_one_image(img2, matches2, matches3, line_color=(255, 0, 0))
+
+            # overlay the grid on the image using plot_grid
+            skip = 8
+            X, Y = np.meshgrid(np.arange(0, 256), np.arange(0, 256))
+            DVF = transform_to_displacement_field(torch.zeros(1, 1, 256, 256), affine_params_rv[0].view(1, 2, 3).cpu())
+            U = -1 * DVF[0, :, :].numpy()
+            V = 1 * DVF[1, :, :].numpy()
+
+            axes["H"].quiver(X[::skip, ::skip], Y[::skip, ::skip], U[::skip, ::skip], V[::skip, ::skip],
+                                color='r', scale=1, scale_units='xy', alpha=alpha)
+            
+            # set plot limit of axes["H"] to the image size
+            axes["H"].set_xlim(0, 255)
+            axes["H"].set_ylim(255, 0)
+
+            try:
+                axes["H"].set_title(f"Target -> Target\', Xformation.\nMSE: {mse(matches2, matches4):.4f}, TRE: {tre(matches2, matches4):.4f}")
+            except:
+                axes["H"].set_title(f"Target -> Target\', Xformation.")
+
+            # Display the checkerboard image 1 original to 2
+            checkerboard = create_checkerboard(image1, image2)
+            axes["C"].imshow(checkerboard, cmap='gray')
+            axes["C"].set_title(f"Source - Target, MSE: {mse12_image_before:.4f}, TRE: {tre_before:.4f}")
+            axes["C"].axis('off')
+
+            # Display the checkerboard image 3 transformed to 4
+            checkerboard = create_checkerboard(image3, image4)
+            axes["G"].imshow(checkerboard, cmap='gray')
+            axes["G"].set_title(f"Source\' - Target\', MSE: {mse12_image:.4f}, TRE: {tre12:.4f}")
+            axes["G"].axis('off')
+            
+            plt.tight_layout()  # Adjust the layout to leave space for the histogram
+            # if the directory does not exist, create it
+            # dir_name = f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}"
+            if not os.path.exists(dir_name):
+                os.makedirs(dir_name) 
+            save_file_name = os.path.join(dir_name, f"{name}_{image1_name}.png")
+            # Check if the file already exists
+            if os.path.exists(save_file_name):
+                suffix = 1
+                while True:
+                    # Add a suffix to the file name
+                    new_file_name = os.path.join(dir_name, f"{name}_{image1_name}_{suffix}.png")
+                    if not os.path.exists(new_file_name):
+                        save_file_name = new_file_name
+                        break
+                    suffix += 1
+
+            signaturebar_gray(fig, f"{name}: {image2_name}", fontsize=20, pad=5, xpos=20, ypos=7.5,
+                    rect_kw={"facecolor": "gray", "edgecolor": None},
+                    text_kw={"color": "w"})
+            fig.savefig(save_file_name)
+            
+            # save images to output folder
+            '''cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_1.png", image3*255)
+            cv2.imwrite(f"../Dataset/output_images/transformed_images/{image1_name}_{image2_name}_{name}_2.png", image2_transformed*255)'''
+            plt.close(fig)
+            
+        except TypeError:
+            print("TypeError in plotting")
+            pass
+
+    elif plot == 2:
+        # save images to output folder
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_source.png", image1*255)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_target.png", image2*255)
+        cv2.imwrite(f"{dir_name}/{name}_{image1_name}_warped.png", image3*255)
+
+    return matches3, mse_before, mse12, tre_before, tre12, \
+        mse12_image_before, mse12_image, ssim12_image_before, ssim12_image
+
+
 def signaturebar(fig, text, fontsize=10, pad=5, xpos=20, ypos=7.5,
                  rect_kw={"facecolor": None, "edgecolor": None},
                  text_kw={"color": "w"}):
