@@ -119,10 +119,10 @@ learning_rate = 1e-3
 # until here
 
 # dataset = range(1, 13)
-dataset = range(16, 18)
+dataset = range(16, 19)
 # dataset = [18]
 plot = 1
-rep = 60
+rep = 90
 verbose = 0
 for i in range(1, 2):
 
