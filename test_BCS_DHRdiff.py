@@ -94,39 +94,157 @@ learning_rate = 1e-3
 
 # generate run commands
 
-plot = 1
-rep = 5
+plot = 2
 verbose = 0
 
-# test 2-way dataset 18, 10 models
-dataset = [16]
-# dataset = [1, 2, 3, 4, 5, 16, 17, 18]
+################################ 2-way ################################
+# dataset = [16]
+dataset = [1, 2, 3, 4, 5]
+i = 1
+# for i in range(1, 2):
 
+rep = 30
 model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
             'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
             'DHR_51100_0.001_0_5_100_20240509-140837.pth']
-for i in range(1, 2):
-    for dataset_ in dataset:      
-        runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
-                        '--dataset', str(dataset_), '--beam', str(i),
-                        '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+for dataset_ in dataset:      
+    runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    # runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+    
+# test using only new models
+model_path = ['DHRdiff_21_1100_0.001_0_10_50_20241121-211151.pth',
+            'DHRdiff_22_1100_0.001_0_10_50_20241121-211423.pth', 'DHRdiff_23_1100_0.001_0_10_50_20241121-212006.pth', 
+            'DHRdiff_24_1100_0.001_0_10_50_20241121-212445.pth', 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
+for dataset_ in dataset:      
+    runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    # runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
 
 model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
             'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
             'DHR_51100_0.001_0_5_100_20240509-140837.pth', 'DHRdiff_21_1100_0.001_0_10_50_20241121-211151.pth',
             'DHRdiff_22_1100_0.001_0_10_50_20241121-211423.pth', 'DHRdiff_23_1100_0.001_0_10_50_20241121-212006.pth', 
             'DHRdiff_24_1100_0.001_0_10_50_20241121-212445.pth', 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
-for i in range(1, 2):
-    for dataset_ in dataset:      
-        runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
-                        '--dataset', str(dataset_), '--beam', str(i),
-                        '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+for dataset_ in dataset:      
+    runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    # runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
         
+dataset = [16, 17, 18]
+i = 1
+rep = 60
+model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
+            'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
+            'DHR_51100_0.001_0_5_100_20240509-140837.pth']
+for dataset_ in dataset:      
+    runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    # runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+    
 # test using only new models
-# dataset = range(16, 19)
-# model_path = ['DHRdiff_21_1100_0.001_0_10_50_20241121-211151.pth',
-#             'DHRdiff_22_1100_0.001_0_10_50_20241121-211423.pth', 'DHRdiff_23_1100_0.001_0_10_50_20241121-212006.pth', 
-#             'DHRdiff_24_1100_0.001_0_10_50_20241121-212445.pth', 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
+model_path = ['DHRdiff_21_1100_0.001_0_10_50_20241121-211151.pth',
+            'DHRdiff_22_1100_0.001_0_10_50_20241121-211423.pth', 'DHRdiff_23_1100_0.001_0_10_50_20241121-212006.pth', 
+            'DHRdiff_24_1100_0.001_0_10_50_20241121-212445.pth', 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
+for dataset_ in dataset:      
+    runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    # runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+
+model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
+            'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
+            'DHR_51100_0.001_0_5_100_20240509-140837.pth', 'DHRdiff_21_1100_0.001_0_10_50_20241121-211151.pth',
+            'DHRdiff_22_1100_0.001_0_10_50_20241121-211423.pth', 'DHRdiff_23_1100_0.001_0_10_50_20241121-212006.pth', 
+            'DHRdiff_24_1100_0.001_0_10_50_20241121-212445.pth', 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
+for dataset_ in dataset:      
+    runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    # runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+
+
+################################ 1-way ################################
+# dataset = [16]
+dataset = [1, 2, 3, 4, 5]
+i = 1
+# for i in range(1, 2):
+
+rep = 30
+model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
+            'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
+            'DHR_51100_0.001_0_5_100_20240509-140837.pth']
+for dataset_ in dataset:      
+    # runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+    
+# test using only new models
+model_path = ['DHRdiff_21_1100_0.001_0_10_50_20241121-211151.pth',
+            'DHRdiff_22_1100_0.001_0_10_50_20241121-211423.pth', 'DHRdiff_23_1100_0.001_0_10_50_20241121-212006.pth', 
+            'DHRdiff_24_1100_0.001_0_10_50_20241121-212445.pth', 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
+for dataset_ in dataset:      
+    # runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+
+model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
+            'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
+            'DHR_51100_0.001_0_5_100_20240509-140837.pth', 'DHRdiff_21_1100_0.001_0_10_50_20241121-211151.pth',
+            'DHRdiff_22_1100_0.001_0_10_50_20241121-211423.pth', 'DHRdiff_23_1100_0.001_0_10_50_20241121-212006.pth', 
+            'DHRdiff_24_1100_0.001_0_10_50_20241121-212445.pth', 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
+for dataset_ in dataset:      
+    # runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+        
+dataset = [16, 17, 18]
+i = 1
+rep = 60
+model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
+            'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
+            'DHR_51100_0.001_0_5_100_20240509-140837.pth']
+for dataset_ in dataset:      
+    # runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+    
+# test using only new models
+model_path = ['DHRdiff_21_1100_0.001_0_10_50_20241121-211151.pth',
+            'DHRdiff_22_1100_0.001_0_10_50_20241121-211423.pth', 'DHRdiff_23_1100_0.001_0_10_50_20241121-212006.pth', 
+            'DHRdiff_24_1100_0.001_0_10_50_20241121-212445.pth', 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
+for dataset_ in dataset:      
+    # runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+
+model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
+            'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
+            'DHR_51100_0.001_0_5_100_20240509-140837.pth', 'DHRdiff_21_1100_0.001_0_10_50_20241121-211151.pth',
+            'DHRdiff_22_1100_0.001_0_10_50_20241121-211423.pth', 'DHRdiff_23_1100_0.001_0_10_50_20241121-212006.pth', 
+            'DHRdiff_24_1100_0.001_0_10_50_20241121-212445.pth', 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
+for dataset_ in dataset:      
+    # runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+    runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+                    '--dataset', str(dataset_), '--beam', str(i),
+                    '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
+        
+# sort runs by element 1, then 11, then 7
+# runs.sort(key=lambda x: x[3])
+
+# runs.sort(key=lambda x: x[5])
+for i in range(len(runs)):
+    print(f'\n{runs[i]}')
+    subprocess.run(runs[i])
 
 # for i in range(1, 2):
 #     for dataset_ in dataset:
@@ -145,14 +263,6 @@ for i in range(1, 2):
 #         runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
 #                         '--dataset', str(dataset_), '--beam', str(i),
 #                         '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
-        
-# sort runs by element 1, then 11, then 7
-# runs.sort(key=lambda x: x[3])
-
-# runs.sort(key=lambda x: x[5])
-for i in range(len(runs)):
-    print(f'\n{runs[i]}')
-    subprocess.run(runs[i])
 
 # for dataset_, sup in zip(dataset, sups):
 #     runs.append(['python', 'test_ensemble_1way.py', '--model', str(models), '--sup', str(sup),

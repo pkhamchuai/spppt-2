@@ -157,6 +157,10 @@ def test(model_name, models, model_params, timestamp,
     # create a csv file to store the metrics
     csv_file = f"{output_dir}/metrics_{timestamp}.csv"
 
+    # create 2D array to store the errors of each iteration to find average error per iteration
+    error_img = np.zeros((len(test_dataset), rep))
+    error_pt = np.zeros((len(test_dataset), rep))
+
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
@@ -292,7 +296,6 @@ def test(model_name, models, model_params, timestamp,
                 best_index_points = np.argsort(metrics_points)[:beam]
                 best_index_images = np.argsort(metrics_images)[:beam]
                 min_metrics_points = np.min([metrics_points])
-
                 
                 if verbose:
                     print(f"Pair {i}, Rep {j}, best model: points {best_index_points}, images {best_index_images}")
@@ -422,14 +425,29 @@ def test(model_name, models, model_params, timestamp,
                 if model_number < len(models):
                     outputs = model[model_number](source_image, target_image, points=points1)
                     affine_params_predicted = outputs[1]
+                    M = combine_matrices(M, affine_params_predicted).to(device)
+
+                    # store error of each iteration
+                    error_img[i, k] = mse(outputs[0][0, 0, :, :].cpu().detach().numpy(), 
+                                        target_image[0, 0, :, :].cpu().detach().numpy())
+                    error_pt[i, k] = tre(outputs[2].cpu().detach().numpy().T, 
+                                        points2.cpu().detach().numpy())
                 else:
                     model_number = model_number - len(models)
                     outputs = model[model_number](target_image, source_image, points=points2)
                     affine_params_predicted_rv = outputs[1]
                     affine_params_predicted = matrix_to_params(
                         torch.inverse(params_to_matrix(affine_params_predicted_rv))).to(device)
-                    
-                M = combine_matrices(M, affine_params_predicted).to(device)
+                    M = combine_matrices(M, affine_params_predicted).to(device)
+                    transformed_source_affine = tensor_affine_transform0(source_image0, M)
+                    points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
+                        M.cpu().detach(), source_image0).T
+
+                    # store error of each iteration
+                    error_img[i, k] = mse(transformed_source_affine[0, 0, :, :].cpu().detach().numpy(),
+                                        target_image[0, 0, :, :].cpu().detach().numpy())
+                    error_pt[i, k] = tre(points1_2_predicted.cpu().detach().numpy().T,
+                                        points2.cpu().detach().numpy())
 
                 if k == len(active_beams)-1:
                     transformed_source_affine = tensor_affine_transform0(source_image0, M)
@@ -451,7 +469,7 @@ def test(model_name, models, model_params, timestamp,
                 image1_name, image2_name,
                 source_image0[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(),
-                source_image[0, 0, :, :].cpu().numpy(),
+                transformed_source_affine[0, 0, :, :].cpu().numpy(),
                 points1_0[0].cpu().detach().numpy().T,
                 points2[0].cpu().detach().numpy().T,
                 points1_2_predicted[0].cpu().detach().numpy().T,
@@ -467,6 +485,7 @@ def test(model_name, models, model_params, timestamp,
             source_image0 = source_image0[0, 0, :, :].cpu().detach().numpy()
             source_image = source_image[0, 0, :, :].cpu().detach().numpy()
             target_image = target_image[0, 0, :, :].cpu().detach().numpy()
+            transformed_source_affine = transformed_source_affine[0, 0, :, :].cpu().detach().numpy()
 
             votes = active_beams
             mse_before_first = mse(points1_0, points2)
@@ -474,9 +493,9 @@ def test(model_name, models, model_params, timestamp,
             tre_before_first = tre(points1_0, points2)
             tre12 = tre(points1_2_predicted, points2)
             mse12_image_before_first = mse(source_image0, target_image)
-            mse12_image = mse(source_image, target_image)
+            mse12_image = mse(transformed_source_affine, target_image)
             ssim12_image_before_first = ssim(source_image0, target_image)
-            ssim12_image = ssim(source_image, target_image)
+            ssim12_image = ssim(transformed_source_affine, target_image)
 
             # append metrics to metrics list
             new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
@@ -505,6 +524,20 @@ def test(model_name, models, model_params, timestamp,
             np.std(metrics[:, 5]), np.std(metrics[:, 6]), np.std(metrics[:, 7]), np.std(metrics[:, 8])]
         writer.writerow(avg)
         writer.writerow(std)
+
+    # calculate the average error per iteration and save in a new csv file
+    error_img = error_img[~np.all(error_img == 0, axis=1)]
+    error_img_avg = np.mean(error_img, axis=0)
+
+    error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
+    error_pt_avg = np.mean(error_pt, axis=0)
+
+    csv_file = f"{output_dir}/error_{timestamp}.csv"
+    with open(csv_file, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["index", "error_img", "error_pt"])
+        for i in range(len(error_img_avg)):
+            writer.writerow([i, error_img_avg[i], error_pt_avg[i]])
 
     print(f"The test results are saved in {csv_file}")
 

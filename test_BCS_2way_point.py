@@ -274,9 +274,6 @@ def test(model_name, models, model_params, timestamp,
                             target_image = tensor_affine_transform0(target_image0, M_rv)
                             points2 = transform_points_DVF(points2_0.cpu().detach().T,
                                             M_rv.cpu().detach(), target_image).T
-                            # inverse the affine parameters
-                            # affine_params_predicted = matrix_to_params(
-                            #     torch.inverse(params_to_matrix(affine_params_predicted_rv))).to(device)
 
                         
                         if k == len(b)-1:
@@ -369,15 +366,6 @@ def test(model_name, models, model_params, timestamp,
                                 points2_1_predicted = transform_points_DVF(points2_0.cpu().detach().T,
                                     M_rv.cpu().detach(), target_image0).T
 
-                                if b == 0: 
-                                    # add error per iteration only once at the first beam and last for loop
-                                    # assign error into the array
-                                    error_img[i, j] = mse(transformed_source[0, 0, :, :].cpu().numpy(), 
-                                                          transformed_target[0, 0, :, :].cpu().numpy())
-                                    error_pt[i, j] = tre(points1_2_predicted.cpu().detach().numpy(), 
-                                                         points2_1_predicted.cpu().detach().numpy())
-                                    # print(f"Error image: {error_img[i, j]}, Error point: {error_pt[i, j]}")
-
                             else:
                                 source_image = tensor_affine_transform0(source_image0, M_fw)
                                 target_image = tensor_affine_transform0(target_image0, M_rv)
@@ -446,13 +434,11 @@ def test(model_name, models, model_params, timestamp,
             # loop through the active beam path to collect all transformations and combine into one
             M = np.array([[1, 0, 0], [0, 1, 0]], dtype=np.float32)
             M_fw = torch.from_numpy(M).unsqueeze(0).to(device)
-            # M_rv = torch.from_numpy(M).unsqueeze(0).to(device)
             source_image = source_image0.clone().to(device)
             target_image = target_image0.clone().to(device)
             points1 = points1_0.clone().to(device)
             points2 = points2_0.clone().to(device)
             points1_2_predicted = points1_0.clone().to(device)
-            # points2_1_predicted = points2_0.clone().to(device)
 
             if verbose:
                 print(f"\nFinalizing pair {i}: {active_beams}")
@@ -463,6 +449,12 @@ def test(model_name, models, model_params, timestamp,
                     outputs = model[model_number](source_image, target_image, points=points1)
                     affine_params_fw = outputs[1]
                     M_fw = combine_matrices(M_fw, affine_params_fw).to(device)
+
+                    # store error of each iteration
+                    error_img[i, k] = mse(outputs[0][0, 0, :, :].cpu().detach().numpy(), 
+                                        target_image[0, 0, :, :].cpu().detach().numpy())
+                    error_pt[i, k] = tre(outputs[2].cpu().detach().numpy().T,
+                                        points2.cpu().detach().numpy())
                 else:
                     model_number = model_number - len(models)
                     outputs = model[model_number](target_image, source_image, points=points2)
@@ -471,27 +463,26 @@ def test(model_name, models, model_params, timestamp,
                         torch.inverse(params_to_matrix(affine_params_rv))).to(device)
                     M_fw = combine_matrices(M_fw, affine_params_fw).to(device)
 
+                    # store error of each iteration
+                    error_img[i, k] = mse(outputs[0][0, 0, :, :].cpu().detach().numpy(), 
+                                        target_image[0, 0, :, :].cpu().detach().numpy())
+                    error_pt[i, k] = tre(outputs[2].cpu().detach().numpy().T,
+                                        points2.cpu().detach().numpy())
+
                 if k == len(active_beams)-1:
                     transformed_source = tensor_affine_transform0(source_image0, M_fw)
-                    # transformed_target = tensor_affine_transform0(target_image0, M_rv)
                     points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
                                 M_fw.cpu().detach(), source_image0).T
-                    # points2_1_predicted = transform_points_DVF(points2_0.cpu().detach().T,
-                    #             M_rv.cpu().detach(), target_image0).T
                 else:
                     source_image = tensor_affine_transform0(source_image0, M_fw)
-                    # target_image = tensor_affine_transform0(target_image0, M_rv)
                     points1 = transform_points_DVF(points1_0.clone().cpu().detach().T,
                                 M_fw.cpu().detach(), source_image0).T
-                    # points2 = transform_points_DVF(points2_0.clone().cpu().detach().T,
-                    #             M_rv.cpu().detach(), target_image0).T
 
             if i < 100 and (plot == 1 or plot == 2):
                 plot_ = True
             elif plot == 3:
                 plot_ = False
 
-            # best_model_text = f"final_{active_beams}"
             image1_name = f"final"
             image2_name = f"beam{b}_rep_{k}_{active_beams[-20:]}"
             _ = DL_affine_plot(f"test_{i}", output_dir,
@@ -515,7 +506,6 @@ def test(model_name, models, model_params, timestamp,
             source_image0 = source_image0[0, 0, :, :].cpu().detach().numpy()
             transformed_source = transformed_source[0, 0, :, :].cpu().detach().numpy()
             target_image0 = target_image0[0, 0, :, :].cpu().detach().numpy()
-            # target_image = target_image[0, 0, :, :].cpu().detach().numpy()
 
             votes = active_beams
             mse_before_first = mse(points1_0, points2)
@@ -555,17 +545,19 @@ def test(model_name, models, model_params, timestamp,
         writer.writerow(avg)
         writer.writerow(std)
 
-        # print(error_img)
+    # calculate the average error per iteration and save in a new csv file
+    error_img = error_img[~np.all(error_img == 0, axis=1)]
+    error_img_avg = np.mean(error_img, axis=0)
 
-        # calculate average error per iteration, ignore zeros, store in 1D array
-        error_img = error_img[~np.all(error_img == 0, axis=1)]
-        error_img_avg = np.mean(error_img, axis=0)
-        # print(error_img_avg)
-        error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
-        error_pt_avg = np.mean(error_pt, axis=0)
-        # write to csv file as column
-        writer.writerow(["error_img", error_img_avg])
-        writer.writerow(["error_pt", error_pt_avg])
+    error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
+    error_pt_avg = np.mean(error_pt, axis=0)
+
+    csv_file = f"{output_dir}/error_{timestamp}.csv"
+    with open(csv_file, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["index", "error_img", "error_pt"])
+        for i in range(len(error_img_avg)):
+            writer.writerow([i, error_img_avg[i], error_pt_avg[i]])
 
     print(f"The test results are saved in {csv_file}")
 
