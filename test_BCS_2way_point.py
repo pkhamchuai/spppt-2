@@ -157,11 +157,15 @@ def test(model_name, models, model_params, timestamp,
     # create a csv file to store the metrics
     csv_file = f"{output_dir}/metrics_{timestamp}.csv"
 
+    # create 2D array to store the errors of each iteration to find average error per iteration
+    error_img = np.zeros((len(test_dataset), rep))
+    error_pt = np.zeros((len(test_dataset), rep))
+
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
-            if i > 10:
-                break
+            # if i > 3:
+            #     break
 
             # Get images and affine parameters
             source_image, target_image, affine_params_true, points1_0, points2, _ = data
@@ -364,6 +368,16 @@ def test(model_name, models, model_params, timestamp,
                                     M_fw.cpu().detach(), source_image0).T
                                 points2_1_predicted = transform_points_DVF(points2_0.cpu().detach().T,
                                     M_rv.cpu().detach(), target_image0).T
+
+                                if b == 0: 
+                                    # add error per iteration only once at the first beam and last for loop
+                                    # assign error into the array
+                                    error_img[i, j] = mse(transformed_source[0, 0, :, :].cpu().numpy(), 
+                                                          transformed_target[0, 0, :, :].cpu().numpy())
+                                    error_pt[i, j] = tre(points1_2_predicted.cpu().detach().numpy(), 
+                                                         points2_1_predicted.cpu().detach().numpy())
+                                    # print(f"Error image: {error_img[i, j]}, Error point: {error_pt[i, j]}")
+
                             else:
                                 source_image = tensor_affine_transform0(source_image0, M_fw)
                                 target_image = tensor_affine_transform0(target_image0, M_rv)
@@ -496,22 +510,22 @@ def test(model_name, models, model_params, timestamp,
             points1_0 = points1_0.cpu().detach().numpy().T
             points1_2_predicted = points1_2_predicted.cpu().detach().numpy().T
             points2 = points2.cpu().detach().numpy().T
-            points2_1_predicted = points2_1_predicted.cpu().detach().numpy().T
+            # points2_1_predicted = points2_1_predicted.cpu().detach().numpy().T
 
             source_image0 = source_image0[0, 0, :, :].cpu().detach().numpy()
-            source_image = source_image[0, 0, :, :].cpu().detach().numpy()
+            transformed_source = transformed_source[0, 0, :, :].cpu().detach().numpy()
             target_image0 = target_image0[0, 0, :, :].cpu().detach().numpy()
-            target_image = target_image[0, 0, :, :].cpu().detach().numpy()
+            # target_image = target_image[0, 0, :, :].cpu().detach().numpy()
 
             votes = active_beams
             mse_before_first = mse(points1_0, points2)
-            mse12 = mse(points1_2_predicted, points2_1_predicted)
+            mse12 = mse(points1_2_predicted, points2)
             tre_before_first = tre(points1_0, points2)
-            tre12 = tre(points1_2_predicted, points2_1_predicted)
+            tre12 = tre(points1_2_predicted, points2)
             mse12_image_before_first = mse(source_image0, target_image0)
-            mse12_image = mse(source_image, target_image)
+            mse12_image = mse(transformed_source, target_image0)
             ssim12_image_before_first = ssim(source_image0, target_image0)
-            ssim12_image = ssim(source_image, target_image)
+            ssim12_image = ssim(transformed_source, target_image0)
 
             # append metrics to metrics list
             new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
@@ -540,6 +554,18 @@ def test(model_name, models, model_params, timestamp,
             np.std(metrics[:, 5]), np.std(metrics[:, 6]), np.std(metrics[:, 7]), np.std(metrics[:, 8])]
         writer.writerow(avg)
         writer.writerow(std)
+
+        # print(error_img)
+
+        # calculate average error per iteration, ignore zeros, store in 1D array
+        error_img = error_img[~np.all(error_img == 0, axis=1)]
+        error_img_avg = np.mean(error_img, axis=0)
+        # print(error_img_avg)
+        error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
+        error_pt_avg = np.mean(error_pt, axis=0)
+        # write to csv file as column
+        writer.writerow(["error_img", error_img_avg])
+        writer.writerow(["error_pt", error_pt_avg])
 
     print(f"The test results are saved in {csv_file}")
 
