@@ -1,6 +1,6 @@
 import subprocess
 
-dataset = [17]
+dataset = [18]
 # dataset = [3, 4, 5, 6, 7, 8, 9, 11]
 # dataset = [11, 9, 8, 7, 6, 5, 4, 3]
 # method = ['perspective']
@@ -30,10 +30,10 @@ for i in dataset:
     #                 '--sup', '0', '--dataset', str(i), '--plot', '1',
     #                 '--method1', 'BFMatcher', '--method2', 'LMEDS',
     #                 ])
-    # subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
-    #                 '--sup', '0', '--dataset', str(i), '--plot', '2',
-    #                 '--method1', 'BFMatcher', '--method2', 'LMEDS',
-    #                 ])
+    subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
+                    '--sup', '0', '--dataset', str(i), '--plot', '2',
+                    '--method1', 'BFMatcher', '--method2', 'LMEDS',
+                    ])
 
     # subprocess.run(['python', 'run_SIFT_test.py', '--model', 'SIFT', 
     #                 '--sup', '0', '--dataset', str(i), '--plot', '2',
@@ -41,10 +41,10 @@ for i in dataset:
     #                 '--method3', 'perspective', '--num_epochs', '2000',
     #                 ])
     
-    # subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
-    #                 '--sup', '0', '--dataset', str(i), '--plot', '1',
-    #                 '--method1', 'BFMatcher', '--method2', 'RANSAC',
-    #                 ])
+    subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
+                    '--sup', '0', '--dataset', str(i), '--plot', '2',
+                    '--method1', 'BFMatcher', '--method2', 'RANSAC',
+                    ])
 
     # subprocess.run(['python', 'run_SIFT_linearEQ_3pairs.py', '--model', 'SIFT', 
     #                 '--sup', '0', '--dataset', str(i), '--plot', '1',

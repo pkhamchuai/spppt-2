@@ -277,7 +277,12 @@ def test(model_name, models, model_params, timestamp,
 
                         
                         if k == len(b)-1:
-                            tre12 = tre(points1.cpu().detach().numpy(), points2.cpu().detach().numpy())
+                            # tre12 = tre(points1.cpu().detach().numpy(), points2.cpu().detach().numpy())
+                            
+                            # calculate cosine similarity between points1 and points2
+                            cosine_similarity = torch.nn.functional.cosine_similarity(points1, points2, dim=0)
+                            tre12 = 1 - cosine_similarity.mean().item()
+
                             mse12_image = mse(source_image[0, 0, :, :].cpu().detach().numpy(), 
                                               target_image[0, 0, :, :].cpu().detach().numpy())
                         
@@ -544,6 +549,14 @@ def test(model_name, models, model_params, timestamp,
             np.std(metrics[:, 5]), np.std(metrics[:, 6]), np.std(metrics[:, 7]), np.std(metrics[:, 8])]
         writer.writerow(avg)
         writer.writerow(std)
+
+    # replace the zeros with values from the last non-zero element
+    for i in range(len(error_img)):
+        for j in range(len(error_img[i])):
+            if error_img[i, j] == 0:
+                error_img[i, j] = error_img[i, j-1]
+            if error_pt[i, j] == 0:
+                error_pt[i, j] = error_pt[i, j-1]
 
     # calculate the average error per iteration and save in a new csv file
     error_img = error_img[~np.all(error_img == 0, axis=1)]
