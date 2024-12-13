@@ -288,9 +288,12 @@ def test(model_name, models, model_params, timestamp,
                                 # if points1.shape[0] != 2:
                                 #     points1 = points1.T
                                 #     points2 = points2.T
+                                # print(points1.cpu().detach().view(1, -1, 2), points2.cpu().detach().view(1, -1, 2))
                                 cosine_similarity = torch.nn.functional.cosine_similarity(
                                     points1.cpu().detach().view(1, -1, 2), 
                                     points2.cpu().detach().view(1, -1, 2), dim=1).numpy()
+                                # calculate the average of the cosine similarity
+                                cosine_similarity = np.mean(cosine_similarity)
                                 metrics_points_forward.append(cosine_similarity)
 
                             mse12_image = mse(source_image[0, 0, :, :].cpu().detach().numpy(), 
@@ -310,8 +313,11 @@ def test(model_name, models, model_params, timestamp,
                     print(f"Length of metrics_points: {len(metrics_points)}")
                 
                 # choose the best 'beam' models
+                # print(f'metrics_points: {metrics_points}')
+                # print(f'best_index_points: {np.argsort(metrics_points)[-beam:]}')
                 best_index_points = np.argsort(metrics_points)[-beam:]
                 best_index_images = np.argsort(metrics_images)[-beam:]
+                
                 min_metrics_points = np.max([metrics_points])
                 
                 if verbose:
