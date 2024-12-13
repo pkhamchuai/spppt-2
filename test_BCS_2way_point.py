@@ -426,15 +426,26 @@ def test(model_name, models, model_params, timestamp,
                 # if mse12 < mse_before or mse12_image < mse12_image_before:
                 # TODO: if tre12 is not available, use mse12_image instead
                 
-                if metric_this_rep > metric_best:
-                    metric_best = metric_this_rep
-                    # mse_images_best = mse12_image
-                    if no_improve > 0: 
-                        no_improve -= 1
-                else:
-                    if verbose:
-                        print(f"No improvement for {no_improve+1} reps")
-                    no_improve += 1
+                if metric == 'TRE':
+                    if metric_this_rep < metric_best:
+                        metric_best = metric_this_rep
+                        # mse_images_best = mse12_image
+                        if no_improve > 0: 
+                            no_improve -= 1
+                    else:
+                        if verbose:
+                            print(f"No improvement for {no_improve+1} reps")
+                        no_improve += 1
+                elif metric == 'cosine':
+                    if metric_this_rep > metric_best:
+                        metric_best = metric_this_rep
+                        # mse_images_best = mse12_image
+                        if no_improve > 0: 
+                            no_improve -= 1
+                    else:
+                        if verbose:
+                            print(f"No improvement for {no_improve+1} reps")
+                        no_improve += 1
 
                 # if verbose:
                 #     print(f"Done: Pair {i}, Rep {j}: search path {active_beams}")

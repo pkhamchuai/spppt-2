@@ -407,15 +407,26 @@ def test(model_name, models, model_params, timestamp,
                 # if mse12 < mse_before or mse12_image < mse12_image_before:
                 # TODO: if tre12 is not available, use mse12_image instead
                 
-                if metric_this_rep < metric_best:
-                    metric_best = metric_this_rep
-                    # mse_images_best = mse12_image
-                    if no_improve > 0: 
-                        no_improve -= 1
-                else:
-                    if verbose:
-                        print(f"No improvement for {no_improve+1} reps")
-                    no_improve += 1
+                if metric == 'TRE':
+                    if metric_this_rep < metric_best:
+                        metric_best = metric_this_rep
+                        # mse_images_best = mse12_image
+                        if no_improve > 0: 
+                            no_improve -= 1
+                    else:
+                        if verbose:
+                            print(f"No improvement for {no_improve+1} reps")
+                        no_improve += 1
+                elif metric == 'cosine':
+                    if metric_this_rep > metric_best:
+                        metric_best = metric_this_rep
+                        # mse_images_best = mse12_image
+                        if no_improve > 0: 
+                            no_improve -= 1
+                    else:
+                        if verbose:
+                            print(f"No improvement for {no_improve+1} reps")
+                        no_improve += 1
 
                 # if verbose:
                 #     print(f"Done: Pair {i}, Rep {j}: search path {active_beams}")
@@ -547,6 +558,14 @@ def test(model_name, models, model_params, timestamp,
         writer.writerow(avg)
         writer.writerow(std)
 
+    # replace the zeros with values from the last non-zero element
+    for i in range(len(error_img)):
+        for j in range(len(error_img[i])):
+            if error_img[i, j] == 0:
+                error_img[i, j] = error_img[i, j-1]
+            if error_pt[i, j] == 0:
+                error_pt[i, j] = error_pt[i, j-1]
+
     # calculate the average error per iteration and save in a new csv file
     error_img = error_img[~np.all(error_img == 0, axis=1)]
     error_img_avg = np.mean(error_img, axis=0)
@@ -586,6 +605,7 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--plot', type=int, default=1, help='plot the results')
+    parser.add_argument('--metric', type=str, default='cosine')
     '''
     plot = 0: plot every steps
     plot = 1: plot only the search path
@@ -630,6 +650,6 @@ if __name__ == '__main__':
 
     args.verbose = int(args.verbose)
     print(f"verbose: {args.verbose}")
-    test(args.model, model_path, model_params, timestamp, 
+    test(args.model, model_path, model_params, timestamp, metric=args.metric,
          verbose=args.verbose, plot=args.plot, beam=args.beam, rep=args.rep)
     print("Test model finished +++++++++++++++++++++++++++++")
