@@ -65,7 +65,7 @@ def tensor_affine_transform0(image, matrix):
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
 def test(model_name, models, model_params, timestamp, 
-         verbose=False, plot=1, beam=1, rep=10):
+         verbose=False, plot=1, beam=1, rep=10, metric='TRE'):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
@@ -190,7 +190,10 @@ def test(model_name, models, model_params, timestamp,
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
-            metric_best = np.inf
+            if metric == 'TRE':
+                metric_best = np.inf
+            elif metric == 'cosine':
+                metric_best = -np.inf
             mse12 = np.inf
             tre12 = np.inf
 
@@ -274,19 +277,24 @@ def test(model_name, models, model_params, timestamp,
                             target_image = tensor_affine_transform0(target_image0, M_rv)
                             points2 = transform_points_DVF(points2_0.cpu().detach().T,
                                             M_rv.cpu().detach(), target_image).T
-
                         
                         if k == len(b)-1:
-                            # tre12 = tre(points1.cpu().detach().numpy(), points2.cpu().detach().numpy())
-                            
-                            # calculate cosine similarity between points1 and points2
-                            cosine_similarity = torch.nn.functional.cosine_similarity(points1, points2, dim=0)
-                            tre12 = 1 - cosine_similarity.mean().item()
+                            if metric == 'TRE':
+                                tre12 = tre(points1.cpu().detach().numpy(), points2.cpu().detach().numpy())
+                                metrics_points_forward.append(tre12)
+                            elif metric == 'cosine':
+                                # calculate cosine similarity between points1 and points2
+                                # if the last dimension of points1 and points2 must be 2
+                                # if points1.shape[0] != 2:
+                                #     points1 = points1.T
+                                #     points2 = points2.T
+                                cosine_similarity = torch.nn.functional.cosine_similarity(
+                                    points1.cpu().detach().view(1, -1, 2), 
+                                    points2.cpu().detach().view(1, -1, 2), dim=1).numpy()
+                                metrics_points_forward.append(cosine_similarity)
 
                             mse12_image = mse(source_image[0, 0, :, :].cpu().detach().numpy(), 
-                                              target_image[0, 0, :, :].cpu().detach().numpy())
-                        
-                            metrics_points_forward.append(tre12)
+                                target_image[0, 0, :, :].cpu().detach().numpy())
                             metrics_images_forward.append(mse12_image)
 
                         if verbose:
@@ -302,9 +310,9 @@ def test(model_name, models, model_params, timestamp,
                     print(f"Length of metrics_points: {len(metrics_points)}")
                 
                 # choose the best 'beam' models
-                best_index_points = np.argsort(metrics_points)[:beam]
-                best_index_images = np.argsort(metrics_images)[:beam]
-                min_metrics_points = np.min([metrics_points])
+                best_index_points = np.argsort(metrics_points)[-beam:]
+                best_index_images = np.argsort(metrics_images)[-beam:]
+                min_metrics_points = np.max([metrics_points])
                 
                 if verbose:
                     print(f"Pair {i}, Rep {j}, best model: points {best_index_points}, images {best_index_images}")
@@ -410,7 +418,7 @@ def test(model_name, models, model_params, timestamp,
                 # if mse12 < mse_before or mse12_image < mse12_image_before:
                 # TODO: if tre12 is not available, use mse12_image instead
                 
-                if metric_this_rep < metric_best:
+                if metric_this_rep > metric_best:
                     metric_best = metric_this_rep
                     # mse_images_best = mse12_image
                     if no_improve > 0: 
@@ -597,6 +605,7 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--plot', type=int, default=1, help='plot the results')
+    parser.add_argument('--metric', type=str, default='cosine')
     '''
     plot = 0: plot every steps
     plot = 1: plot only the search path
@@ -641,6 +650,6 @@ if __name__ == '__main__':
 
     args.verbose = int(args.verbose)
     print(f"verbose: {args.verbose}")
-    test(args.model, model_path, model_params, timestamp, 
+    test(args.model, model_path, model_params, timestamp, metric=args.metric,
          verbose=args.verbose, plot=args.plot, beam=args.beam, rep=args.rep)
     print("Test model finished +++++++++++++++++++++++++++++")
