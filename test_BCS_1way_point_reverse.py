@@ -65,7 +65,7 @@ def tensor_affine_transform0(image, matrix):
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
 def test(model_name, models, model_params, timestamp, 
-         verbose=False, plot=1, beam=1, rep=10):
+         verbose=False, plot=1, beam=1, rep=10, metric='TRE'):
     # model_name: name of the model
     # model: model to be tested
     # model_params: model parameters
@@ -190,7 +190,10 @@ def test(model_name, models, model_params, timestamp,
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
-            metric_best = np.inf
+            if metric == 'TRE':
+                metric_best = np.inf
+            elif metric == 'cosine':
+                metric_best = -np.inf
             mse12 = np.inf
             tre12 = np.inf
 
@@ -273,11 +276,25 @@ def test(model_name, models, model_params, timestamp,
                                         M.cpu().detach(), source_image0).T
                         
                         if k == len(b)-1:
-                            tre12 = tre(points1.cpu().detach().numpy(), points2.cpu().detach().numpy())
+                            if metric == 'TRE':
+                                tre12 = tre(points1.cpu().detach().numpy(), points2.cpu().detach().numpy())
+                                metrics_points_forward.append(tre12)
+                            elif metric == 'cosine':
+                                # calculate cosine similarity between points1 and points2
+                                # if the last dimension of points1 and points2 must be 2
+                                # if points1.shape[0] != 2:
+                                #     points1 = points1.T
+                                #     points2 = points2.T
+                                # print(points1.cpu().detach().view(1, -1, 2), points2.cpu().detach().view(1, -1, 2))
+                                cosine_similarity = torch.nn.functional.cosine_similarity(
+                                    points1.cpu().detach().view(1, -1, 2), 
+                                    points2.cpu().detach().view(1, -1, 2), dim=1).numpy()
+                                # calculate the average of the cosine similarity
+                                cosine_similarity = np.mean(cosine_similarity)
+                                metrics_points_forward.append(cosine_similarity)
+                            
                             mse12_image = mse(source_image[0, 0, :, :].cpu().detach().numpy(), 
-                                              target_image[0, 0, :, :].cpu().detach().numpy())
-                        
-                            metrics_points_forward.append(tre12)
+                                            target_image[0, 0, :, :].cpu().detach().numpy())
                             metrics_images_forward.append(mse12_image)
 
                         if verbose:
@@ -293,9 +310,14 @@ def test(model_name, models, model_params, timestamp,
                     print(f"Length of metrics_points: {len(metrics_points)}")
                 
                 # choose the best 'beam' models
-                best_index_points = np.argsort(metrics_points)[:beam]
-                best_index_images = np.argsort(metrics_images)[:beam]
-                min_metrics_points = np.min([metrics_points])
+                if metric == 'TRE':
+                    best_index_points = np.argsort(metrics_points)[:beam]
+                    best_index_images = np.argsort(metrics_images)[:beam]
+                    min_metrics_points = np.min([metrics_points])
+                elif metric == 'cosine':
+                    best_index_points = np.argsort(metrics_points)[-beam:]
+                    best_index_images = np.argsort(metrics_images)[-beam:]
+                    min_metrics_points = np.max([metrics_points])
                 
                 if verbose:
                     print(f"Pair {i}, Rep {j}, best model: points {best_index_points}, images {best_index_images}")

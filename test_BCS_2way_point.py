@@ -295,9 +295,9 @@ def test(model_name, models, model_params, timestamp,
                                 # calculate the average of the cosine similarity
                                 cosine_similarity = np.mean(cosine_similarity)
                                 metrics_points_forward.append(cosine_similarity)
-
+                            
                             mse12_image = mse(source_image[0, 0, :, :].cpu().detach().numpy(), 
-                                target_image[0, 0, :, :].cpu().detach().numpy())
+                                            target_image[0, 0, :, :].cpu().detach().numpy())
                             metrics_images_forward.append(mse12_image)
 
                         if verbose:
@@ -313,12 +313,14 @@ def test(model_name, models, model_params, timestamp,
                     print(f"Length of metrics_points: {len(metrics_points)}")
                 
                 # choose the best 'beam' models
-                # print(f'metrics_points: {metrics_points}')
-                # print(f'best_index_points: {np.argsort(metrics_points)[-beam:]}')
-                best_index_points = np.argsort(metrics_points)[-beam:]
-                best_index_images = np.argsort(metrics_images)[-beam:]
-                
-                min_metrics_points = np.max([metrics_points])
+                if metric == 'TRE':
+                    best_index_points = np.argsort(metrics_points)[:beam]
+                    best_index_images = np.argsort(metrics_images)[:beam]
+                    min_metrics_points = np.min([metrics_points])
+                elif metric == 'cosine':
+                    best_index_points = np.argsort(metrics_points)[-beam:]
+                    best_index_images = np.argsort(metrics_images)[-beam:]
+                    min_metrics_points = np.max([metrics_points])
                 
                 if verbose:
                     print(f"Pair {i}, Rep {j}, best model: points {best_index_points}, images {best_index_images}")
