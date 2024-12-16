@@ -459,12 +459,7 @@ def test(model_name, models, model_params, timestamp,
                     outputs = model[model_number](source_image, target_image, points=points1)
                     affine_params_predicted = outputs[1]
                     M = combine_matrices(M, affine_params_predicted).to(device)
-
-                    # store error of each iteration
-                    error_img[i, k] = mse(outputs[0][0, 0, :, :].cpu().detach().numpy(), 
-                                        target_image[0, 0, :, :].cpu().detach().numpy())
-                    error_pt[i, k] = tre(outputs[2].cpu().detach().numpy().T, 
-                                        points2.cpu().detach().numpy())
+                    
                 else:
                     model_number = model_number - len(models)
                     outputs = model[model_number](target_image, source_image, points=points2)
@@ -476,16 +471,15 @@ def test(model_name, models, model_params, timestamp,
                     points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
                         M.cpu().detach(), source_image0).T
 
-                    # store error of each iteration
-                    error_img[i, k] = mse(transformed_source_affine[0, 0, :, :].cpu().detach().numpy(),
-                                        target_image[0, 0, :, :].cpu().detach().numpy())
-                    error_pt[i, k] = tre(points1_2_predicted.cpu().detach().numpy().T,
-                                        points2.cpu().detach().numpy())
-
                 if k == len(active_beams)-1:
                     transformed_source_affine = tensor_affine_transform0(source_image0, M)
                     points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
+                    # store error of each iteration
+                    error_img[i, k] = mse(outputs[0][0, 0, :, :].cpu().detach().numpy(), 
+                                        target_image[0, 0, :, :].cpu().detach().numpy())
+                    error_pt[i, k] = tre(outputs[2].cpu().detach().numpy().T, 
+                                        points2.cpu().detach().numpy())
                 else:
                     source_image = tensor_affine_transform0(source_image0, M)
                     points1 = transform_points_DVF(points1_0.cpu().detach().T,
@@ -559,12 +553,12 @@ def test(model_name, models, model_params, timestamp,
         writer.writerow(std)
 
     # replace the zeros with values from the last non-zero element
-    for i in range(len(error_img)):
-        for j in range(len(error_img[i])):
-            if error_img[i, j] == 0:
-                error_img[i, j] = error_img[i, j-1]
-            if error_pt[i, j] == 0:
-                error_pt[i, j] = error_pt[i, j-1]
+    # for i in range(len(error_img)):
+    #     for j in range(len(error_img[i])):
+    #         if error_img[i, j] == 0:
+    #             error_img[i, j] = error_img[i, j-1]
+    #         if error_pt[i, j] == 0:
+    #             error_pt[i, j] = error_pt[i, j-1]
 
     # calculate the average error per iteration and save in a new csv file
     error_img = error_img[~np.all(error_img == 0, axis=1)]
@@ -572,6 +566,9 @@ def test(model_name, models, model_params, timestamp,
 
     error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
     error_pt_avg = np.mean(error_pt, axis=0)
+
+    print(error_pt)
+    print(error_pt_avg)
 
     csv_file = f"{output_dir}/error_{timestamp}.csv"
     with open(csv_file, 'w', newline='') as file:

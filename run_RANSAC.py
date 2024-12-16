@@ -78,50 +78,29 @@ def run(model_params):
         # process images
         source_image = process_image(source_image)
         target_image = process_image(target_image)
+        points1 = points1[0].cpu().numpy()
+        points2 = points2[0].cpu().numpy()
 
-        # Process the first image
-        points1, desc1, heatmap1 = superpoint(source_image)
-        # Process the second image
-        points2, desc2, heatmap2 = superpoint(target_image)
+        print(points1.shape, points2.shape)
 
-        # match the points between the two images
-        tracker = PointTracker(5, nn_thresh=0.7)
-        matches = tracker.nn_match_two_way(desc1, desc2, nn_thresh=0.7)
+        affine_transform1 = cv2.estimateAffinePartial2D(points1, points2, method=cv2.RANSAC)
+        matches1_transformed = cv2.transform(points1, affine_transform1[0])
+        matches1_transformed = matches1_transformed[0].T
+        # transform image 1 and 2 using the affine transform matrix
+        transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
 
-        # take the elements from points1 and points2 using the matches as indices
-        matches1 = points1[:2, matches[0, :].astype(int)]
-        matches2 = points2[:2, matches[1, :].astype(int)]
-
-        matches_RANSAC = tracker.ransac(matches1.T, matches2.T, matches, max_reproj_error=2)
-            
-        # take elements from matches1 and matches2 where matches_RANSAC is TRUE
-        matches_RANSAC = matches_RANSAC.reshape(-1)
-        matches1_RANSAC = matches1[:, matches_RANSAC]
-        matches2_RANSAC = matches2[:, matches_RANSAC]
-
-        # # create affine transform matrix from points1 to points2
-        # # and apply it to points1
-        # affine_transform1 = cv2.estimateAffinePartial2D(matches1_RANSAC.T, matches2_RANSAC.T)
-        # matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
-        # matches1_transformed = matches1_transformed[0].T
-
-        # # transform image 1 and 2 using the affine transform matrix
-        # transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
-
-        # create affine transform matrix from points1 to points2
-        # and apply it to points1
-        try:
-            affine_transform1 = cv2.estimateAffinePartial2D(matches1_RANSAC.T, matches2_RANSAC.T)
-            matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
-            matches1_transformed = matches1_transformed[0].T
-            # transform image 1 and 2 using the affine transform matrix
-            transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
-        except cv2.error:
-            print(f"Error: {i}")
-            # set affine_transform1 to identity affine matrix
-            affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
-            matches1_transformed = matches1
-            transformed_source_affine = source_image
+        # try:
+        #     affine_transform1 = cv2.estimateAffinePartial2D(points1.T, points2.T, method=cv2.RANSAC)
+        #     matches1_transformed = cv2.transform(points1[0], affine_transform1[0])
+        #     matches1_transformed = matches1_transformed[0].T
+        #     # transform image 1 and 2 using the affine transform matrix
+        #     transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
+        # except cv2.error:
+        #     print(f"Error: {i}")
+        #     # set affine_transform1 to identity affine matrix
+        #     affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
+        #     matches1_transformed = points1
+        #     transformed_source_affine = source_image
 
         # mse12 = np.mean((matches1_transformed - matches2_RANSAC)**2)
         # tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2_RANSAC)**2, axis=0)))
@@ -134,10 +113,10 @@ def run(model_params):
         results = DL_affine_plot(f"test_{i+1}", output_dir,
                 f"{i}", "RANSAC", source_image, target_image, \
                 transformed_source_affine, \
-                matches1, matches2, matches1_transformed, desc1, desc2, 
+                points1, points2, points1_2_true, \
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_transform1[0], 
-                heatmap1=heatmap1, heatmap2=heatmap2, plot=plot_)
+                heatmap1=None, heatmap2=None, plot=plot_)
 
 
         # calculate metrics
