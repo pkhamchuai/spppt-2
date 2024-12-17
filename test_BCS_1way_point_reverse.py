@@ -381,9 +381,9 @@ def test(model_name, models, model_params, timestamp,
 
                             if k == len(active_beams[b])-1:
                                 # plot_ = 1
-                                image1_name = f"beam{b}_rep_{k}"
-                                image2_name = f"beam{b}_rep_{k}_{active_beams[b][-20:]}"
-                                _ = DL_affine_plot(f"test_{i}", output_dir,
+                                image1_name = f"beam{b}_rep_{k:02d}"
+                                image2_name = f"beam{b}_rep_{k:02d}_{active_beams[b][-20:]}"
+                                _ = DL_affine_plot(f"test_{i:03d}", output_dir,
                                     image1_name, image2_name,
                                     source_image[0, 0, :, :].cpu().numpy(),
                                     target_image[0, 0, :, :].cpu().numpy(),
@@ -476,8 +476,8 @@ def test(model_name, models, model_params, timestamp,
                     points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
                     
-                    results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                    results = DL_affine_plot(f"test_{i:03d}", output_dir,
+                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
@@ -497,8 +497,8 @@ def test(model_name, models, model_params, timestamp,
                     points1 = transform_points_DVF(points1_0.clone().cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
 
-                    results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                    results = DL_affine_plot(f"test_{i:03d}", output_dir,
+                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         source_image[0, 0, :, :].cpu().numpy(),
@@ -520,8 +520,8 @@ def test(model_name, models, model_params, timestamp,
                 plot_ = False
 
             image1_name = f"final"
-            image2_name = f"beam{b}_rep_{k}_{active_beams[-20:]}"
-            _ = DL_affine_plot(f"test_{i}", output_dir,
+            image2_name = f"beam{b}_rep_{k:02d}_{active_beams[-20:]}"
+            _ = DL_affine_plot(f"test_{i:03d}", output_dir,
                 image1_name, image2_name,
                 source_image0[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(),

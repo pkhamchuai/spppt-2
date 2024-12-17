@@ -84,8 +84,12 @@ files = os.listdir('trained_models/')
 runs = []
 learning_rate = 1e-3
 
+models = 'DHRdiff'
 rep = 60
 dataset = [18]
+plot = 1
+verbose = 0
+
 for i in range(1, 4):
 
     # remove some models
