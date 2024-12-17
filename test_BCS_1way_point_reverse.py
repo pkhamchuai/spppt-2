@@ -459,7 +459,7 @@ def test(model_name, models, model_params, timestamp,
                     outputs = model[model_number](source_image, target_image, points=points1)
                     affine_params_predicted = outputs[1]
                     M = combine_matrices(M, affine_params_predicted).to(device)
-                    
+                                        
                 else:
                     model_number = model_number - len(models)
                     outputs = model[model_number](target_image, source_image, points=points2)
@@ -475,15 +475,44 @@ def test(model_name, models, model_params, timestamp,
                     transformed_source_affine = tensor_affine_transform0(source_image0, M)
                     points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
+                    
+                    results = DL_affine_plot(f"test_{i}", output_dir,
+                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                        source_image0[0, 0, :, :].cpu().numpy(),
+                        target_image[0, 0, :, :].cpu().numpy(),
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1_0[0].cpu().detach().numpy().T,
+                        points2[0].cpu().detach().numpy().T,
+                        points1_2_predicted[0].cpu().detach().numpy().T,
+                        None, None,
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=M.cpu().detach(),
+                        heatmap1=None, heatmap2=None, plot=0, alpha=0.3)
+                    
                     # store error of each iteration
-                    error_img[i, k] = mse(outputs[0][0, 0, :, :].cpu().detach().numpy(), 
-                                        target_image[0, 0, :, :].cpu().detach().numpy())
-                    error_pt[i, k] = tre(outputs[2].cpu().detach().numpy().T, 
-                                        points2.cpu().detach().numpy())
+                    error_img[i, k] = results[6]
+                    error_pt[i, k] = results[4]
                 else:
                     source_image = tensor_affine_transform0(source_image0, M)
-                    points1 = transform_points_DVF(points1_0.cpu().detach().T,
+                    points1 = transform_points_DVF(points1_0.clone().cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
+
+                    results = DL_affine_plot(f"test_{i}", output_dir,
+                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                        source_image[0, 0, :, :].cpu().numpy(),
+                        target_image[0, 0, :, :].cpu().numpy(),
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1_0[0].cpu().detach().numpy().T,
+                        points2[0].cpu().detach().numpy().T,
+                        points1[0].cpu().detach().numpy().T,
+                        None, None,
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=M.cpu().detach(),
+                        heatmap1=None, heatmap2=None, plot=0, alpha=0.3)
+                    
+                    # store error of each iteration
+                    error_img[i, k] = results[6]
+                    error_pt[i, k] = results[4]
 
             if i < 100 and (plot == 1 or plot == 2):
                 plot_ = True
@@ -553,22 +582,24 @@ def test(model_name, models, model_params, timestamp,
         writer.writerow(std)
 
     # replace the zeros with values from the last non-zero element
-    # for i in range(len(error_img)):
-    #     for j in range(len(error_img[i])):
-    #         if error_img[i, j] == 0:
-    #             error_img[i, j] = error_img[i, j-1]
-    #         if error_pt[i, j] == 0:
-    #             error_pt[i, j] = error_pt[i, j-1]
+    for i in range(error_img.shape[0]):
+        for j in range(error_img.shape[1]):
+            if error_img[i, j] == 0.:
+                error_img[i, j] = error_img[i, j-1]
+            if error_pt[i, j] == 0.:
+                error_pt[i, j] = error_pt[i, j-1]
 
     # calculate the average error per iteration and save in a new csv file
-    error_img = error_img[~np.all(error_img == 0, axis=1)]
+    # error_img = error_img[~np.all(error_img == 0, axis=1)]
     error_img_avg = np.mean(error_img, axis=0)
 
-    error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
+    # error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
     error_pt_avg = np.mean(error_pt, axis=0)
 
-    print(error_pt)
-    print(error_pt_avg)
+    # print(f"error_pt: {error_pt}")
+    # print(f"error_pt_avg: {error_pt_avg}")
+    # print(f"error_img: {error_img}")
+    # print(f"error_img_avg: {error_img_avg}")
 
     csv_file = f"{output_dir}/error_{timestamp}.csv"
     with open(csv_file, 'w', newline='') as file:

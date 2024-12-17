@@ -482,11 +482,6 @@ def test(model_name, models, model_params, timestamp,
                     affine_params_fw = outputs[1]
                     M_fw = combine_matrices(M_fw, affine_params_fw).to(device)
 
-                    # store error of each iteration
-                    error_img[i, k] = mse(outputs[0][0, 0, :, :].cpu().detach().numpy(), 
-                                        target_image[0, 0, :, :].cpu().detach().numpy())
-                    error_pt[i, k] = tre(outputs[2].cpu().detach().numpy().T,
-                                        points2.cpu().detach().numpy())
                 else:
                     model_number = model_number - len(models)
                     outputs = model[model_number](target_image, source_image, points=points2)
@@ -495,20 +490,48 @@ def test(model_name, models, model_params, timestamp,
                         torch.inverse(params_to_matrix(affine_params_rv))).to(device)
                     M_fw = combine_matrices(M_fw, affine_params_fw).to(device)
 
-                    # store error of each iteration
-                    error_img[i, k] = mse(outputs[0][0, 0, :, :].cpu().detach().numpy(), 
-                                        target_image[0, 0, :, :].cpu().detach().numpy())
-                    error_pt[i, k] = tre(outputs[2].cpu().detach().numpy().T,
-                                        points2.cpu().detach().numpy())
-
                 if k == len(active_beams)-1:
-                    transformed_source = tensor_affine_transform0(source_image0, M_fw)
+                    transformed_source_affine = tensor_affine_transform0(source_image0, M_fw)
                     points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
                                 M_fw.cpu().detach(), source_image0).T
+                    
+                    results = DL_affine_plot(f"test_{i}", output_dir,
+                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                        source_image0[0, 0, :, :].cpu().numpy(),
+                        target_image[0, 0, :, :].cpu().numpy(),
+                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        points1_0[0].cpu().detach().numpy().T,
+                        points2[0].cpu().detach().numpy().T,
+                        points1_2_predicted[0].cpu().detach().numpy().T,
+                        None, None,
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=M_fw.cpu().detach(),
+                        heatmap1=None, heatmap2=None, plot=0, alpha=0.3)
+                    
+                    # store error of each iteration
+                    error_img[i, k] = results[6]
+                    error_pt[i, k] = results[4]
                 else:
                     source_image = tensor_affine_transform0(source_image0, M_fw)
                     points1 = transform_points_DVF(points1_0.clone().cpu().detach().T,
                                 M_fw.cpu().detach(), source_image0).T
+                    
+                    results = DL_affine_plot(f"test_{i}", output_dir,
+                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                        source_image0[0, 0, :, :].cpu().numpy(),
+                        target_image[0, 0, :, :].cpu().numpy(),
+                        source_image[0, 0, :, :].cpu().numpy(),
+                        points1_0[0].cpu().detach().numpy().T,
+                        points2[0].cpu().detach().numpy().T,
+                        points1[0].cpu().detach().numpy().T,
+                        None, None,
+                        affine_params_true=affine_params_true,
+                        affine_params_predict=M_fw.cpu().detach(),
+                        heatmap1=None, heatmap2=None, plot=0, alpha=0.3)
+                    
+                    # store error of each iteration
+                    error_img[i, k] = results[6]
+                    error_pt[i, k] = results[4]
 
             if i < 100 and (plot == 1 or plot == 2):
                 plot_ = True
@@ -521,7 +544,7 @@ def test(model_name, models, model_params, timestamp,
                 image1_name, image2_name,
                 source_image0[0, 0, :, :].cpu().numpy(),
                 target_image0[0, 0, :, :].cpu().numpy(),
-                transformed_source[0, 0, :, :].cpu().numpy(),
+                transformed_source_affine[0, 0, :, :].cpu().numpy(),
                 points1_0[0].cpu().detach().numpy().T,
                 points2[0].cpu().detach().numpy().T,
                 points1_2_predicted[0].cpu().detach().numpy().T,
@@ -578,18 +601,18 @@ def test(model_name, models, model_params, timestamp,
         writer.writerow(std)
 
     # replace the zeros with values from the last non-zero element
-    for i in range(len(error_img)):
-        for j in range(len(error_img[i])):
-            if error_img[i, j] == 0:
+    for i in range(error_img.shape[0]):
+        for j in range(error_img.shape[1]):
+            if error_img[i, j] == 0.:
                 error_img[i, j] = error_img[i, j-1]
-            if error_pt[i, j] == 0:
+            if error_pt[i, j] == 0.:
                 error_pt[i, j] = error_pt[i, j-1]
 
     # calculate the average error per iteration and save in a new csv file
-    error_img = error_img[~np.all(error_img == 0, axis=1)]
+    # error_img = error_img[~np.all(error_img == 0, axis=1)]
     error_img_avg = np.mean(error_img, axis=0)
 
-    error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
+    # error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
     error_pt_avg = np.mean(error_pt, axis=0)
 
     csv_file = f"{output_dir}/error_{timestamp}.csv"
