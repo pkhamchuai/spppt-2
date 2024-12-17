@@ -76,23 +76,6 @@ def test(model_name, models, model_params, timestamp,
     # model_params: model parameters
     # timestamp: timestamp of the model
 
-    #-----------------------------------------------------------------------------
-    world_size    = int(os.environ["WORLD_SIZE"])
-    rank          = int(os.environ["SLURM_PROCID"])
-    gpus_per_node = int(os.environ["SLURM_GPUS_ON_NODE"])
-
-    assert gpus_per_node == torch.cuda.device_count()
-    print(f"Hello from rank {rank} of {world_size} on {gethostname()} where there are" \
-          f" {gpus_per_node} allocated GPUs per node.", flush=True)
-
-    setup(rank, world_size)
-    if rank == 0: print(f"Group initialized? {dist.is_initialized()}", flush=True)
-
-    device = rank - gpus_per_node * (rank // gpus_per_node)
-    torch.cuda.set_device(device)
-    print(f"host: {gethostname()}, rank: {rank}, local_rank: {device}\n", flush=True)
-    #-----------------------------------------------------------------------------
-
     def reg(model, source_image, target_image, i, j, b, k, output_dir, 
             points1=None, points2=None, plot_=False):
         # Get the predicted affine parameters and transformed source image
@@ -155,12 +138,11 @@ def test(model_name, models, model_params, timestamp,
         # if model is a loaded model, use the model
         if isinstance(models[i], str):
             print(f"\nLoading model: {models[i]}")
-            model[i] = model_loader(model_name, model_params, device)
+            model[i] = model_loader(model_name, model_params)
             buffer = io.BytesIO()
             torch.save(model[i].state_dict(), buffer)
             buffer.seek(0)
             model[i].load_state_dict(torch.load(models[i]))
-            model[i] = DDP(model[i], device_ids=[device])
             # print(f'Loaded model from {model[i]}')
         elif isinstance(models[i], nn.Module):
             print(f'Using model {model_name}')
@@ -472,7 +454,6 @@ def test(model_name, models, model_params, timestamp,
             M = torch.from_numpy(M).unsqueeze(0)#.to(device)
             source_image = source_image0.clone().to(device)
             points1 = points1_0.clone().to(device)
-            # points1_2_predicted = []
 
             if verbose:
                 print(f"\nFinalizing pair {i}: {active_beams}")

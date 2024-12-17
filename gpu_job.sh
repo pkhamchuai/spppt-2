@@ -3,9 +3,9 @@
 #SBATCH --output=hpc_output_error/output_%j.out    ## ชื่อไฟล์ Output (%j = Job-ID)
 #SBATCH --error=hpc_output_error/error_%j.err     ## ชื่อไฟล์ error (%j = Job-ID)
 #SBATCH --partition=mixed
-#SBATCH --cpus-per-task=2        # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --cpus-per-task=32        # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH --gpus=1                 # total number of GPUs
-#SBATCH --time=6:00:00          # total run time limit (HH:MM:SS)
+#SBATCH --time=12:00:00          # total run time limit (HH:MM:SS)
 #SBATCH --ntasks-per-node=1      # number of tasks per node
 
 export MASTER_PORT=$(expr 10000 + $(echo -n $SLURM_JOBID | tail -c 4))
