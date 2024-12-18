@@ -54,11 +54,11 @@ def process_image(image):
     image = (image/np.max(image)).astype('float32')
     return image
 
-def run(model_params):
+def run(model_params, timestamp, plot):
     # Initialize SuperPointFrontend
-    superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
-                          conf_thresh=0.015,
-                          nn_thresh=0.7, cuda=True)
+    # superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
+    #                       conf_thresh=0.015,
+    #                       nn_thresh=0.7, cuda=True)
     
     test_dataset = datagen(model_params.dataset, False, model_params.sup)
 
@@ -81,43 +81,46 @@ def run(model_params):
         points1 = points1[0].cpu().numpy()
         points2 = points2[0].cpu().numpy()
 
-        print(points1.shape, points2.shape)
 
-        affine_transform1 = cv2.estimateAffinePartial2D(points1, points2, method=cv2.RANSAC)
-        matches1_transformed = cv2.transform(points1, affine_transform1[0])
-        matches1_transformed = matches1_transformed[0].T
-        # transform image 1 and 2 using the affine transform matrix
-        transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
-
-        # try:
-        #     affine_transform1 = cv2.estimateAffinePartial2D(points1.T, points2.T, method=cv2.RANSAC)
-        #     matches1_transformed = cv2.transform(points1[0], affine_transform1[0])
-        #     matches1_transformed = matches1_transformed[0].T
-        #     # transform image 1 and 2 using the affine transform matrix
-        #     transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
-        # except cv2.error:
-        #     print(f"Error: {i}")
-        #     # set affine_transform1 to identity affine matrix
-        #     affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
-        #     matches1_transformed = points1
-        #     transformed_source_affine = source_image
+        try:
+            if args.model == 'RANSAC':
+                method = cv2.RANSAC
+            elif args.model == 'LMEDS':
+                method = cv2.LMEDS
+            affine_transform1, inliers = cv2.estimateAffinePartial2D(points1, points2, method=method)
+            points1_reshaped = points1.reshape(-1, 1, 2)
+            matches1_transformed = cv2.transform(points1_reshaped, affine_transform1)
+            matches1_transformed = matches1_transformed.reshape(-1, 2)
+            # transform image 1 and 2 using the affine transform matrix
+            transformed_source_affine = cv2.warpAffine(source_image, affine_transform1, (256, 256))
+        except cv2.error:
+            print(f"Error: {i}")
+            # set affine_transform1 to identity affine matrix
+            affine_transform1 = np.array([[[1., 0., 0.], [0., 1., 0.]]])
+            affine_transform1 = torch.tensor(affine_transform1).view(1, 1, 2, 3).to(device)
+            matches1_transformed = points1
+            transformed_source_affine = source_image
 
         # mse12 = np.mean((matches1_transformed - matches2_RANSAC)**2)
         # tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2_RANSAC)**2, axis=0)))
 
-        if i < 100:
+        if i < 100 and plot == 1:
             plot_ = True
-        else:
+        elif i < 100 and plot == 0:
             plot_ = False
 
-        results = DL_affine_plot(f"test_{i+1}", output_dir,
-                f"{i}", "RANSAC", source_image, target_image, \
-                transformed_source_affine, \
-                points1, points2, points1_2_true, \
+        
+        affine_transform1 = torch.tensor(affine_transform1).view(1, 1, 2, 3).to(device)
+        # print(affine_transform1.shape, affine_params_true.shape)
+        results = DL_affine_plot(f"test", output_dir,
+                f"{i:03d}", str(args.model),
+                source_image, target_image,
+                transformed_source_affine,
+                points1.T, points2.T, matches1_transformed.T, 
+                None, None,
                 affine_params_true=affine_params_true,
-                affine_params_predict=affine_transform1[0], 
+                affine_params_predict=affine_transform1,
                 heatmap1=None, heatmap2=None, plot=plot_)
-
 
         # calculate metrics
         # matches1_transformed = results[0]
@@ -132,7 +135,7 @@ def run(model_params):
 
         # append metrics to metrics list
         metrics.append([i, mse_before, mse12, tre_before, tre12, mse12_image_before, 
-            mse12_image, ssim12_image_before, ssim12_image, matches2.shape[-1]])
+            mse12_image, ssim12_image_before, ssim12_image, matches1_transformed.shape[0]])
         
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
@@ -176,6 +179,7 @@ if __name__ == '__main__':
     parser.add_argument('--decay_rate', type=float, default=0.96, help='decay rate')
     parser.add_argument('--model', type=str, default='RANSAC', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
+    parser.add_argument('--plot', type=int, default=0, help='plot the results')
     args = parser.parse_args()
 
     model_params = ModelParams(dataset=args.dataset, sup=args.sup, image=args.image, # heatmaps=args.heatmaps, 
@@ -185,4 +189,4 @@ if __name__ == '__main__':
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    run(model_params)
+    run(model_params, timestamp, args.plot)
