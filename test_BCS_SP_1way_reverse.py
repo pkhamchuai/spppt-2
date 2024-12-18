@@ -1,3 +1,11 @@
+'''This version of the test is to test the BCS model with SuperPoint features
+At the beginning, the model will find keypoints in the source and target images using SuperPoint.
+Then, the model will use the keypoints to find the affine transformation between the images using RANSAC/LMEDS.
+If the model cannot find more than 3 keypoints, the model will use BCS on image metrics (MSE) to find the transformation.
+In the next iteration, we apply SuperPoint to find the keypoints again, if we have more than 3 keypoints, we use RANSAC/LMEDS.
+However, if results from RANSAC/LMEDS are not good, we will use BCS on points/image metrics to find the transformation.'''
+
+
 # import sys
 import argparse
 import numpy as np
@@ -5,29 +13,27 @@ import os
 import cv2
 import torch
 import matplotlib.pyplot as plt
+
 from datetime import datetime
 
 import torch
 torch.manual_seed(9793047918980052389)
 print('Seed:', torch.seed())
-import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel as DDP
-from socket import gethostname
 
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, print_summary
+from utils.utils2 import *
 from utils import test
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f'Device: {device}')
 
 # Stub to warn about opencv version.
 if int(cv2.__version__[0]) < 3: # pragma: no cover
   print('Warning: OpenCV 3 is not installed')
 
 image_size = 256
-
-def setup(rank, world_size):
-    # initialize the process group
-    dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
 # Convert 1x2x3 parameters to 3x3 affine transformation matrices
 def params_to_matrix(params):
@@ -64,6 +70,41 @@ def tensor_affine_transform0(image, matrix):
     transformed_image = F.grid_sample(image, grid, align_corners=False)
     return transformed_image
 
+# Initialize SuperPoint
+superpoint = SuperPointFrontend(weights_path='superpoint_v1.pth',
+                                nms_dist=4,
+                                conf_thresh=0.015,
+                                nn_thresh=0.7,
+                                cuda=torch.cuda.is_available())
+
+def find_keypoints(image):
+    # Convert image to grayscale if it is not already
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Normalize image
+    image = image.astype(np.float32) / 255.0
+    # Find keypoints and descriptors
+    keypoints, descriptors, heatmap = superpoint.run(image)
+    return keypoints, descriptors
+
+def find_affine_transform(keypoints1, keypoints2):
+    if len(keypoints1) < 3 or len(keypoints2) < 3:
+        return None, None
+    # Use RANSAC to find the affine transformation
+    keypoints1 = np.array(keypoints1)
+    keypoints2 = np.array(keypoints2)
+    H, status = cv2.estimateAffinePartial2D(keypoints1, keypoints2, method=cv2.RANSAC)
+    return H, status
+
+def apply_superpoint_and_ransac(source_image, target_image):
+    keypoints1, descriptors1 = find_keypoints(source_image)
+    keypoints2, descriptors2 = find_keypoints(target_image)
+    if len(keypoints1) < 3 or len(keypoints2) < 3:
+        return None, None, None, None
+    H, status = find_affine_transform(keypoints1, keypoints2)
+    return keypoints1, keypoints2, H, status
+
+
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
 def test(model_name, models, model_params, timestamp, 
@@ -72,23 +113,6 @@ def test(model_name, models, model_params, timestamp,
     # model: model to be tested
     # model_params: model parameters
     # timestamp: timestamp of the model
-
-    #-----------------------------------------------------------------------------
-    world_size    = int(os.environ["WORLD_SIZE"])
-    rank          = int(os.environ["SLURM_PROCID"])
-    gpus_per_node = int(os.environ["SLURM_GPUS_ON_NODE"])
-
-    assert gpus_per_node == torch.cuda.device_count()
-    print(f"Hello from rank {rank} of {world_size} on {gethostname()} where there are" \
-          f" {gpus_per_node} allocated GPUs per node.", flush=True)
-
-    setup(rank, world_size)
-    if rank == 0: print(f"Group initialized? {dist.is_initialized()}", flush=True)
-
-    device = rank - gpus_per_node * (rank // gpus_per_node)
-    torch.cuda.set_device(device)
-    print(f"host: {gethostname()}, rank: {rank}, local_rank: {device}\n", flush=True)
-    #-----------------------------------------------------------------------------
 
     def reg(model, source_image, target_image, i, j, b, k, output_dir, 
             points1=None, points2=None, plot_=False):
@@ -152,12 +176,11 @@ def test(model_name, models, model_params, timestamp,
         # if model is a loaded model, use the model
         if isinstance(models[i], str):
             print(f"\nLoading model: {models[i]}")
-            model[i] = model_loader(model_name, model_params, device)
+            model[i] = model_loader(model_name, model_params)
             buffer = io.BytesIO()
             torch.save(model[i].state_dict(), buffer)
             buffer.seek(0)
             model[i].load_state_dict(torch.load(models[i]))
-            model[i] = DDP(model[i], device_ids=[device])
             # print(f'Loaded model from {model[i]}')
         elif isinstance(models[i], nn.Module):
             print(f'Using model {model_name}')
@@ -401,9 +424,9 @@ def test(model_name, models, model_params, timestamp,
 
                             if k == len(active_beams[b])-1:
                                 # plot_ = 1
-                                image1_name = f"beam{b}_rep_{k}"
-                                image2_name = f"beam{b}_rep_{k}_{active_beams[b][-20:]}"
-                                _ = DL_affine_plot(f"test_{i}", output_dir,
+                                image1_name = f"beam{b}_rep_{k:02d}"
+                                image2_name = f"beam{b}_rep_{k:02d}_{active_beams[b][-20:]}"
+                                _ = DL_affine_plot(f"test_{i:03d}", output_dir,
                                     image1_name, image2_name,
                                     source_image[0, 0, :, :].cpu().numpy(),
                                     target_image[0, 0, :, :].cpu().numpy(),
@@ -469,7 +492,6 @@ def test(model_name, models, model_params, timestamp,
             M = torch.from_numpy(M).unsqueeze(0)#.to(device)
             source_image = source_image0.clone().to(device)
             points1 = points1_0.clone().to(device)
-            # points1_2_predicted = []
 
             if verbose:
                 print(f"\nFinalizing pair {i}: {active_beams}")
@@ -497,8 +519,8 @@ def test(model_name, models, model_params, timestamp,
                     points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
                     
-                    results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                    results = DL_affine_plot(f"test_{i:03d}", output_dir,
+                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         transformed_source_affine[0, 0, :, :].cpu().numpy(),
@@ -518,8 +540,8 @@ def test(model_name, models, model_params, timestamp,
                     points1 = transform_points_DVF(points1_0.clone().cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
 
-                    results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                    results = DL_affine_plot(f"test_{i:03d}", output_dir,
+                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         source_image[0, 0, :, :].cpu().numpy(),
@@ -541,8 +563,8 @@ def test(model_name, models, model_params, timestamp,
                 plot_ = False
 
             image1_name = f"final"
-            image2_name = f"beam{b}_rep_{k}_{active_beams[-20:]}"
-            _ = DL_affine_plot(f"test_{i}", output_dir,
+            image2_name = f"beam{b}_rep_{k:02d}_{active_beams[-20:]}"
+            _ = DL_affine_plot(f"test_{i:03d}", output_dir,
                 image1_name, image2_name,
                 source_image0[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(),

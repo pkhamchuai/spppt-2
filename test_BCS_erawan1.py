@@ -91,10 +91,10 @@ plot = 1
 verbose = 0
 
 for i in range(1, 4):
-
     # remove some models
     # only scale1, shear1, rotation1, and mix2 are used
-    model_path = ['DHR_21100_0.001_0_5_100_20240509-160207.pth',
+    model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth',
+                'DHR_21100_0.001_0_5_100_20240509-160207.pth',
                 'DHR_31100_0.001_0_10_100_20240508-120807.pth', 
                 'DHR_41100_0.001_0_5_100_20240509-133824.pth', 
                 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
@@ -103,7 +103,19 @@ for i in range(1, 4):
         runs.append(['python', 'test_BCS_1way_point_reverse_erawan.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i), '--metric', str('TRE'),
                         '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
-        
+
+    # remove some models
+    # only scale1, shear1, rotation1, and mix2 are used
+    model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth',
+                'DHR_21100_0.001_0_5_100_20240509-160207.pth',
+                'DHR_31100_0.001_0_10_100_20240508-120807.pth', 
+                'DHR_41100_0.001_0_5_100_20240509-133824.pth', 
+                'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
+    for dataset_ in dataset:
+        runs.append(['python', 'test_BCS_2way_point_erawan.py', '--model', str(models), '--sup', str(sups[0]),
+        # runs.append(['python', 'test_BCS_1way_point_reverse_erawan.py', '--model', str(models), '--sup', str(sups[0]),
+                        '--dataset', str(dataset_), '--beam', str(i), '--metric', str('TRE'),
+                        '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
 # sort runs by element 1, then 11, then 7
 # runs.sort(key=lambda x: x[3])
 
