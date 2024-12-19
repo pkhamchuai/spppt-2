@@ -136,8 +136,8 @@ def run(model_params, method='affine', plot=1, num_iter=0):
                 f"{i:03d}", "SE", 
                 source_image, target_image,
                 transformed_source_affine,
-                # points1, points2, points1_transformed, None, None, 
-                points1, points2, None, None, None,
+                points1, points2, points1_transformed, None, None, 
+                # points1, points2, None, None, None,
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_transform1,
                 heatmap1=None, heatmap2=None, plot=plot_)
