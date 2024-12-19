@@ -94,7 +94,7 @@ def test(model_name, models, model_params, timestamp,
             points1=None, points2=None, plot_=False):
         # Get the predicted affine parameters and transformed source image
         outputs = model(source_image, target_image, points=points1)
-        transformed_source_affine = outputs[0]
+        transformed_source = outputs[0]
         affine_params_predicted = outputs[1]
         points1_2_predicted = outputs[2]
         # print(points1.shape)
@@ -116,7 +116,7 @@ def test(model_name, models, model_params, timestamp,
                 f"{i+1}", f"rep{j:02d}_beam{b}_branch_{k}", 
                 source_image[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(), 
-                transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                transformed_source[0, 0, :, :].cpu().numpy(),
                 points1[0].cpu().detach().numpy().T,
                 points2[0].cpu().detach().numpy().T,
                 points1_2_predicted[0].cpu().detach().numpy().T,
@@ -131,7 +131,7 @@ def test(model_name, models, model_params, timestamp,
                 f"{i+1}", f"rep{j:02d}_beam{b}_branch_{k}", 
                 source_image[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(),
-                transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                transformed_source[0, 0, :, :].cpu().numpy(),
                 None, None, None,
                 None, None,
                 affine_params_true=affine_params_true,
@@ -152,7 +152,7 @@ def test(model_name, models, model_params, timestamp,
         # if model is a loaded model, use the model
         if isinstance(models[i], str):
             print(f"\nLoading model: {models[i]}")
-            model[i] = model_loader(model_name, model_params, device)
+            model[i] = model_loader(model_name, model_params)
             buffer = io.BytesIO()
             torch.save(model[i].state_dict(), buffer)
             buffer.seek(0)
@@ -511,7 +511,7 @@ def test(model_name, models, model_params, timestamp,
                     M_fw = combine_matrices(M_fw, affine_params_fw).to(device)
 
                 if k == len(active_beams)-1:
-                    transformed_source_affine = tensor_affine_transform0(source_image0, M_fw)
+                    transformed_source = tensor_affine_transform0(source_image0, M_fw)
                     points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
                                 M_fw.cpu().detach(), source_image0).T
                     
@@ -519,7 +519,7 @@ def test(model_name, models, model_params, timestamp,
                         f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
-                        transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                        transformed_source[0, 0, :, :].cpu().numpy(),
                         points1_0[0].cpu().detach().numpy().T,
                         points2[0].cpu().detach().numpy().T,
                         points1_2_predicted[0].cpu().detach().numpy().T,
@@ -564,7 +564,7 @@ def test(model_name, models, model_params, timestamp,
                 image1_name, image2_name,
                 source_image0[0, 0, :, :].cpu().numpy(),
                 target_image0[0, 0, :, :].cpu().numpy(),
-                transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                transformed_source[0, 0, :, :].cpu().numpy(),
                 points1_0[0].cpu().detach().numpy().T,
                 points2[0].cpu().detach().numpy().T,
                 points1_2_predicted[0].cpu().detach().numpy().T,
