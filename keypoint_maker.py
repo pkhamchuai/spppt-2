@@ -216,8 +216,8 @@ def display_existing_points():
         target_canvas.create_oval(tp[0] - 3, tp[1] - 3, tp[0] + 3, tp[1] + 3, fill=color, tags="point")
 
         # Draw the number next to the dot
-        source_canvas.create_text(sp[0] + 8, sp[1], text=str(i + 1), fill="black", anchor="w", tags="point")
-        target_canvas.create_text(tp[0] + 8, tp[1], text=str(i + 1), fill="black", anchor="w", tags="point")
+        source_canvas.create_text(sp[0] + 8, sp[1], text=str(i + 1), fill="white", anchor="w", tags="point")
+        target_canvas.create_text(tp[0] + 8, tp[1], text=str(i + 1), fill="white", anchor="w", tags="point")
 
         # Draw white stroke if this pair is selected
         if i == selected_point_index:
