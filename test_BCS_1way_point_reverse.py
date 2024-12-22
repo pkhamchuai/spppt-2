@@ -5,6 +5,17 @@ import os
 import cv2
 import torch
 import matplotlib.pyplot as plt
+# import mutual information function
+from sklearn.metrics import mutual_info_score
+
+def mutual_information(x, y):
+    # Flatten the arrays if they are not already 1D
+    if x.ndim > 1:
+        x = x.ravel()
+    if y.ndim > 1:
+        y = y.ravel()
+    return mutual_info_score(x, y)
+
 
 from datetime import datetime
 
@@ -292,6 +303,23 @@ def test(model_name, models, model_params, timestamp,
                                 # calculate the average of the cosine similarity
                                 cosine_similarity = np.mean(cosine_similarity)
                                 metrics_points_forward.append(cosine_similarity)
+                            elif metric == 'MI_point':
+                                # calculate mutual information between points1 and points2
+                                # if the last dimension of points1 and points2 must be 2
+                                # if points1.shape[0] != 2:
+                                #     points1 = points1.T
+                                #     points2 = points2.T
+                                # print(points1.cpu().detach().view(1, -1, 2), points2.cpu().detach().view(1, -1, 2))
+                                mutual_info = mutual_information(
+                                    points1.cpu().detach().view(1, -1, 2), 
+                                    points2.cpu().detach().view(1, -1, 2))
+                                metrics_points_forward.append(mutual_info)
+                            elif metric == 'MI_image':
+                                # calculate mutual information between image1 and image2
+                                mutual_info = mutual_information(
+                                    source_image[0, 0, :, :].cpu().detach().numpy(), 
+                                    target_image[0, 0, :, :].cpu().detach().numpy())
+                                metrics_points_forward.append(mutual_info)
                             
                             mse12_image = mse(source_image[0, 0, :, :].cpu().detach().numpy(), 
                                             target_image[0, 0, :, :].cpu().detach().numpy())
