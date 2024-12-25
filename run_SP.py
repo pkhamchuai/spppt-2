@@ -68,7 +68,7 @@ def run(model_params, method='LMEDS', plot=1):
 
     metrics = []
     # create a csv file to store the metrics
-    csv_file = f"{output_dir}/metrics.csv"
+    csv_file = f"{output_dir}/metrics_{timestamp}.csv"
 
     testbar = tqdm(test_dataset, desc=f'Testing:')
     for i, data in enumerate(testbar, 0):
@@ -104,6 +104,7 @@ def run(model_params, method='LMEDS', plot=1):
                 affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T, method=cv2.LMEDS)
             # matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
             # matches1_transformed = matches1_transformed[0].T
+            # print(f"Affine transform matrix: {affine_transform1[0]}")
             points1_transformed = cv2.transform(points1.reshape(-1, 1, 2), affine_transform1[0])
 
             # transform image 1 and 2 using the affine transform matrix
@@ -111,8 +112,9 @@ def run(model_params, method='LMEDS', plot=1):
         except cv2.error:
             print(f"Error: {i}")
             # set affine_transform1 to identity affine matrix
-            affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
-            matches1_transformed = matches1
+            affine_transform1 = np.array([[[1., 0., 0.], [0., 1., 0.]]])
+            # matches1_transformed = matches1
+            points1_transformed = points1
             transformed_source_affine = source_image
         
         # mse12 = np.mean((matches1_transformed - matches2)**2)
@@ -125,13 +127,16 @@ def run(model_params, method='LMEDS', plot=1):
         else:
             plot_ = 0
 
+        # reshape the affine_transform1 to tensor [1, 1, 2, 3]
+        affine_transform1 = torch.tensor(affine_transform1[0]).reshape(1, 1, 2, 3).to(device)
+        # print(affine_transform1.shape)
         results = DL_affine_plot(f"test", output_dir,
                 f"{i}", "SP", source_image, target_image,
                 transformed_source_affine,
                 points1.T, points2.T, points1_transformed.reshape(-1, 2).T, 
                 None, None,
                 affine_params_true=affine_params_true,
-                affine_params_predict=affine_transform1[0], 
+                affine_params_predict=affine_transform1,
                 heatmap1=heatmap1, heatmap2=heatmap2, plot=plot_)
 
         # calculate metrics
