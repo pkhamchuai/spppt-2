@@ -64,6 +64,15 @@ def tensor_affine_transform0(image, matrix):
     transformed_image = F.grid_sample(image, grid, align_corners=False)
     return transformed_image
 
+def process_image(image):
+    # squeeze dimensions 0 and 1
+    image = image.squeeze(0).squeeze(0)
+    # convert to numpy array
+    image = image.cpu().numpy()
+    # normalize image to range 0 to 1
+    image = (image/np.max(image)).astype('float32')
+    return image
+
 # from utils.SuperPoint import SuperPointFrontend
 # from utils.utils1 import transform_points_DVF
 def test(model_name, models, model_params, timestamp, 
@@ -188,13 +197,13 @@ def test(model_name, models, model_params, timestamp,
             #     break
 
             # Get images and affine parameters
-            source_image, target_image, affine_params_true, points1_0, points2, _ = data
+            source_image, target_image, affine_params_true, kp1_0, kp2, _ = data
 
             source_image0 = source_image.requires_grad_(True).to(device)
             target_image0 = target_image.requires_grad_(True).to(device)
             # add gradient to the matches
-            points1_0 = points1_0.requires_grad_(True).to(device)
-            points2_0 = points2.requires_grad_(True).to(device)
+            kp1_0 = kp1_0.requires_grad_(True).to(device)
+            kp2_0 = kp2.requires_grad_(True).to(device)
             # print(points1_0.shape)
             # if isinstance(points1_0, torch.Tensor):
             #     points1_0 = points1_0[0].cpu().detach().numpy()
@@ -207,6 +216,27 @@ def test(model_name, models, model_params, timestamp,
             # 3. until the mse is not change anymore and 
             #    the affine parameters are not change anymore
 
+            # use superpoint to extract keypoints and descriptors
+            superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
+                          conf_thresh=0.015,
+                          nn_thresh=0.7, cuda=True)
+            # Process the first image
+            keypoints1, descriptors1, _ = superpoint(process_image(source_image0))
+            # Process the second image
+            keypoints2, descriptors2, _ = superpoint(process_image(target_image0))
+
+            # match the points between the two images
+            tracker = PointTracker(5, nn_thresh=0.7)
+            matches = tracker.nn_match_two_way(descriptors1, descriptors2, nn_thresh=0.7)
+
+            # get the points from the matches
+            # print(f"Pair {i}: {matches.shape} matches")
+            # print(f"Pair {i}: {keypoints1.shape} matches")
+            points1 = keypoints1[:2, matches[0, :].astype(int)]
+            points1_0 = torch.from_numpy(points1).unsqueeze(0).to(device)
+            points2 = keypoints2[:2, matches[1, :].astype(int)]
+            points2_0 = torch.from_numpy(points2).unsqueeze(0).to(device)
+            
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop
@@ -419,7 +449,7 @@ def test(model_name, models, model_params, timestamp,
                                 # plot_ = 1
                                 image1_name = f"beam{b}_rep_{k:02d}"
                                 image2_name = f"beam{b}_rep_{k:02d}_{active_beams[b][-20:]}"
-                                _ = DL_affine_plot(f"test_{i:03d}", output_dir,
+                                _ = DL_affine_plot_2way(f"test_{i:03d}", output_dir,
                                     image1_name, image2_name,
                                     source_image[0, 0, :, :].cpu().numpy(),
                                     target_image[0, 0, :, :].cpu().numpy(),
@@ -488,9 +518,9 @@ def test(model_name, models, model_params, timestamp,
             M_fw = torch.from_numpy(M).unsqueeze(0).to(device)
             source_image = source_image0.clone().to(device)
             target_image = target_image0.clone().to(device)
-            points1 = points1_0.clone().to(device)
-            points2 = points2_0.clone().to(device)
-            points1_2_predicted = points1_0.clone().to(device)
+            points1 = kp1_0.clone().to(device)
+            points2 = kp2_0.clone().to(device)
+            points1_2_predicted = points1.clone().to(device)
 
             if verbose:
                 print(f"\nFinalizing pair {i}: {active_beams}")

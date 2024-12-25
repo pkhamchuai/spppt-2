@@ -211,9 +211,11 @@ def test(model_name, models, model_params, timestamp,
             matches = tracker.nn_match_two_way(descriptors1, descriptors2, nn_thresh=0.7)
 
             # get the points from the matches
-            points1 = keypoints1[matches[:, 0], :2]
+            # print(f"Pair {i}: {matches.shape} matches")
+            # print(f"Pair {i}: {keypoints1.shape} matches")
+            points1 = keypoints1[:2, matches[0, :].astype(int)]
             points1_0 = torch.from_numpy(points1).unsqueeze(0).to(device)
-            points2 = keypoints2[matches[:, 1], :2]
+            points2 = keypoints2[:2, matches[1, :].astype(int)]
             points2_0 = torch.from_numpy(points2).unsqueeze(0).to(device)
             
             # use for loop with a large number of iterations 
@@ -428,7 +430,7 @@ def test(model_name, models, model_params, timestamp,
                                 # plot_ = 1
                                 image1_name = f"beam{b}_rep_{k:02d}"
                                 image2_name = f"beam{b}_rep_{k:02d}_{active_beams[b][-20:]}"
-                                _ = DL_affine_plot(f"test_{i:03d}", output_dir,
+                                _ = DL_affine_plot_2way(f"test_{i:03d}", output_dir,
                                     image1_name, image2_name,
                                     source_image[0, 0, :, :].cpu().numpy(),
                                     target_image[0, 0, :, :].cpu().numpy(),
@@ -499,7 +501,7 @@ def test(model_name, models, model_params, timestamp,
             target_image = target_image0.clone().to(device)
             points1 = kp1_0.clone().to(device)
             points2 = kp2_0.clone().to(device)
-            points1_2_predicted = points1_0.clone().to(device)
+            points1_2_predicted = points1.clone().to(device)
 
             if verbose:
                 print(f"\nFinalizing pair {i}: {active_beams}")
@@ -545,8 +547,8 @@ def test(model_name, models, model_params, timestamp,
                     points1 = transform_points_DVF(points1_0.clone().cpu().detach().T,
                                 M_fw.cpu().detach(), source_image0).T
                     
-                    results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                    results = DL_affine_plot(f"test_{i:03d}", output_dir,
+                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         source_image[0, 0, :, :].cpu().numpy(),
@@ -569,7 +571,7 @@ def test(model_name, models, model_params, timestamp,
 
             image1_name = f"final"
             image2_name = f"beam{b}_rep_{k:02d}_{active_beams[-20:]}"
-            _ = DL_affine_plot(f"test_{i:03d}", output_dir,
+            results = DL_affine_plot(f"test_{i:03d}", output_dir,
                 image1_name, image2_name,
                 source_image0[0, 0, :, :].cpu().numpy(),
                 target_image0[0, 0, :, :].cpu().numpy(),
@@ -592,14 +594,14 @@ def test(model_name, models, model_params, timestamp,
             target_image0 = target_image0[0, 0, :, :].cpu().detach().numpy()
 
             votes = active_beams
-            mse_before_first = mse(points1_0, points2)
-            mse12 = mse(points1_2_predicted, points2)
-            tre_before_first = tre(points1_0, points2)
-            tre12 = tre(points1_2_predicted, points2)
-            mse12_image_before_first = mse(source_image0, target_image0)
-            mse12_image = mse(transformed_source, target_image0)
-            ssim12_image_before_first = ssim(source_image0, target_image0)
-            ssim12_image = ssim(transformed_source, target_image0)
+            mse_before_first = results[1]
+            mse12 = results[2]
+            tre_before_first = results[3]
+            tre12 = results[4]
+            mse12_image_before_first = results[5]
+            mse12_image = results[6]
+            ssim12_image_before_first = results[7]
+            ssim12_image = results[8]
 
             # append metrics to metrics list
             new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \

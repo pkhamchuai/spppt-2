@@ -92,6 +92,8 @@ def run(model_params, method='LMEDS', plot=1):
         matches = tracker.nn_match_two_way(desc1, desc2, nn_thresh=0.7)
 
         # take the elements from points1 and points2 using the matches as indices
+        # print(f"Pair {i}: {matches.shape} matches")
+        # print(f"Pair {i}: {kp1.shape} kp")
         matches1 = kp1[:2, matches[0, :].astype(int)]
         matches2 = kp2[:2, matches[1, :].astype(int)]
 

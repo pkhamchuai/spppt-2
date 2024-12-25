@@ -124,7 +124,7 @@ learning_rate = 1e-3
 # generate run commands
 
 plot = 1
-verbose = 0
+verbose = 1
 
 ################################ 2-way ################################
 # dataset = [16]
@@ -164,7 +164,7 @@ verbose = 0
 #                     '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
         
 # i = 1
-rep = 60
+rep = 10
 
 '''running only all models for 1way-pt-rv, 2way TRE, 2way cosine for beams 1-3'''
 for i in range(1, 2):
@@ -229,8 +229,8 @@ for i in range(1, 2):
         #                 '--dataset', str(dataset_), '--beam', str(i), '--metric', str('TRE'),
         #                 '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
         
-        runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
-        # runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+        # runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+        runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i), '--metric', str('TRE'),
                         '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
 

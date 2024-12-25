@@ -27,10 +27,10 @@ for i in dataset:
     #                 '--method', 'LMEDS',
     #                 ])
 
-    subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
-                    '--dataset', str(i), '--plot', '1',
-                    '--method', 'RANSAC',
-                    ])
+    # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
+    #                 '--dataset', str(i), '--plot', '1',
+    #                 '--method', 'RANSAC',
+    #                 ])
     # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
     #                 '--dataset', str(i), '--plot', '2',
     #                 '--method', 'RANSAC',
