@@ -346,9 +346,9 @@ def datagen(dataset, is_train, sup, batch_size=1):
         if is_train:
             raise ValueError('Not implemented yet')
         else:
-            df = pd.read_csv('Dataset/eye_manual_9/image_pair_log.csv')
+            df = pd.read_csv('Dataset/eye_manual_6/image_pair_log.csv')
             # count number of rows that df['training'] == 0
-            print('Test real eye dataset (9) with manual keypoints (16)')
+            print('Dataset 16 : real eye dataset (6) with manual keypoints')
             print('Number of testing data: ', len(df))
 
     elif dataset == 17:

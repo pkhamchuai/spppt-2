@@ -187,6 +187,25 @@ def test(model_name, models, model_params, timestamp,
             # 3. until the mse is not change anymore and 
             #    the affine parameters are not change anymore
 
+            # use superpoint to extract keypoints and descriptors
+            superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
+                          conf_thresh=0.015,
+                          nn_thresh=0.7, cuda=True)
+            # Process the first image
+            keypoints1, descriptors1 = superpoint.run(source_image0)
+            # Process the second image
+            keypoints2, descriptors2 = superpoint.run(target_image0)
+
+            # match the points between the two images
+            tracker = PointTracker(5, nn_thresh=0.7)
+            matches = tracker.nn_match_two_way(descriptors1, descriptors2, nn_thresh=0.7)
+
+            # get the points from the matches
+            matches1 = keypoints1[matches[:, 0], :2]
+            matches2 = keypoints2[matches[:, 1], :2]
+            
+
+
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
             # if TRE grows larger than the last iteration, stop the loop

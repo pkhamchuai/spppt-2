@@ -78,20 +78,22 @@ def run(model_params, method='LMEDS', plot=1):
         # process images
         source_image = process_image(source_image)
         target_image = process_image(target_image)
+        points1 = points1[0].cpu().numpy()
+        points2 = points2[0].cpu().numpy()
 
         # need to perform superpoint again because descriptors are not saved
         # Process the first image
-        points1, desc1, heatmap1 = superpoint(source_image)
+        kp1, desc1, heatmap1 = superpoint(source_image)
         # Process the second image
-        points2, desc2, heatmap2 = superpoint(target_image)
+        kp2, desc2, heatmap2 = superpoint(target_image)
 
         # match the points between the two images
         tracker = PointTracker(5, nn_thresh=0.7)
         matches = tracker.nn_match_two_way(desc1, desc2, nn_thresh=0.7)
 
         # take the elements from points1 and points2 using the matches as indices
-        matches1 = points1[:2, matches[0, :].astype(int)]
-        matches2 = points2[:2, matches[1, :].astype(int)]
+        matches1 = kp1[:2, matches[0, :].astype(int)]
+        matches2 = kp2[:2, matches[1, :].astype(int)]
 
         # create affine transform matrix from points1 to points2
         # and apply it to points1
@@ -100,8 +102,10 @@ def run(model_params, method='LMEDS', plot=1):
                 affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T, method=cv2.RANSAC)
             elif method == 'LMEDS':
                 affine_transform1 = cv2.estimateAffinePartial2D(matches1.T, matches2.T, method=cv2.LMEDS)
-            matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
-            matches1_transformed = matches1_transformed[0].T
+            # matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
+            # matches1_transformed = matches1_transformed[0].T
+            points1_transformed = cv2.transform(points1.reshape(-1, 1, 2), affine_transform1[0])
+
             # transform image 1 and 2 using the affine transform matrix
             transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
         except cv2.error:
@@ -122,13 +126,13 @@ def run(model_params, method='LMEDS', plot=1):
             plot_ = 0
 
         results = DL_affine_plot(f"test", output_dir,
-                f"{i}", "SP", source_image, target_image, \
-                transformed_source_affine, \
-                matches1, matches2, matches1_transformed, desc1, desc2, 
+                f"{i}", "SP", source_image, target_image,
+                transformed_source_affine,
+                points1.T, points2.T, points1_transformed.reshape(-1, 2).T, 
+                None, None,
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_transform1[0], 
                 heatmap1=heatmap1, heatmap2=heatmap2, plot=plot_)
-
 
         # calculate metrics
         # matches1_transformed = results[0]

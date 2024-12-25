@@ -171,8 +171,9 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             # print(f"matches1_transformed: {matches1_transformed.shape}")
             try:
                 points1_transformed = points1_transformed[0]
-            except TypeError:
-                pass
+            except:
+                text = "failed"
+                plot_ = plot
             # transform image 1 and 2 using the affine transform matrix
             transformed_source_affine = cv2.warpAffine(source_image, affine_transform1, (256, 256))
             text = "success"
@@ -188,21 +189,21 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             else:
                 plot_ = 0
 
-            try:
-                matches1_2 = cv2.transform(matches1[None, :, :], affine_transform1)[0]
-                matches1, matches2, matches1_2 = matches1.T, matches2.T, matches1_2.T
-            except:
-                matches1, matches2, matches1_2 = [], [], []
-                text = "failed"
-                plot_ = plot
+            # try:
+            #     matches1_2 = cv2.transform(matches1[None, :, :], affine_transform1)[0]
+            #     matches1, matches2, matches1_2 = matches1.T, matches2.T, matches1_2.T
+            # except:
+            #     matches1, matches2, matches1_2 = [], [], []
+            #     text = "failed"
+            #     plot_ = plot
 
             # print(f"matcches1: {matches1.shape}")
             # print(f"matches2: {matches2.shape}")
             # print(f"matches1_2: {matches1_2.shape}")
             results = DL_affine_plot(f"test", output_dir,
-                f"{i}", text, source_image, target_image, \
-                transformed_source_affine, \
-                matches1, matches2, matches1_2, desc1, desc2,
+                f"{i}", text, source_image, target_image,
+                transformed_source_affine,
+                points1, points2, points1_transformed, desc1, desc2,
                 affine_params_true=affine_params_true,
                 affine_params_predict=np.round(affine_transform1, 3), 
                 heatmap1=None, heatmap2=None, plot=plot_)
@@ -228,18 +229,18 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             else:
                 plot_ = 0
 
-            try:
-                matches1_2 = cv2.transform(matches1[None, :, :], affine_transform1)[0]
-                matches1, matches2, matches1_2 = matches1.T, matches2.T, matches1_2.T
-            except:
-                matches1, matches2, matches1_2 = [], [], []
-                text = "failed"
-                plot_ = plot
+            # try:
+            #     matches1_2 = cv2.transform(matches1[None, :, :], affine_transform1)[0]
+            #     matches1, matches2, matches1_2 = matches1.T, matches2.T, matches1_2.T
+            # except:
+            #     matches1, matches2, matches1_2 = [], [], []
+            #     text = "failed"
+            #     plot_ = plot
 
             results = DL_affine_plot(f"test", output_dir,
                 f"{i}", text, source_image, target_image, \
                 transformed_source_affine, \
-                matches1, matches2, matches1_2, desc1, desc2,
+                points1, points2, points1_transformed, desc1, desc2,
                 affine_params_true=affine_params_true,
                 affine_params_predict=np.round(affine_transform1, 3), 
                 heatmap1=None, heatmap2=None, plot=plot_)
@@ -272,22 +273,22 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
         # mse12 = np.mean((matches1_transformed - matches2)**2)
         # tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2)**2, axis=0)))
 
-        try:
-            points1, points2, points1_transformed = points1.T, points2.T, points1_transformed.T
-        except:
-            points1, points2, points1_transformed = [], [], []
+        # try:
+        #     points1, points2, points1_transformed = points1.T, points2.T, points1_transformed.T
+        # except:
+        #     points1, points2, points1_transformed = [], [], []
 
-        # print(f"points1: {points1.shape}")
-        # print(f"points2: {points2.shape}")
-        # print(f"points1_transformed: {points1_transformed.shape}")
+        # # print(f"points1: {points1.shape}")
+        # # print(f"points2: {points2.shape}")
+        # # print(f"points1_transformed: {points1_transformed.shape}")
         
-        results = DL_affine_plot(f"test", output_dir,
-                f"{i}", text, source_image, target_image, \
-                transformed_source_affine, \
-                points1, points2, points1_transformed, desc1, desc2, 
-                affine_params_true=affine_params_true,
-                affine_params_predict=np.round(affine_transform1, 3), 
-                heatmap1=None, heatmap2=None, plot=False)
+        # results = DL_affine_plot(f"test", output_dir,
+        #         f"{i}", text, source_image, target_image, \
+        #         transformed_source_affine, \
+        #         points1, points2, points1_transformed, desc1, desc2, 
+        #         affine_params_true=affine_params_true,
+        #         affine_params_predict=np.round(affine_transform1, 3), 
+        #         heatmap1=None, heatmap2=None, plot=False)
 
         # calculate metrics
         # matches1_transformed = results[0]
