@@ -107,17 +107,20 @@ def run(model_params, method='LMEDS', plot=1):
             # matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
             # matches1_transformed = matches1_transformed[0].T
             # print(f"Affine transform matrix: {affine_transform1[0]}")
+            matches1_transformed = cv2.transform(matches1.T[None, :, :], affine_transform1[0])
             points1_transformed = cv2.transform(points1.reshape(-1, 1, 2), affine_transform1[0])
 
             # transform image 1 and 2 using the affine transform matrix
             transformed_source_affine = cv2.warpAffine(source_image, affine_transform1[0], (256, 256))
+            text = "success"
         except cv2.error:
             print(f"Error: {i}")
             # set affine_transform1 to identity affine matrix
             affine_transform1 = np.array([[[1., 0., 0.], [0., 1., 0.]]])
-            # matches1_transformed = matches1
+            matches1_transformed = matches1
             points1_transformed = points1
             transformed_source_affine = source_image
+            text = "failed"
         
         # mse12 = np.mean((matches1_transformed - matches2)**2)
         # tre12 = np.mean(np.sqrt(np.sum((matches1_transformed - matches2)**2, axis=0)))
@@ -131,9 +134,18 @@ def run(model_params, method='LMEDS', plot=1):
 
         # reshape the affine_transform1 to tensor [1, 1, 2, 3]
         affine_transform1 = torch.tensor(affine_transform1[0]).reshape(1, 1, 2, 3).to(device)
-        # print(affine_transform1.shape)
+
+        _ = DL_affine_plot(f"test", output_dir,
+                f"{i:03d}_SP", f"{text}", source_image, target_image,
+                transformed_source_affine,
+                matches1, matches2, matches1_transformed.reshape(-1, 2),
+                None, None,
+                affine_params_true=affine_params_true,
+                affine_params_predict=affine_transform1,
+                heatmap1=heatmap1, heatmap2=heatmap2, plot=plot_)
+        
         results = DL_affine_plot(f"test", output_dir,
-                f"{i}", "SP", source_image, target_image,
+                f"{i:03d}_metrics", f"{text}", source_image, target_image,
                 transformed_source_affine,
                 points1.T, points2.T, points1_transformed.reshape(-1, 2).T, 
                 None, None,

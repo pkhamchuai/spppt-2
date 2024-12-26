@@ -165,11 +165,13 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             # print(points1[None, :, :].shape)
             if affine_transform1 is None:
                 affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
+                matches1_transformed = matches1
                 points1_transformed = points1
                 transformed_source_affine = source_image
                 text = "failed"
                 plot_ = plot
             else:
+                matches1_transformed = cv2.transform(matches1[None, :, :], affine_transform1[:2, :])[0]
                 points1_transformed = cv2.transform(points1[None, :, :], affine_transform1[:2, :])[0]
                 transformed_source_affine = cv2.warpAffine(source_image, affine_transform1, (256, 256))
                 text = "success"
@@ -197,11 +199,21 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             # print(f"matches2: {matches2.shape}")
             # print(f"matches1_2: {matches1_2.shape}")
             affine_transform1 = torch.tensor(affine_transform1, dtype=torch.float32).to(device)
+
+            _ = DL_affine_plot(f"test", output_dir,
+                f"{i:03d}", f"{text}_SIFT", source_image, target_image,
+                transformed_source_affine,
+                matches1, matches2, matches1_transformed,
+                None, None,
+                affine_params_true=affine_params_true,
+                affine_params_predict=affine_transform1, 
+                heatmap1=None, heatmap2=None, plot=plot_)
+            
             results = DL_affine_plot(f"test", output_dir,
-                f"{i}", text, source_image, target_image,
+                f"{i:03d}", f"{text}_metrics", source_image, target_image,
                 transformed_source_affine,
                 points1, points2, points1_transformed, 
-                desc1, desc2,
+                None, None,
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_transform1, 
                 heatmap1=None, heatmap2=None, plot=plot_)

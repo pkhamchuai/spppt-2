@@ -638,7 +638,7 @@ def test(model_name, models, model_params, timestamp,
 
             # append metrics to metrics list
             new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
-                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes]
+                            ssim12_image_before_first, ssim12_image, np.max(points1_2.shape), votes]
             metrics.append(new_entry)
 
     with open(csv_file, 'w', newline='') as file:
