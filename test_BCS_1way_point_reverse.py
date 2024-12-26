@@ -95,12 +95,10 @@ def test(model_name, models, model_params, timestamp,
     def reg(model, source_image, target_image, i, j, b, k, output_dir, 
             points1=None, points2=None, plot_=False):
         # Get the predicted affine parameters and transformed source image
-        # print(points1.shape)
         outputs = model(source_image, target_image, points=points1)
         transformed_source = outputs[0]
         affine_params_predicted = outputs[1]
         points1_2_predicted = outputs[2]
-        # print(points1.shape)
 
         if points1.shape[0] == 2:
             points1 = points1.T
@@ -183,6 +181,10 @@ def test(model_name, models, model_params, timestamp,
     error_img = np.zeros((len(test_dataset), rep))
     error_pt = np.zeros((len(test_dataset), rep))
 
+    # use superpoint to extract keypoints and descriptors
+    superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
+        conf_thresh=0.015, nn_thresh=0.7, cuda=True)
+
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
@@ -209,10 +211,6 @@ def test(model_name, models, model_params, timestamp,
             # 3. until the mse is not change anymore and 
             #    the affine parameters are not change anymore
 
-            # use superpoint to extract keypoints and descriptors
-            superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
-                          conf_thresh=0.015,
-                          nn_thresh=0.7, cuda=True)
             # Process the first image
             keypoints1, descriptors1, _ = superpoint(process_image(source_image0))
             # Process the second image
@@ -226,9 +224,9 @@ def test(model_name, models, model_params, timestamp,
             # print(f"Pair {i}: {matches.shape} matches")
             # print(f"Pair {i}: {keypoints1.shape} matches")
             points1 = keypoints1[:2, matches[0, :].astype(int)]
-            points1_0 = torch.from_numpy(points1).unsqueeze(0).to(device)
+            points1_0 = torch.from_numpy(points1).T.unsqueeze(0).to(device)
             points2 = keypoints2[:2, matches[1, :].astype(int)]
-            points2_0 = torch.from_numpy(points2).unsqueeze(0).to(device)
+            points2_0 = torch.from_numpy(points2).T.unsqueeze(0).to(device)
             
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
@@ -303,7 +301,6 @@ def test(model_name, models, model_params, timestamp,
                             plot_ = False
 
                         if b[k] < len(models):
-                            print(points1.shape, points2.shape)
                             _, affine_params_predicted = reg(model[b[k]], source_image, target_image, 
                                 i, j, b, k, output_dir, points1=points1, points2=points2, plot_=plot_)
                         else:
@@ -535,7 +532,6 @@ def test(model_name, models, model_params, timestamp,
             points1 = kp1_0.clone().to(device)
             points2 = kp2_0.clone().to(device)
             points1_2_predicted = points1.clone().to(device)
-            print(points1.shape, points2.shape, points1_2_predicted.shape)
 
             if verbose:
                 print(f"\nFinalizing pair {i}: {active_beams}")
@@ -621,15 +617,6 @@ def test(model_name, models, model_params, timestamp,
                 affine_params_true=affine_params_true,
                 affine_params_predict=M,
                 heatmap1=None, heatmap2=None, plot=plot_, alpha=0.3)
-            
-            # points1_0 = points1_0.cpu().detach().numpy().T
-            # points1_2_predicted = points1_2_predicted.cpu().detach().numpy().T
-            # points2 = points2.cpu().detach().numpy().T
-
-            # source_image0 = source_image0[0, 0, :, :].cpu().detach().numpy()
-            # source_image = source_image[0, 0, :, :].cpu().detach().numpy()
-            # target_image = target_image[0, 0, :, :].cpu().detach().numpy()
-            # transformed_source = transformed_source[0, 0, :, :].cpu().detach().numpy()
 
             votes = active_beams
             mse_before_first = results[1]
@@ -683,11 +670,6 @@ def test(model_name, models, model_params, timestamp,
 
     # error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
     error_pt_avg = np.mean(error_pt, axis=0)
-
-    # print(f"error_pt: {error_pt}")
-    # print(f"error_pt_avg: {error_pt_avg}")
-    # print(f"error_img: {error_img}")
-    # print(f"error_img_avg: {error_img_avg}")
 
     csv_file = f"{output_dir}/error_{timestamp}.csv"
     with open(csv_file, 'w', newline='') as file:

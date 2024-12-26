@@ -123,8 +123,8 @@ learning_rate = 1e-3
 
 # generate run commands
 
-plot = 1
-verbose = 1
+plot = 2
+verbose = 0
 
 ################################ 2-way ################################
 # dataset = [16]
@@ -164,10 +164,10 @@ verbose = 1
 #                     '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
         
 # i = 1
-rep = 10
+rep = 60
 
 '''running only all models for 1way-pt-rv, 2way TRE, 2way cosine for beams 1-3'''
-for i in range(1, 2):
+for i in range(1, 4):
     # model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
     #             'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
     #             'DHR_51100_0.001_0_5_100_20240509-140837.pth']
