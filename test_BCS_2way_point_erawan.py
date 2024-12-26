@@ -5,6 +5,18 @@ import os
 import cv2
 import torch
 import matplotlib.pyplot as plt
+# import mutual information function
+from sklearn.metrics import mutual_info_score
+
+def mutual_information(x, y):
+    # Flatten the arrays if they are not already 1D
+    if x.ndim > 1:
+        x = x.ravel()
+    if y.ndim > 1:
+        y = y.ravel()
+    return mutual_info_score(x, y)
+
+
 from datetime import datetime
 
 import torch
@@ -14,9 +26,11 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from socket import gethostname
 
+from utils.SuperPoint import SuperPointFrontend, PointTracker, load_image
 from utils.utils0 import *
 from utils.utils1 import *
 from utils.utils1 import ModelParams, print_summary
+from utils.utils2 import *
 from utils import test
 
 # Stub to warn about opencv version.
@@ -106,7 +120,6 @@ def test(model_name, models, model_params, timestamp,
         transformed_source = outputs[0]
         affine_params_predicted = outputs[1]
         points1_2_predicted = outputs[2]
-        # print(points1.shape)
 
         if points1.shape[0] == 2:
             points1 = points1.T
@@ -126,9 +139,9 @@ def test(model_name, models, model_params, timestamp,
                 source_image[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(), 
                 transformed_source[0, 0, :, :].cpu().numpy(),
-                points1[0].cpu().detach().numpy().T,
-                points2[0].cpu().detach().numpy().T,
-                points1_2_predicted[0].cpu().detach().numpy().T,
+                points1[0].T,
+                points2[0].T,
+                points1_2_predicted[0].T,
                 None, None, 
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_params_predicted, 
@@ -190,6 +203,10 @@ def test(model_name, models, model_params, timestamp,
     error_img = np.zeros((len(test_dataset), rep))
     error_pt = np.zeros((len(test_dataset), rep))
 
+    # use superpoint to extract keypoints and descriptors
+    superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
+        conf_thresh=0.015, nn_thresh=0.7, cuda=True)
+
     with torch.no_grad():
         testbar = tqdm(test_dataset, desc=f'Testing:')
         for i, data in enumerate(testbar, 0):
@@ -216,10 +233,6 @@ def test(model_name, models, model_params, timestamp,
             # 3. until the mse is not change anymore and 
             #    the affine parameters are not change anymore
 
-            # use superpoint to extract keypoints and descriptors
-            superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
-                          conf_thresh=0.015,
-                          nn_thresh=0.7, cuda=True)
             # Process the first image
             keypoints1, descriptors1, _ = superpoint(process_image(source_image0))
             # Process the second image
@@ -233,9 +246,9 @@ def test(model_name, models, model_params, timestamp,
             # print(f"Pair {i}: {matches.shape} matches")
             # print(f"Pair {i}: {keypoints1.shape} matches")
             points1 = keypoints1[:2, matches[0, :].astype(int)]
-            points1_0 = torch.from_numpy(points1).unsqueeze(0).to(device)
+            points1_0 = torch.from_numpy(points1).T.unsqueeze(0).to(device)
             points2 = keypoints2[:2, matches[1, :].astype(int)]
-            points2_0 = torch.from_numpy(points2).unsqueeze(0).to(device)
+            points2_0 = torch.from_numpy(points2).T.unsqueeze(0).to(device)
             
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
@@ -330,7 +343,12 @@ def test(model_name, models, model_params, timestamp,
                         
                         if k == len(b)-1:
                             if metric == 'TRE':
-                                tre12 = tre(points1.cpu().detach().numpy(), points2.cpu().detach().numpy())
+                                # check if points are numpy or tensor
+                                if isinstance(points1, torch.Tensor):
+                                    points1 = points1.cpu().detach().numpy()
+                                if isinstance(points2, torch.Tensor):
+                                    points2 = points2.cpu().detach().numpy()
+                                tre12 = tre(points1, points2)
                                 metrics_points_forward.append(tre12)
                             elif metric == 'cosine':
                                 # calculate cosine similarity between points1 and points2
@@ -339,12 +357,34 @@ def test(model_name, models, model_params, timestamp,
                                 #     points1 = points1.T
                                 #     points2 = points2.T
                                 # print(points1.cpu().detach().view(1, -1, 2), points2.cpu().detach().view(1, -1, 2))
-                                cosine_similarity = torch.nn.functional.cosine_similarity(
-                                    points1.cpu().detach().view(1, -1, 2), 
-                                    points2.cpu().detach().view(1, -1, 2), dim=1).numpy()
+                                if isinstance(points1, torch.Tensor):
+                                    cosine_similarity = torch.nn.functional.cosine_similarity(
+                                        points1.cpu().detach().view(1, -1, 2), 
+                                        points2.cpu().detach().view(1, -1, 2), dim=1).numpy()
+                                else:
+                                    cosine_similarity = np.cosine_similarity(
+                                        points1.view(1, -1, 2), 
+                                        points2.view(1, -1, 2), axis=1)
                                 # calculate the average of the cosine similarity
                                 cosine_similarity = np.mean(cosine_similarity)
                                 metrics_points_forward.append(cosine_similarity)
+                            elif metric == 'MI_point':
+                                # calculate mutual information between points1 and points2
+                                # if the last dimension of points1 and points2 must be 2
+                                # if points1.shape[0] != 2:
+                                #     points1 = points1.T
+                                #     points2 = points2.T
+                                # print(points1.cpu().detach().view(1, -1, 2), points2.cpu().detach().view(1, -1, 2))
+                                mutual_info = mutual_information(
+                                    points1.cpu().detach().view(1, -1, 2), 
+                                    points2.cpu().detach().view(1, -1, 2))
+                                metrics_points_forward.append(mutual_info)
+                            elif metric == 'MI_image':
+                                # calculate mutual information between image1 and image2
+                                mutual_info = mutual_information(
+                                    source_image[0, 0, :, :].cpu().detach().numpy(), 
+                                    target_image[0, 0, :, :].cpu().detach().numpy())
+                                metrics_points_forward.append(mutual_info)
                             
                             mse12_image = mse(source_image[0, 0, :, :].cpu().detach().numpy(), 
                                             target_image[0, 0, :, :].cpu().detach().numpy())
@@ -419,12 +459,17 @@ def test(model_name, models, model_params, timestamp,
 
                             model_number = active_beams[b][k]
                             if model_number < len(models):
+                                # if points1 is not tensor, convert it to tensor
+                                if isinstance(points1, np.ndarray):
+                                    points1 = torch.from_numpy(points1).to(device)
                                 outputs = model[model_number](source_image, target_image, points=points1)
                                 affine_params_predicted = outputs[1]
                                 M_fw = combine_matrices(M_fw, affine_params_predicted).to(device)
 
                             else:
                                 model_number = model_number - len(models)
+                                if isinstance(points2, np.ndarray):
+                                    points2 = torch.from_numpy(points2).to(device)
                                 outputs = model[model_number](target_image, source_image, points=points2)
                                 affine_params_predicted_rv = outputs[1]
                                 M_rv = combine_matrices(M_rv, affine_params_predicted_rv).to(device)
@@ -455,10 +500,10 @@ def test(model_name, models, model_params, timestamp,
                                     target_image[0, 0, :, :].cpu().numpy(),
                                     transformed_source[0, 0, :, :].cpu().numpy(),
                                     transformed_target[0, 0, :, :].cpu().numpy(),
-                                    points1[0].cpu().detach().numpy().T,
-                                    points2[0].cpu().detach().numpy().T,
-                                    points1_2_predicted[0].cpu().detach().numpy().T,
-                                    points2_1_predicted[0].cpu().detach().numpy().T,
+                                    points1[0].T.cpu().detach().numpy(),
+                                    points2[0].T.cpu().detach().numpy(),
+                                    points1_2_predicted[0].T.cpu().detach().numpy(),
+                                    points2_1_predicted[0].T.cpu().detach().numpy(),
                                     None, None,
                                     affine_params_true=affine_params_true,
                                     affine_params_fw=affine_params_predicted, 
@@ -520,7 +565,7 @@ def test(model_name, models, model_params, timestamp,
             target_image = target_image0.clone().to(device)
             points1 = kp1_0.clone().to(device)
             points2 = kp2_0.clone().to(device)
-            points1_2_predicted = points1.clone().to(device)
+            points1_2 = None
 
             if verbose:
                 print(f"\nFinalizing pair {i}: {active_beams}")
@@ -542,17 +587,17 @@ def test(model_name, models, model_params, timestamp,
 
                 if k == len(active_beams)-1:
                     transformed_source = tensor_affine_transform0(source_image0, M_fw)
-                    points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
+                    points1_2 = transform_points_DVF(kp1_0.cpu().detach().T,
                                 M_fw.cpu().detach(), source_image0).T
                     
-                    results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                    results = DL_affine_plot(f"test_{i:03d}", output_dir,
+                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         transformed_source[0, 0, :, :].cpu().numpy(),
-                        points1_0[0].cpu().detach().numpy().T,
+                        points1[0].cpu().detach().numpy().T,
                         points2[0].cpu().detach().numpy().T,
-                        points1_2_predicted[0].cpu().detach().numpy().T,
+                        points1_2[0].cpu().detach().numpy().T,
                         None, None,
                         affine_params_true=affine_params_true,
                         affine_params_predict=M_fw.cpu().detach(),
@@ -563,17 +608,16 @@ def test(model_name, models, model_params, timestamp,
                     error_pt[i, k] = results[4]
                 else:
                     source_image = tensor_affine_transform0(source_image0, M_fw)
-                    points1 = transform_points_DVF(points1_0.clone().cpu().detach().T,
+                    points1_2 = transform_points_DVF(kp1_0.cpu().detach().T,
                                 M_fw.cpu().detach(), source_image0).T
-                    
-                    results = DL_affine_plot(f"test_{i}", output_dir,
-                        f"final", f"beam{b}_rep_{k}_{active_beams[-20:]}",
+                    results = DL_affine_plot(f"test_{i:03d}", output_dir,
+                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         source_image[0, 0, :, :].cpu().numpy(),
-                        points1_0[0].cpu().detach().numpy().T,
-                        points2[0].cpu().detach().numpy().T,
                         points1[0].cpu().detach().numpy().T,
+                        points2[0].cpu().detach().numpy().T,
+                        points1_2[0].cpu().detach().numpy().T,
                         None, None,
                         affine_params_true=affine_params_true,
                         affine_params_predict=M_fw.cpu().detach(),
@@ -582,6 +626,7 @@ def test(model_name, models, model_params, timestamp,
                     # store error of each iteration
                     error_img[i, k] = results[6]
                     error_pt[i, k] = results[4]
+                    points1 = points1_2.clone().to(device)
 
             if i < 100 and (plot == 1 or plot == 2):
                 plot_ = True
@@ -590,37 +635,28 @@ def test(model_name, models, model_params, timestamp,
 
             image1_name = f"final"
             image2_name = f"beam{b}_rep_{k:02d}_{active_beams[-20:]}"
-            _ = DL_affine_plot(f"test_{i:03d}", output_dir,
+            results = DL_affine_plot(f"test_{i:03d}", output_dir,
                 image1_name, image2_name,
                 source_image0[0, 0, :, :].cpu().numpy(),
                 target_image0[0, 0, :, :].cpu().numpy(),
                 transformed_source[0, 0, :, :].cpu().numpy(),
-                points1_0[0].cpu().detach().numpy().T,
-                points2[0].cpu().detach().numpy().T,
-                points1_2_predicted[0].cpu().detach().numpy().T,
+                kp1_0[0].cpu().detach().numpy().T,
+                kp2_0[0].cpu().detach().numpy().T,
+                points1_2[0].cpu().detach().numpy().T,
                 None, None,
                 affine_params_true=affine_params_true,
                 affine_params_predict=M_fw,
                 heatmap1=None, heatmap2=None, plot=plot_, alpha=0.3)
-            
-            points1_0 = points1_0.cpu().detach().numpy().T
-            points1_2_predicted = points1_2_predicted.cpu().detach().numpy().T
-            points2 = points2.cpu().detach().numpy().T
-            # points2_1_predicted = points2_1_predicted.cpu().detach().numpy().T
-
-            source_image0 = source_image0[0, 0, :, :].cpu().detach().numpy()
-            transformed_source = transformed_source[0, 0, :, :].cpu().detach().numpy()
-            target_image0 = target_image0[0, 0, :, :].cpu().detach().numpy()
 
             votes = active_beams
-            mse_before_first = mse(points1_0, points2)
-            mse12 = mse(points1_2_predicted, points2)
-            tre_before_first = tre(points1_0, points2)
-            tre12 = tre(points1_2_predicted, points2)
-            mse12_image_before_first = mse(source_image0, target_image0)
-            mse12_image = mse(transformed_source, target_image0)
-            ssim12_image_before_first = ssim(source_image0, target_image0)
-            ssim12_image = ssim(transformed_source, target_image0)
+            mse_before_first = results[1]
+            mse12 = results[2]
+            tre_before_first = results[3]
+            tre12 = results[4]
+            mse12_image_before_first = results[5]
+            mse12_image = results[6]
+            ssim12_image_before_first = results[7]
+            ssim12_image = results[8]
 
             # append metrics to metrics list
             new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \

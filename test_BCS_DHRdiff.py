@@ -123,7 +123,7 @@ learning_rate = 1e-3
 
 # generate run commands
 
-plot = 2
+plot = 1
 verbose = 0
 
 ################################ 2-way ################################
@@ -164,10 +164,10 @@ verbose = 0
 #                     '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
         
 # i = 1
-rep = 60
+rep = 10
 
 '''running only all models for 1way-pt-rv, 2way TRE, 2way cosine for beams 1-3'''
-for i in range(1, 4):
+for i in range(1, 2):
     # model_path = ['DHR_11100_0.001_0_5_100_20240509-155916.pth', 'DHR_21100_0.001_0_5_100_20240509-160207.pth',
     #             'DHR_31100_0.001_0_10_100_20240508-120807.pth', 'DHR_41100_0.001_0_5_100_20240509-133824.pth',
     #             'DHR_51100_0.001_0_5_100_20240509-140837.pth']
@@ -229,8 +229,8 @@ for i in range(1, 4):
         #                 '--dataset', str(dataset_), '--beam', str(i), '--metric', str('TRE'),
         #                 '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
         
-        # runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
-        runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+        runs.append(['python', 'test_BCS_2way_point.py', '--model', str(models), '--sup', str(sups[0]),
+        # runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i), '--metric', str('TRE'),
                         '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
 

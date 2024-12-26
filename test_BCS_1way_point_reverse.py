@@ -531,7 +531,7 @@ def test(model_name, models, model_params, timestamp,
             source_image = source_image0.clone().to(device)
             points1 = kp1_0.clone().to(device)
             points2 = kp2_0.clone().to(device)
-            points1_2_predicted = points1.clone().to(device)
+            points1_2 = None
 
             if verbose:
                 print(f"\nFinalizing pair {i}: {active_beams}")
@@ -550,13 +550,10 @@ def test(model_name, models, model_params, timestamp,
                     affine_params_predicted = matrix_to_params(
                         torch.inverse(params_to_matrix(affine_params_predicted_rv))).to(device)
                     M = combine_matrices(M, affine_params_predicted).to(device)
-                    transformed_source = tensor_affine_transform0(source_image0, M)
-                    points1_2_predicted = transform_points_DVF(kp1_0.cpu().detach().T,
-                        M.cpu().detach(), source_image0).T
 
                 if k == len(active_beams)-1:
                     transformed_source = tensor_affine_transform0(source_image0, M)
-                    points1_2_predicted = transform_points_DVF(kp1_0.cpu().detach().T,
+                    points1_2 = transform_points_DVF(kp1_0.cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
                     
                     results = DL_affine_plot(f"test_{i:03d}", output_dir,
@@ -566,7 +563,7 @@ def test(model_name, models, model_params, timestamp,
                         transformed_source[0, 0, :, :].cpu().numpy(),
                         points1[0].cpu().detach().numpy().T,
                         points2[0].cpu().detach().numpy().T,
-                        points1_2_predicted[0].cpu().detach().numpy().T,
+                        points1_2[0].cpu().detach().numpy().T,
                         None, None,
                         affine_params_true=affine_params_true,
                         affine_params_predict=M.cpu().detach(),
@@ -579,7 +576,6 @@ def test(model_name, models, model_params, timestamp,
                     source_image = tensor_affine_transform0(source_image0, M)
                     points1_2 = transform_points_DVF(kp1_0.cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
-
                     results = DL_affine_plot(f"test_{i:03d}", output_dir,
                         f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
@@ -612,7 +608,7 @@ def test(model_name, models, model_params, timestamp,
                 transformed_source[0, 0, :, :].cpu().numpy(),
                 kp1_0[0].cpu().detach().numpy().T,
                 kp2_0[0].cpu().detach().numpy().T,
-                points1_2_predicted[0].cpu().detach().numpy().T,
+                points1_2[0].cpu().detach().numpy().T,
                 None, None,
                 affine_params_true=affine_params_true,
                 affine_params_predict=M,
