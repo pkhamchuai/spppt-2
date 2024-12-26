@@ -73,7 +73,11 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
         source_image, target_image, affine_params_true, points1, points2, points1_2_true = data
         points1 = points1.squeeze(0).cpu().numpy()
         points2 = points2.squeeze(0).cpu().numpy()
-            
+        
+        # keep the original images
+        source_image_orig = source_image.squeeze(0).squeeze(0).cpu().numpy()
+        target_image_orig = target_image.squeeze(0).squeeze(0).cpu().numpy()
+
         # process images
         source_image = process_image(source_image)
         target_image = process_image(target_image)
@@ -154,87 +158,81 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             # plt.imshow(img3), plt.show()
         
         try:
-            # M, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, 5.0)
-            # print(f"M: {M}")
-            # affine_transform1 = M[:2, :]
-
             if method2 == 'RANSAC':
                 affine_transform1, _ = cv2.estimateAffine2D(matches1, matches2, method=cv2.RANSAC)
             elif method2 == 'LMEDS':
                 affine_transform1, _ = cv2.estimateAffine2D(matches1, matches2, method=cv2.LMEDS)
-            # print(points1[None, :, :].shape)
-            if affine_transform1 is None:
-                affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
-                matches1_transformed = matches1
-                points1_transformed = points1
-                transformed_source_affine = source_image
-                text = "failed"
-                plot_ = plot
-            else:
-                matches1_transformed = cv2.transform(matches1[None, :, :], affine_transform1[:2, :])[0]
-                points1_transformed = cv2.transform(points1[None, :, :], affine_transform1[:2, :])[0]
-                transformed_source_affine = cv2.warpAffine(source_image, affine_transform1, (256, 256))
-                text = "success"
 
-            if i < 100 and plot == 1:
-                plot_ = 1
-            elif i < 100 and plot == 2:
-                plot_ = 2
-                # do the bitwise not operation to get the inverse of the image
-                source_image = cv2.bitwise_not(source_image)
-                target_image = cv2.bitwise_not(target_image)
-                transformed_source_affine = cv2.bitwise_not(transformed_source_affine)
-            else:
-                plot_ = 0
+            matches1_transformed = cv2.transform(matches1[None, :, :], affine_transform1[:2, :])[0]
+            points1_transformed = cv2.transform(points1[None, :, :], affine_transform1[:2, :])[0]
+            transformed_source_affine = cv2.warpAffine(source_image_orig, affine_transform1, (image_size, image_size))
+            text = "success"
 
-            # try:
-            #     matches1_2 = cv2.transform(matches1[None, :, :], affine_transform1)[0]
-            #     matches1, matches2, matches1_2 = matches1.T, matches2.T, matches1_2.T
-            # except:
-            #     matches1, matches2, matches1_2 = [], [], []
-            #     text = "failed"
-            #     plot_ = plot
-
-            # print(f"matcches1: {matches1.shape}")
-            # print(f"matches2: {matches2.shape}")
-            # print(f"matches1_2: {matches1_2.shape}")
-            affine_transform1 = torch.tensor(affine_transform1, dtype=torch.float32).to(device)
-
-            _ = DL_affine_plot(f"test", output_dir,
-                f"{i:03d}", f"{text}_SIFT", source_image, target_image,
-                transformed_source_affine,
-                matches1, matches2, matches1_transformed,
-                None, None,
-                affine_params_true=affine_params_true,
-                affine_params_predict=affine_transform1, 
-                heatmap1=None, heatmap2=None, plot=plot_)
-            
-            results = DL_affine_plot(f"test", output_dir,
-                f"{i:03d}", f"{text}_metrics", source_image, target_image,
-                transformed_source_affine,
-                points1, points2, points1_transformed, 
-                None, None,
-                affine_params_true=affine_params_true,
-                affine_params_predict=affine_transform1, 
-                heatmap1=None, heatmap2=None, plot=plot_)
-
-            # calculate metrics
-            # matches1_transformed = results[0]
-            mse_before = results[1]
-            mse12 = results[2]
-            tre_before = results[3]
-            tre12 = results[4]
-            mse12_image_before = results[5]
-            mse12_image = results[6]
-            ssim12_image_before = results[7]
-            ssim12_image = results[8]
-
+        # except when affine_transform1 is None
         except:
-            num_failed += 1
-            mse_before = mse12 = tre_before = tre12 = mse12_image_before = mse12_image = ssim12_image_before = ssim12_image = 0
-            # matches1 = matches2 = matches1_2 = []
+            affine_transform1 = np.array([[[1, 0, 0], [0, 1, 0]]])
+            matches1_transformed = matches1
+            points1_transformed = points1
+            transformed_source_affine = source_image_orig
             text = "failed"
-            plot_ = plot
+
+        if i < 100 and plot == 1:
+            plot_ = 1
+        elif i < 100 and plot == 2:
+            plot_ = 2
+            # do the bitwise not operation to get the inverse of the image
+            # source_image = cv2.bitwise_not(source_image)
+            # target_image = cv2.bitwise_not(target_image)
+            # transformed_source_affine = cv2.bitwise_not(transformed_source_affine)
+        else:
+            plot_ = 0
+
+        # print(f"matcches1: {matches1.shape}, matches2: {matches2.shape}, matches1_transformed: {matches1_transformed.shape}")
+        # print(f"points1: {points1.shape}, points2: {points2.shape}, points1_transformed: {points1_transformed.shape}")
+        affine_transform1 = torch.tensor(affine_transform1, dtype=torch.float32).unsqueeze(0).to(device)
+
+        # print(affine_transform1.shape)
+        _ = DL_affine_plot(f"test", output_dir,
+            f"{i:03d}_SIFT", f"{text}", source_image_orig, target_image_orig,
+            transformed_source_affine,
+            matches1.T, matches2.T, matches1_transformed.T,
+            None, None,
+            affine_params_true=affine_params_true,
+            affine_params_predict=affine_transform1, 
+            heatmap1=None, heatmap2=None, plot=plot_)
+        
+        results = DL_affine_plot(f"test", output_dir,
+            f"{i:03d}_metrics", f"{text}", source_image_orig, target_image_orig,
+            transformed_source_affine,
+            points1.T, points2.T, points1_transformed.T, 
+            None, None,
+            affine_params_true=affine_params_true,
+            affine_params_predict=affine_transform1, 
+            heatmap1=None, heatmap2=None, plot=plot_)
+
+        # calculate metrics
+        # matches1_transformed = results[0]
+        mse_before = results[1]
+        mse12 = results[2]
+        tre_before = results[3]
+        tre12 = results[4]
+        mse12_image_before = results[5]
+        mse12_image = results[6]
+        ssim12_image_before = results[7]
+        ssim12_image = results[8]
+
+        # if the metrics are nan, set them to before values
+        if np.isnan(mse12):
+            mse12 = mse_before
+        if np.isnan(tre12):
+            tre12 = tre_before
+
+        # except:
+        #     num_failed += 1
+        #     # mse_before = mse12 = tre_before = tre12 = mse12_image_before = mse12_image = ssim12_image_before = ssim12_image = 0
+        #     # matches1 = matches2 = matches1_2 = []
+        #     text = "failed"
+        #     plot_ = plot
 
         # append metrics to metrics list
         try:
@@ -250,8 +248,8 @@ def run(model_params, method1='BFMatcher', method2='RANSAC', plot=1):
             writer.writerow(metrics[i])
         # write the average and std of the metrics
         metrics = np.array(metrics)
-        nan_mask = np.isnan(metrics).any(axis=1)
-        metrics = metrics[~nan_mask]
+        # nan_mask = np.isnan(metrics).any(axis=1)
+        # metrics = metrics[~nan_mask]
         avg = ["average", np.mean(metrics[:, 1]), np.mean(metrics[:, 2]), np.mean(metrics[:, 3]), np.mean(metrics[:, 4]), 
             np.mean(metrics[:, 5]), np.mean(metrics[:, 6]), np.mean(metrics[:, 7]), np.mean(metrics[:, 8])]
         std = ["std", np.std(metrics[:, 1]), np.std(metrics[:, 2]), np.std(metrics[:, 3]), np.std(metrics[:, 4]), 

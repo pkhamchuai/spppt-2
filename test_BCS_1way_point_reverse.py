@@ -557,7 +557,7 @@ def test(model_name, models, model_params, timestamp,
                                 M.cpu().detach(), source_image0).T
                     
                     results = DL_affine_plot(f"test_{i:03d}", output_dir,
-                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
+                        f"beam{b}", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         transformed_source[0, 0, :, :].cpu().numpy(),
@@ -577,7 +577,7 @@ def test(model_name, models, model_params, timestamp,
                     points1_2 = transform_points_DVF(kp1_0.cpu().detach().T,
                                 M.cpu().detach(), source_image0).T
                     results = DL_affine_plot(f"test_{i:03d}", output_dir,
-                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
+                        f"beam{b}", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         source_image[0, 0, :, :].cpu().numpy(),
@@ -626,7 +626,7 @@ def test(model_name, models, model_params, timestamp,
 
             # append metrics to metrics list
             new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
-                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes]
+                            ssim12_image_before_first, ssim12_image, np.max(points1_2.shape), votes]
             metrics.append(new_entry)
 
     with open(csv_file, 'w', newline='') as file:

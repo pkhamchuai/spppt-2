@@ -569,7 +569,7 @@ def test(model_name, models, model_params, timestamp,
                                 M_fw.cpu().detach(), source_image0).T
                     
                     results = DL_affine_plot(f"test_{i:03d}", output_dir,
-                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
+                        f"beam{b}", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         transformed_source[0, 0, :, :].cpu().numpy(),
@@ -589,7 +589,7 @@ def test(model_name, models, model_params, timestamp,
                     points1_2 = transform_points_DVF(kp1_0.cpu().detach().T,
                                 M_fw.cpu().detach(), source_image0).T
                     results = DL_affine_plot(f"test_{i:03d}", output_dir,
-                        f"final", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
+                        f"beam{b}", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
                         target_image[0, 0, :, :].cpu().numpy(),
                         source_image[0, 0, :, :].cpu().numpy(),
