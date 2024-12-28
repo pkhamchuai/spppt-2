@@ -57,6 +57,77 @@ def process_image(image):
     image = (image/np.max(image)).astype('float32')
     return image
 
+def get_affine_matrix_from_elastix(transform_params, center_of_rotation, inverse=True):
+    """
+    Convert SimpleElastix transformation parameters to a 3x3 affine matrix.
+    
+    Args:
+        transform_params (list): 6 parameters [a, b, c, d, tx, ty] from Elastix
+        center_of_rotation (list): [x, y] center point used in the registration
+    
+    Returns:
+        numpy.ndarray: 3x3 affine transformation matrix
+    """
+    # Extract parameters
+    a, b, c, d, tx, ty = transform_params
+    cx, cy = center_of_rotation
+    
+    # Create rotation/scaling matrix
+    R = np.array([[a, b],
+                  [c, d]])
+    
+    # Calculate the true translation
+    t = np.array([tx, ty]) + np.array([cx, cy]) - np.dot(R, np.array([cx, cy]))
+    
+    # Create full 3x3 affine matrix
+    matrix = np.eye(3)
+    matrix[:2, :2] = R
+    matrix[:2, 2] = t
+
+    if inverse:
+        return np.linalg.inv(matrix)
+    return matrix
+
+def transform_points(points, affine_matrix):
+    """
+    Transform a set of 2D points using an affine transformation matrix.
+    
+    Args:
+        points (numpy.ndarray): Nx2 array of points
+        affine_matrix (numpy.ndarray): 3x3 affine transformation matrix
+    
+    Returns:
+        numpy.ndarray: Transformed points as Nx2 array
+    """
+    # print(f"points: {points.shape}")
+    points = points.view(-1, 2)
+    # Convert to homogeneous coordinates
+    homogeneous_points = np.hstack([points, np.ones((len(points), 1))])
+    
+    # Apply transformation
+    transformed_points = np.dot(homogeneous_points, affine_matrix.T)
+    
+    # Convert back to 2D coordinates
+    return transformed_points[:, :2]
+
+def apply_elastix_transform(points, transform_params, center_of_rotation):
+    """
+    Apply SimpleElastix transformation to a set of points.
+    
+    Args:
+        points (numpy.ndarray): Nx2 array of points to transform
+        transform_params (list): 6 parameters from Elastix
+        center_of_rotation (list): [x, y] center point used in the registration
+    
+    Returns:
+        numpy.ndarray: Transformed points
+    """
+    # Get the full affine matrix
+    affine_matrix = get_affine_matrix_from_elastix(transform_params, center_of_rotation)
+    
+    # Transform the points
+    return transform_points(points, affine_matrix).T
+
 def run(model_params, method='affine', plot=1, num_iter=0):
     # Initialize SuperPointFrontend
     superpoint = SuperPointFrontend('utils/superpoint_v1.pth', nms_dist=4,
@@ -71,7 +142,7 @@ def run(model_params, method='affine', plot=1, num_iter=0):
 
     metrics = []
     # create a csv file to store the metrics
-    csv_file = f"{output_dir}/metrics.csv"
+    csv_file = f"{output_dir}/metrics-{timestamp}.csv"
 
     testbar = tqdm(test_dataset, desc=f'Testing:')
 
@@ -85,7 +156,7 @@ def run(model_params, method='affine', plot=1, num_iter=0):
     if num_iter > 0:
         parameterMap['MaximumNumberOfIterations'] = [f'{int(num_iter)}']
 
-    print(f"\nparameterMap: {parameterMap}")
+    # print(f"\nparameterMap: {parameterMap}")
 
     for i, data in enumerate(testbar, 0):
         # Get images and affine parameters
@@ -115,7 +186,9 @@ def run(model_params, method='affine', plot=1, num_iter=0):
         # reshape points1
         points1_ = points1.view(2, -1, 1)
         # print(f"points1: {points1.shape}")
-        points1_transformed = transform_points_DVF_unbatched(points1_, affine_transform1, source_image)
+        # points1_transformed = transform_points_DVF_unbatched(points1_, affine_transform1, source_image)
+        # print(affine_transform1.shape)
+        points1_transformed = apply_elastix_transform(points1_, affine_transform1[0].view(-1).cpu().numpy(), [image_size/2, image_size/2])
         # print(f"points1: {points1.shape}")
         # print(f"points2: {points2.shape}")
         # print(f"points1_transformed: {points1_transformed.shape}")
@@ -127,9 +200,10 @@ def run(model_params, method='affine', plot=1, num_iter=0):
         else:
             plot_ = 0
             
-        points1 = points1[0].T
-        points2 = points2[0].T
-        # print(f"\npoints1: {points1.shape}")
+        points1 = points1[0].T.cpu().numpy()
+        points2 = points2[0].T.cpu().numpy()
+        # points1_transformed = torch.tensor(points1_transformed)
+
         # print(f"points1_transformed: {points1_transformed.shape}")
 
         results = DL_affine_plot(f"test", output_dir,
@@ -147,8 +221,9 @@ def run(model_params, method='affine', plot=1, num_iter=0):
         # matches1_transformed = results[0]
         mse_before = results[1]
         mse12 = results[2]
-        tre_before = results[3]
-        tre12 = results[4]
+        tre_before = tre(points1, points2)
+        tre12 = tre(points1, points1_transformed)
+        # print(f"mse_before: {mse_before}, mse12: {mse12}, tre_before: {tre_before}, tre12: {tre12}")
         mse12_image_before = results[5]
         mse12_image = results[6]
         ssim12_image_before = results[7]

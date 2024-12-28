@@ -807,6 +807,77 @@ def transform_points_from_DVF(points_, DVF, image): # batch version
                                         image[b].view(1, 1, image[b].size(-1), image[b].size(-1)))
     # print(points_.shape)
     return points_
+
+def get_affine_matrix_from_elastix(transform_params, center_of_rotation, inverse=True):
+    """
+    Convert SimpleElastix transformation parameters to a 3x3 affine matrix.
+    
+    Args:
+        transform_params (list): 6 parameters [a, b, c, d, tx, ty] from Elastix
+        center_of_rotation (list): [x, y] center point used in the registration
+    
+    Returns:
+        numpy.ndarray: 3x3 affine transformation matrix
+    """
+    # Extract parameters
+    a, b, c, d, tx, ty = transform_params
+    cx, cy = center_of_rotation
+    
+    # Create rotation/scaling matrix
+    R = np.array([[a, b],
+                  [c, d]])
+    
+    # Calculate the true translation
+    t = np.array([tx, ty]) + np.array([cx, cy]) - np.dot(R, np.array([cx, cy]))
+    
+    # Create full 3x3 affine matrix
+    matrix = np.eye(3)
+    matrix[:2, :2] = R
+    matrix[:2, 2] = t
+
+    if inverse:
+        return np.linalg.inv(matrix)
+    return matrix
+
+def transform_points(points, affine_matrix):
+    """
+    Transform a set of 2D points using an affine transformation matrix.
+    
+    Args:
+        points (numpy.ndarray): Nx2 array of points
+        affine_matrix (numpy.ndarray): 3x3 affine transformation matrix
+    
+    Returns:
+        numpy.ndarray: Transformed points as Nx2 array
+    """
+    # print(f"points: {points.shape}")
+    points = points.view(-1, 2)
+    # Convert to homogeneous coordinates
+    homogeneous_points = np.hstack([points, np.ones((len(points), 1))])
+    
+    # Apply transformation
+    transformed_points = np.dot(homogeneous_points, affine_matrix.T)
+    
+    # Convert back to 2D coordinates
+    return transformed_points[:, :2]
+
+def apply_elastix_transform(points, transform_params, center_of_rotation):
+    """
+    Apply SimpleElastix transformation to a set of points.
+    
+    Args:
+        points (numpy.ndarray): Nx2 array of points to transform
+        transform_params (list): 6 parameters from Elastix
+        center_of_rotation (list): [x, y] center point used in the registration
+    
+    Returns:
+        numpy.ndarray: Transformed points
+    """
+    # Get the full affine matrix
+    affine_matrix = get_affine_matrix_from_elastix(transform_params, center_of_rotation)
+    
+    # Transform the points
+    return transform_points(points, affine_matrix).T
         
 
 # def transform_points_DVF_(points_, M, image): # batch version

@@ -120,7 +120,7 @@ def test(model_name, models, model_params, timestamp,
                 heatmap1=None, heatmap2=None, plot=plot_)
             return results
 
-    print('Test 1-way BCS using points')
+    print('Test 1-way BCS using only images')
     print(f"Function input:', {model_name},\n{model_params},\n{timestamp}")
     print(f"Plot: {plot}, Beam: {beam}")
 
