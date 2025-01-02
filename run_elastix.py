@@ -188,7 +188,8 @@ def run(model_params, method='affine', plot=1, num_iter=0):
         # print(f"points1: {points1.shape}")
         # points1_transformed = transform_points_DVF_unbatched(points1_, affine_transform1, source_image)
         # print(affine_transform1.shape)
-        points1_transformed = apply_elastix_transform(points1_, affine_transform1[0].view(-1).cpu().numpy(), [image_size/2, image_size/2])
+        points1_transformed = apply_elastix_transform(points1_, 
+                affine_transform1[0].view(-1).cpu().numpy(), [image_size/2, image_size/2])
         # print(f"points1: {points1.shape}")
         # print(f"points2: {points2.shape}")
         # print(f"points1_transformed: {points1_transformed.shape}")

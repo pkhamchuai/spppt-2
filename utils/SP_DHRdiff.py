@@ -5,7 +5,7 @@ import numpy as np
 from utils.SuperPoint import SuperPointFrontend
 from utils.utils0 import *
 from utils.utils1 import *
-from utils.utils1 import transform_points_DVF
+from utils.utils1 import transform_points_DVF, apply_elastix_transform
 from pytorch_model_summary import summary
 
 image_size = 256
@@ -43,6 +43,8 @@ class SP_DHR_Net(nn.Module):
             transformed_points = points.clone()
             transformed_points = transform_points_DVF(transformed_points.cpu().detach().T, 
                 affine_params.cpu().detach(), transformed_source_image.cpu().detach())
-
+            # transformed_points = apply_elastix_transform(points, 
+            #         affine_params[0].view(-1).cpu().detach().numpy(), 
+            #         [image_size/2, image_size/2])
             return transformed_source_image, affine_params, transformed_points.T
     

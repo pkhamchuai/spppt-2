@@ -164,7 +164,7 @@ verbose = 0
 #                     '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
         
 # i = 1
-rep = 10
+rep = 60
 
 '''running only all models for 1way-pt-rv, 2way TRE, 2way cosine for beams 1-3'''
 for i in range(1, 4):
@@ -225,7 +225,7 @@ for i in range(1, 4):
                 'DHRdiff_24_1100_0.001_0_10_50_20241121-212445.pth', 'DHRdiff_25_1100_0.001_0_10_50_20241121-213438.pth']
                 
     for dataset_ in dataset:      
-        runs.append(['python', 'test_BCS_1way_point_reverse.py', '--model', str(models), '--sup', str(sups[0]),
+        runs.append(['python', 'test_BCS_1way_point2.py', '--model', str(models), '--sup', str(sups[0]),
                         '--dataset', str(dataset_), '--beam', str(i), '--metric', str('TRE'),
                         '--model_path', str(model_path), '--plot', str(plot), '--verbose', str(verbose), '--rep', str(rep)])
         

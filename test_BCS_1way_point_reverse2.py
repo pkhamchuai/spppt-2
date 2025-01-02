@@ -103,14 +103,6 @@ def test(model_name, models, model_params, timestamp,
         if points1.shape[0] == 2:
             points1 = points1.T
 
-        # # check type of points1, if it's a tensor, convert it to numpy
-        # if isinstance(points1, torch.Tensor):
-        #     points1 = points1.cpu().detach().numpy()
-        # print(points1.shape)
-        # points1_2_predicted = transform_points(points1.T, affine_params_predicted[0].cpu().detach().numpy(), 
-        #                                        center=[image_size/2, image_size/2]).T
-        # print(points1_2_predicted.shape, points2.shape, points1.shape)
-
         if points1 is not None and points2 is not None:
             # print(points1.shape, points2.shape, points1_2_predicted.shape)
             results = DL_affine_plot(f"test_{i}", output_dir,
@@ -222,6 +214,10 @@ def test(model_name, models, model_params, timestamp,
             points1_0 = torch.from_numpy(points1).T.unsqueeze(0).to(device)
             points2 = keypoints2[:2, matches[1, :].astype(int)]
             points2_0 = torch.from_numpy(points2).T.unsqueeze(0).to(device)
+
+            # keep the source image and points for each chosen beams
+            source_beam = [source_image0.clone().to(device)] * beam
+            points1_beam = [points1_0] * beam
             
             # use for loop with a large number of iterations 
             # check TRE of points1 and points2
@@ -240,125 +236,86 @@ def test(model_name, models, model_params, timestamp,
             votes = []
             
             no_improve = 0
-            # not using intermediate source images anymore
-            # re-create the resulting image in every iteration
             
             # Active beams will track which beams are still active
             # Defined as a dictionary with the beam index as 
             # the key and the number of votes as the value
             active_beams_index = list(b for b in range(beam))
             active_beams = [0]*beam
+            # intermediate source images and points
+            source_intermediate = [source_beam]*model_params.num_models*2
+            points1_intermediate = [points1_beam]*model_params.num_models*2
 
             for j in range(rep):
                 if verbose:
                     print(f"\nPair {i}, Rep {j}, active beams {active_beams}")
 
                 if j == 0:
-                    # beam_info = []
-                    beam_info = [[m] for m in range(2*len(models))]
-                    # print(beam_info)
+                    beam_info = []
                 else:
                     # make b copies of beam_info
                     beam_info = []
-                    for b in range(len(active_beams)):
-                        for k in range(2*len(models)):
+                    for active_beam in active_beams:
+                        for k in range(len(models)):
                             # append values of active beams
-                            temp = active_beams[b].copy()
-                            temp.append(k)
-                            beam_info.append(temp)
+                            beam_info.append(active_beam.copy())
 
                 if verbose:
                     print(f"\nRep {j}: beam_info {beam_info}")
-                    print(f"Lenght of beam_info: {len(beam_info)}")
 
                 metrics_points_forward = []
                 metrics_images_forward = []
 
-                for b in beam_info:
-                    # print(b)
-                    if verbose:
-                        print(f"\nRep {j}, Beam {b}: doing registration")
-                        
-                    M = np.array([[1, 0, 0], [0, 1, 0]], dtype=np.float32)
-                    M = torch.from_numpy(M).unsqueeze(0)#.to(device)
-
-                    for k in range(len(b)):
-                        if k == 0:
-                            points1 = points1_0.clone().to(device)
-                            points2 = points2_0.clone().to(device)
-                            source_image = source_image0.clone().to(device)
-                        # print(f"{k}, Pair {i}, Rep {j}, Beam {b}, Model {[b[k]]}")
-                        # print(points1.shape, points2.shape)
+                for b in range(beam):
+                    if j == 0 and b != 0:
+                        if verbose:
+                            print(f"Rep {j}, Beam {b}")
+                            print('Pass')
+                        pass
+                    else:
+                        if verbose:
+                            print(f"\nRep {j}, Beam {b}: doing registration")
 
                         if plot == 0 and i < 10 and k == len(b)-1:
                             plot_ = True
                         else:
                             plot_ = False
 
-                        if b[k] < len(models):
-                            _, affine_params_predicted = reg(model[b[k]], source_image, target_image, 
-                                i, j, b, k, output_dir, points1=points1, points2=points2, plot_=plot_)
-                        else:
-                            # offset model number by the number of models
-                            model_number = b[k]-len(models)
-                            _, affine_params_predicted_rv = reg(model[model_number], target_image, source_image, 
-                                i, j, b, k, output_dir, points1=points2, points2=points1, plot_=plot_)                            
-                            # inverse the affine parameters
-                            affine_params_predicted = matrix_to_params(
-                                torch.inverse(params_to_matrix(affine_params_predicted_rv))).to(device)
-
-                        M = combine_matrices(M, affine_params_predicted).to(device)
-                        source_image = tensor_affine_transform0(source_image0, M)
-                        points1 = transform_points_DVF(points1_0.cpu().detach().T,
-                                        M.cpu().detach(), source_image0).T
-                        
-                        if k == len(b)-1:
-                            if metric == 'TRE':
-                                # check if points are numpy or tensor
-                                if isinstance(points1, torch.Tensor):
-                                    points1 = points1.cpu().detach().numpy()
-                                if isinstance(points2, torch.Tensor):
-                                    points2 = points2.cpu().detach().numpy()
-                                tre12 = tre(points1, points2)
-                                metrics_points_forward.append(tre12)
-                            elif metric == 'cosine':
-                                # calculate cosine similarity between points1 and points2
-                                # if the last dimension of points1 and points2 must be 2
-                                # if points1.shape[0] != 2:
-                                #     points1 = points1.T
-                                #     points2 = points2.T
-                                # print(points1.cpu().detach().view(1, -1, 2), points2.cpu().detach().view(1, -1, 2))
-                                if isinstance(points1, torch.Tensor):
-                                    cosine_similarity = torch.nn.functional.cosine_similarity(
-                                        points1.cpu().detach().view(1, -1, 2), 
-                                        points2.cpu().detach().view(1, -1, 2), dim=1).numpy()
-                                else:
-                                    cosine_similarity = np.cosine_similarity(
-                                        points1.view(1, -1, 2), 
-                                        points2.view(1, -1, 2), axis=1)
-                                # calculate the average of the cosine similarity
-                                cosine_similarity = np.mean(cosine_similarity)
-                                metrics_points_forward.append(cosine_similarity)
-                            elif metric == 'MI_point':
-                                # calculate mutual information between points1 and points2
-                                # if the last dimension of points1 and points2 must be 2
-                                # if points1.shape[0] != 2:
-                                #     points1 = points1.T
-                                #     points2 = points2.T
-                                # print(points1.cpu().detach().view(1, -1, 2), points2.cpu().detach().view(1, -1, 2))
-                                mutual_info = mutual_information(
-                                    points1.cpu().detach().view(1, -1, 2), 
-                                    points2.cpu().detach().view(1, -1, 2))
-                                metrics_points_forward.append(mutual_info)
-                            elif metric == 'MI_image':
-                                # calculate mutual information between image1 and image2
-                                mutual_info = mutual_information(
-                                    source_image[0, 0, :, :].cpu().detach().numpy(), 
-                                    target_image[0, 0, :, :].cpu().detach().numpy())
-                                metrics_points_forward.append(mutual_info)
+                        for k in range(len(models)):
+                            if b[k] < len(models):
+                                results = reg(model[k], source_beam[b].clone(),
+                                    target_image, points1_beam[b].copy(), points2,
+                                    i, j, b, k, output_dir, points1=points1_beam[b].clone(),
+                                    points2=points2, plot_=plot_)
+                            else:
+                                # offset model number by the number of models
+                                model_number = b[k]-len(models)
+                                results = reg(model[model_number], target_image, 
+                                    source_beam[b].clone(), points2, points1_beam[b].copy(),
+                                    i, j, b, k, output_dir, points1=points2, 
+                                    points2=points1_beam[b].clone(), plot_=plot_)
                             
-                            mse12_image = mse(source_image[0, 0, :, :].cpu().detach().numpy(), 
-                                            target_image[0, 0, :, :].cpu().detach().numpy())
+                            mse_before = results[1]
+                            tre_before = results[3]
+                            mse12_image_before = results[5]
+                            ssim12_image_before = results[7]
+
+                            mse12 = results[2]
+                            tre12 = results[4]
+                            mse12_image = results[6]
+                            ssim12_image = results[8]
+
+                            # beam identifiers
+                            # print(beam_info, b, b*len(models)+k, len(beam_info))
+                            if j == 0:
+                                # pass
+                                beam_info.append([k])
+                            else:
+                                beam_info[b*len(models)+k].append(k)
+                                # print(beam_info[b*len(models)+k])
+                                # beam_info[b*len(models)+k] = [b, k, mse12, tre12, mse12_image, ssim12_image]
+
+                            metrics_points_forward.append(tre12)
                             metrics_images_forward.append(mse12_image)
 
                         if verbose:
@@ -402,7 +359,6 @@ def test(model_name, models, model_params, timestamp,
                 if verbose:
                     print(f"Pair {i}, Rep {j}, best model index: {best_index}")
 
-                # print(beam_info, best_index)
                 for b in range(beam):
                     active_beams_index[b] = best_index[b]
                     active_beams[b] = beam_info[best_index[b]]
@@ -423,15 +379,10 @@ def test(model_name, models, model_params, timestamp,
 
                             model_number = active_beams[b][k]
                             if model_number < len(models):
-                                # if points1 is not tensor, convert it to tensor
-                                if isinstance(points1, np.ndarray):
-                                    points1 = torch.from_numpy(points1).to(device)
                                 outputs = model[model_number](source_image, target_image, points=points1)
                                 affine_params_predicted = outputs[1]
                             else:
                                 model_number = model_number - len(models)
-                                if isinstance(points2, np.ndarray):
-                                    points2 = torch.from_numpy(points2).to(device)
                                 outputs = model[model_number](target_image, source_image, points=points2)
                                 affine_params_predicted_rv = outputs[1]
                                 affine_params_predicted = matrix_to_params(
@@ -440,33 +391,28 @@ def test(model_name, models, model_params, timestamp,
                             M = combine_matrices(M, affine_params_predicted).to(device)
                             
                             if k == len(active_beams[b])-1: # if this is the last model
-                                transformed_source = tensor_affine_transform0(source_image0, M)
-                                points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
-                                    M.cpu().detach(), source_image0).T
+                                transformed_source_affine = tensor_affine_transform0(source_image0, M)
+                                # points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
+                                #     M.cpu().detach(), source_image0).T
+                                points1_2_predicted = apply_elastix_transform(points1_0.cpu().detach().numpy().T,
+                                    M.cpu().detach().numpy(), [image_size/2, image_size/2]).T
                             else:
                                 source_image = tensor_affine_transform0(source_image0, M)
-                                points1 = transform_points_DVF(points1_0.cpu().detach().T,
-                                            M.cpu().detach(), source_image0).T
+                                # points1 = transform_points_DVF(points1_0.cpu().detach().T,
+                                #             M.cpu().detach(), source_image0).T
+                                points1 = apply_elastix_transform(points1_0.cpu().detach().numpy().T,
+                                    M.cpu().detach().numpy(), [image_size/2, image_size/2]).T
 
-                            # check if points are numpy or tensor
-                            if isinstance(points1, torch.Tensor):
-                                points1 = points1.cpu().detach().numpy()
-                            if isinstance(points2, torch.Tensor):
-                                points2 = points2.cpu().detach().numpy()
-                            if isinstance(points1_2_predicted, torch.Tensor):
-                                points1_2_predicted = points1_2_predicted.cpu().detach().numpy()
                             if k == len(active_beams[b])-1:
                                 # plot_ = 1
-                                image1_name = f"beam{b}_rep_{k:02d}"
-                                image2_name = f"beam{b}_rep_{k:02d}_{active_beams[b][-20:]}"
-                                _ = DL_affine_plot(f"test_{i:03d}", output_dir,
-                                    image1_name, image2_name,
+                                _ = DL_affine_plot(f"test_{i}", output_dir,
+                                    i+1, f"beam{b}_rep_{k}_{active_beams[b]}",
                                     source_image[0, 0, :, :].cpu().numpy(),
                                     target_image[0, 0, :, :].cpu().numpy(),
-                                    transformed_source[0, 0, :, :].cpu().numpy(),
-                                    points1[0].T,
-                                    points2[0].T,
-                                    points1_2_predicted[0].T,
+                                    transformed_source_affine[0, 0, :, :].cpu().numpy(),
+                                    points1[0].cpu().detach().numpy().T,
+                                    points2[0].cpu().detach().numpy().T,
+                                    points1_2_predicted[0].cpu().detach().numpy().T,
                                     None, None,
                                     affine_params_true=affine_params_true,
                                     affine_params_predict=affine_params_predicted,
@@ -483,26 +429,15 @@ def test(model_name, models, model_params, timestamp,
                 # if mse12 < mse_before or mse12_image < mse12_image_before:
                 # TODO: if tre12 is not available, use mse12_image instead
                 
-                if metric == 'TRE':
-                    if metric_this_rep < metric_best:
-                        metric_best = metric_this_rep
-                        # mse_images_best = mse12_image
-                        if no_improve > 0: 
-                            no_improve -= 1
-                    else:
-                        if verbose:
-                            print(f"No improvement for {no_improve+1} reps")
-                        no_improve += 1
-                elif metric == 'cosine':
-                    if metric_this_rep > metric_best:
-                        metric_best = metric_this_rep
-                        # mse_images_best = mse12_image
-                        if no_improve > 0: 
-                            no_improve -= 1
-                    else:
-                        if verbose:
-                            print(f"No improvement for {no_improve+1} reps")
-                        no_improve += 1
+                if metric_this_rep < metric_best:
+                    metric_best = metric_this_rep
+                    # mse_images_best = mse12_image
+                    if no_improve > 0: 
+                        no_improve -= 1
+                else:
+                    if verbose:
+                        print(f"No improvement for {no_improve+1} reps")
+                    no_improve += 1
 
                 # if verbose:
                 #     print(f"Done: Pair {i}, Rep {j}: search path {active_beams}")
@@ -524,9 +459,7 @@ def test(model_name, models, model_params, timestamp,
             M = np.array([[1, 0, 0], [0, 1, 0]], dtype=np.float32)
             M = torch.from_numpy(M).unsqueeze(0)#.to(device)
             source_image = source_image0.clone().to(device)
-            points1 = kp1_0.clone().to(device)
-            points2 = kp2_0.clone().to(device)
-            points1_2 = None
+            points1 = points1_0.clone().to(device)
 
             if verbose:
                 print(f"\nFinalizing pair {i}: {active_beams}")
@@ -536,94 +469,68 @@ def test(model_name, models, model_params, timestamp,
                 if model_number < len(models):
                     outputs = model[model_number](source_image, target_image, points=points1)
                     affine_params_predicted = outputs[1]
-                    M = combine_matrices(M, affine_params_predicted).to(device)
-                                        
                 else:
                     model_number = model_number - len(models)
                     outputs = model[model_number](target_image, source_image, points=points2)
                     affine_params_predicted_rv = outputs[1]
                     affine_params_predicted = matrix_to_params(
                         torch.inverse(params_to_matrix(affine_params_predicted_rv))).to(device)
-                    M = combine_matrices(M, affine_params_predicted).to(device)
+                    
+                M = combine_matrices(M, affine_params_predicted).to(device)
 
                 if k == len(active_beams)-1:
-                    transformed_source = tensor_affine_transform0(source_image0, M)
-                    points1_2 = apply_elastix_transform(kp1_0.cpu().detach().T,
-                                M[0].cpu().detach().numpy(),
-                                center=[image_size/2, image_size/2]).T
-                    
-                    results = DL_affine_plot(f"test_{i:03d}", output_dir,
-                        f"beam{b}", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
-                        source_image0[0, 0, :, :].cpu().numpy(),
-                        target_image[0, 0, :, :].cpu().numpy(),
-                        transformed_source[0, 0, :, :].cpu().numpy(),
-                        points1[0].cpu().detach().numpy().T,
-                        points2[0].cpu().detach().numpy().T,
-                        points1_2[0].cpu().detach().numpy().T,
-                        None, None,
-                        affine_params_true=affine_params_true,
-                        affine_params_predict=M.cpu().detach(),
-                        heatmap1=None, heatmap2=None, plot=0, alpha=0.3)
-                    
-                    # store error of each iteration
-                    error_img[i, k] = results[6]
-                    error_pt[i, k] = results[4]
+                    transformed_source_affine = tensor_affine_transform0(source_image0, M)
+                    # points1_2_predicted = transform_points_DVF(points1_0.cpu().detach().T,
+                    #             M.cpu().detach(), source_image0).T
+                    points1_2_predicted = apply_elastix_transform(points1_0.cpu().detach().numpy().T,
+                        M.cpu().detach().numpy(), [image_size/2, image_size/2]).T
                 else:
                     source_image = tensor_affine_transform0(source_image0, M)
-                    points1_2 = apply_elastix_transform(kp1_0.cpu().detach().T,
-                                M[0].cpu().detach().numpy(),
-                                center=[image_size/2, image_size/2]).T
-                    results = DL_affine_plot(f"test_{i:03d}", output_dir,
-                        f"beam{b}", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
-                        source_image0[0, 0, :, :].cpu().numpy(),
-                        target_image[0, 0, :, :].cpu().numpy(),
-                        source_image[0, 0, :, :].cpu().numpy(),
-                        points1[0].cpu().detach().numpy().T,
-                        points2[0].cpu().detach().numpy().T,
-                        points1_2[0].cpu().detach().numpy().T,
-                        None, None,
-                        affine_params_true=affine_params_true,
-                        affine_params_predict=M.cpu().detach(),
-                        heatmap1=None, heatmap2=None, plot=0, alpha=0.3)
-                    
-                    # store error of each iteration
-                    error_img[i, k] = results[6]
-                    error_pt[i, k] = results[4]
-                    points1 = points1_2.clone().to(device)
+                    # points1 = transform_points_DVF(points1_0.cpu().detach().T,
+                    #             M.cpu().detach(), source_image0).T
+                    points1 = apply_elastix_transform(points1_0.cpu().detach().numpy().T,
+                        M.cpu().detach().numpy(), [image_size/2, image_size/2]).T
 
             if i < 100 and (plot == 1 or plot == 2):
                 plot_ = True
             elif plot == 3:
                 plot_ = False
 
-            image1_name = f"final"
-            image2_name = f"beam{b}_rep_{k:02d}_{active_beams[-20:]}"
-            results = DL_affine_plot(f"test_{i:03d}", output_dir,
-                image1_name, image2_name,
+            best_model_text = f"final_{active_beams}"
+            _ = DL_affine_plot(f"test_{i}", output_dir,
+                i+1, best_model_text, 
                 source_image0[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(),
-                transformed_source[0, 0, :, :].cpu().numpy(),
-                kp1_0[0].cpu().detach().numpy().T,
-                kp2_0[0].cpu().detach().numpy().T,
-                points1_2[0].cpu().detach().numpy().T,
+                source_image[0, 0, :, :].cpu().numpy(),
+                points1_0[0].cpu().detach().numpy().T,
+                points2[0].cpu().detach().numpy().T,
+                points1_2_predicted[0].cpu().detach().numpy().T,
                 None, None,
                 affine_params_true=affine_params_true,
                 affine_params_predict=M,
                 heatmap1=None, heatmap2=None, plot=plot_, alpha=0.3)
+            
+            points1_0 = points1_0.cpu().detach().numpy().T
+            points1_2_predicted = points1_2_predicted.cpu().detach().numpy().T
+            points2 = points2.cpu().detach().numpy().T
+
+            source_image0 = source_image0[0, 0, :, :].cpu().detach().numpy()
+            source_image = source_image[0, 0, :, :].cpu().detach().numpy()
+            target_image = target_image[0, 0, :, :].cpu().detach().numpy()
 
             votes = active_beams
-            mse_before_first = results[1]
-            mse12 = results[2]
-            tre_before_first = results[3]
-            tre12 = results[4]
-            mse12_image_before_first = results[5]
-            mse12_image = results[6]
-            ssim12_image_before_first = results[7]
-            ssim12_image = results[8]
+            mse_before_first = mse(points1_0, points2)
+            mse12 = mse(points1_2_predicted, points2)
+            tre_before_first = tre(points1_0, points2)
+            tre12 = tre(points1_2_predicted, points2)
+            mse12_image_before_first = mse(source_image0, target_image)
+            mse12_image = mse(source_image, target_image)
+            ssim12_image_before_first = ssim(source_image0, target_image)
+            ssim12_image = ssim(source_image, target_image)
 
             # append metrics to metrics list
             new_entry = [i, mse_before_first, mse12, tre_before_first, tre12, mse12_image_before_first, mse12_image, \
-                            ssim12_image_before_first, ssim12_image, np.max(points1_2.shape), votes]
+                            ssim12_image_before_first, ssim12_image, np.max(points1_2_predicted.shape), votes]
             metrics.append(new_entry)
 
     with open(csv_file, 'w', newline='') as file:
@@ -648,28 +555,6 @@ def test(model_name, models, model_params, timestamp,
             np.std(metrics[:, 5]), np.std(metrics[:, 6]), np.std(metrics[:, 7]), np.std(metrics[:, 8])]
         writer.writerow(avg)
         writer.writerow(std)
-
-    # replace the zeros with values from the last non-zero element
-    for i in range(error_img.shape[0]):
-        for j in range(error_img.shape[1]):
-            if error_img[i, j] == 0.:
-                error_img[i, j] = error_img[i, j-1]
-            if error_pt[i, j] == 0.:
-                error_pt[i, j] = error_pt[i, j-1]
-
-    # calculate the average error per iteration and save in a new csv file
-    # error_img = error_img[~np.all(error_img == 0, axis=1)]
-    error_img_avg = np.mean(error_img, axis=0)
-
-    # error_pt = error_pt[~np.all(error_pt == 0, axis=1)]
-    error_pt_avg = np.mean(error_pt, axis=0)
-
-    csv_file = f"{output_dir}/error_{timestamp}.csv"
-    with open(csv_file, 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["index", "error_img", "error_pt"])
-        for i in range(len(error_img_avg)):
-            writer.writerow([i, error_img_avg[i], error_pt_avg[i]])
 
     print(f"The test results are saved in {csv_file}")
 
@@ -696,7 +581,6 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='DHR', help='which model to use')
     parser.add_argument('--model_path', type=str, default=None, help='path to model to load')
     parser.add_argument('--plot', type=int, default=1, help='plot the results')
-    parser.add_argument('--metric', type=str, default='cosine')
     '''
     plot = 0: plot every steps
     plot = 1: plot only the search path
@@ -741,6 +625,6 @@ if __name__ == '__main__':
 
     args.verbose = int(args.verbose)
     print(f"verbose: {args.verbose}")
-    test(args.model, model_path, model_params, timestamp, metric=args.metric,
+    test(args.model, model_path, model_params, timestamp, 
          verbose=args.verbose, plot=args.plot, beam=args.beam, rep=args.rep)
     print("Test model finished +++++++++++++++++++++++++++++")

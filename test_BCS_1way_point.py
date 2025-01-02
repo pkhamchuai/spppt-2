@@ -83,14 +83,6 @@ def test(model_name, models, model_params, timestamp,
         if points1.shape[0] == 2:
             points1 = points1.T
 
-        # # check type of points1, if it's a tensor, convert it to numpy
-        # if isinstance(points1, torch.Tensor):
-        #     points1 = points1.cpu().detach().numpy()
-        # print(points1.shape)
-        # points1_2_predicted = transform_points(points1.T, affine_params_predicted[0].cpu().detach().numpy(), 
-        #                                        center=[image_size/2, image_size/2]).T
-        # print(points1_2_predicted.shape, points2.shape, points1.shape)
-
         if points1 is not None and points2 is not None:
             # print(points1.shape, points2.shape, points1_2_predicted.shape)
             results = DL_affine_plot(f"test_{i}", output_dir,

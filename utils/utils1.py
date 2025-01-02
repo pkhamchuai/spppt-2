@@ -808,6 +808,7 @@ def transform_points_from_DVF(points_, DVF, image): # batch version
     # print(points_.shape)
     return points_
 
+# ref: https://claude.ai/chat/abe7edcd-ab43-4305-b6a9-e63e475252ef
 def get_affine_matrix_from_elastix(transform_params, center_of_rotation, inverse=True):
     """
     Convert SimpleElastix transformation parameters to a 3x3 affine matrix.
@@ -851,7 +852,15 @@ def transform_points(points, affine_matrix):
         numpy.ndarray: Transformed points as Nx2 array
     """
     # print(f"points: {points.shape}")
-    points = points.view(-1, 2)
+
+    # if points are a tensor convert to numpy
+    if isinstance(points, torch.Tensor):
+        points = points.cpu().detach().numpy()
+        # reshape points to Nx2
+        points = points.reshape(-1, 2)
+
+    # Reshape points to Nx2
+    # points = points.view(-1, 2)
     # Convert to homogeneous coordinates
     homogeneous_points = np.hstack([points, np.ones((len(points), 1))])
     
