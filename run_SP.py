@@ -138,7 +138,7 @@ def run(model_params, method='LMEDS', plot=1):
         _ = DL_affine_plot(f"test", output_dir,
                 f"{i:03d}_SP", f"{text}", source_image, target_image,
                 transformed_source_affine,
-                matches1, matches2, matches1_transformed.reshape(-1, 2),
+                matches1, matches2, matches1_transformed.reshape(-1, 2).T,
                 None, None,
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_transform1,

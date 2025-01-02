@@ -18,31 +18,31 @@ for i in dataset:
     #                 '--method1', 'BFMatcher', '--method2', 'RANSAC',
     #                 ])
 
-    # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
-    #                 '--dataset', str(i), '--plot', '1',
-    #                 '--method', 'LMEDS',
-    #                 ])
-    
-    # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
-    #                 '--dataset', str(i), '--plot', '2',
-    #                 '--method', 'LMEDS',
-    #                 ])
-
-    # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
-    #                 '--dataset', str(i), '--plot', '1',
-    #                 '--method', 'RANSAC',
-    #                 ])
-    
-    # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
-    #                 '--dataset', str(i), '--plot', '2',
-    #                 '--method', 'RANSAC',
-    #                 ])
-
-
-    subprocess.run(['python', 'run_elastix.py', 
+    subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
                     '--dataset', str(i), '--plot', '1',
-                    '--method', str(method[0]), '--num_iter', '0',
+                    '--method', 'LMEDS',
                     ])
+    
+    # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
+    #                 '--dataset', str(i), '--plot', '2',
+    #                 '--method', 'LMEDS',
+    #                 ])
+
+    subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
+                    '--dataset', str(i), '--plot', '1',
+                    '--method', 'RANSAC',
+                    ])
+    
+    # subprocess.run(['python', 'run_SP.py', '--model', 'SP', '--sup', '0', 
+    #                 '--dataset', str(i), '--plot', '2',
+    #                 '--method', 'RANSAC',
+    #                 ])
+
+
+    # subprocess.run(['python', 'run_elastix.py', 
+    #                 '--dataset', str(i), '--plot', '1',
+    #                 '--method', str(method[0]), '--num_iter', '0',
+    #                 ])
 
     
     # subprocess.run(['python', 'run_SIFT.py', '--model', 'SIFT', 
