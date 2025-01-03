@@ -100,6 +100,7 @@ def test(model_name, models, model_params, timestamp,
         if points1.shape[0] == 2:
             points1 = points1.T
 
+        # print(points1.shape, points2.shape, points1_2_predicted.shape)
         if points1 is not None and points2 is not None:
             # print(points1.shape, points2.shape, points1_2_predicted.shape)
             results = DL_affine_plot(f"test_{i}", output_dir,
@@ -107,14 +108,14 @@ def test(model_name, models, model_params, timestamp,
                 source_image[0, 0, :, :].cpu().numpy(),
                 target_image[0, 0, :, :].cpu().numpy(), 
                 transformed_source[0, 0, :, :].cpu().numpy(),
-                points1[0].T,
-                points2[0].T,
-                points1_2_predicted[0].T,
+                points1[0].cpu().numpy().T,
+                points2[0].cpu().numpy().T,
+                points1_2_predicted[0].cpu().numpy().T,
                 None, None, 
                 affine_params_true=affine_params_true,
                 affine_params_predict=affine_params_predicted, 
                 heatmap1=None, heatmap2=None, plot=plot_)
-            return results, affine_params_predicted
+            return results, affine_params_predicted, transformed_source, points1_2_predicted
         else:
             points1_2_predicted = None
             results = DL_affine_plot_image(f"test_{i}", output_dir,
@@ -286,15 +287,15 @@ def test(model_name, models, model_params, timestamp,
                             plot_ = False
 
                         # print(points1.shape, points2_0.shape)
-                        results, affine_params_predicted = reg(
+                        results, affine_params_predicted, source_image, points1 = reg(
                             model[b[k]], source_image, target_image, 
                             i, j, b, k, output_dir, points1=points1, points2=points2_0,
                             plot_=plot_)
 
                         M = combine_matrices(M, affine_params_predicted).to(device)
-                        source_image = tensor_affine_transform0(source_image0, M)
-                        points1 = transform_points_DVF(points1_0.cpu().detach().T,
-                                        M.cpu().detach(), source_image0).T
+                        # source_image = tensor_affine_transform0(source_image0, M)
+                        # points1 = transform_points_DVF(points1_0.cpu().detach().T,
+                        #                 M.cpu().detach(), source_image0).T
                         
                         if k == len(b)-1:
                             if metric == 'TRE':
