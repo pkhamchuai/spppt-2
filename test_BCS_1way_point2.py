@@ -7,18 +7,7 @@ import torch
 import matplotlib.pyplot as plt
 # import mutual information function
 from sklearn.metrics import mutual_info_score
-
-def mutual_information(x, y):
-    # Flatten the arrays if they are not already 1D
-    if x.ndim > 1:
-        x = x.ravel()
-    if y.ndim > 1:
-        y = y.ravel()
-    return mutual_info_score(x, y)
-
-
 from datetime import datetime
-
 import torch
 torch.manual_seed(9793047918980052389)
 print('Seed:', torch.seed())
@@ -74,6 +63,14 @@ def tensor_affine_transform0(image, matrix):
     transformed_image = F.grid_sample(image, grid, align_corners=False)
     return transformed_image
 
+def mutual_information(x, y):
+    # Flatten the arrays if they are not already 1D
+    if x.ndim > 1:
+        x = x.ravel()
+    if y.ndim > 1:
+        y = y.ravel()
+    return mutual_info_score(x, y)
+    
 def process_image(image):
     # squeeze dimensions 0 and 1
     image = image.squeeze(0).squeeze(0)

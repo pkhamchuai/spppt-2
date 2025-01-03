@@ -7,18 +7,7 @@ import torch
 import matplotlib.pyplot as plt
 # import mutual information function
 from sklearn.metrics import mutual_info_score
-
-def mutual_information(x, y):
-    # Flatten the arrays if they are not already 1D
-    if x.ndim > 1:
-        x = x.ravel()
-    if y.ndim > 1:
-        y = y.ravel()
-    return mutual_info_score(x, y)
-
-
 from datetime import datetime
-
 import torch
 torch.manual_seed(9793047918980052389)
 print('Seed:', torch.seed())
@@ -74,6 +63,14 @@ def tensor_affine_transform0(image, matrix):
     transformed_image = F.grid_sample(image, grid, align_corners=False)
     return transformed_image
 
+def mutual_information(x, y):
+    # Flatten the arrays if they are not already 1D
+    if x.ndim > 1:
+        x = x.ravel()
+    if y.ndim > 1:
+        y = y.ravel()
+    return mutual_info_score(x, y)
+
 def process_image(image):
     # squeeze dimensions 0 and 1
     image = image.squeeze(0).squeeze(0)
@@ -102,14 +99,6 @@ def test(model_name, models, model_params, timestamp,
 
         if points1.shape[0] == 2:
             points1 = points1.T
-
-        # # check type of points1, if it's a tensor, convert it to numpy
-        # if isinstance(points1, torch.Tensor):
-        #     points1 = points1.cpu().detach().numpy()
-        # print(points1.shape)
-        # points1_2_predicted = transform_points(points1.T, affine_params_predicted[0].cpu().detach().numpy(), 
-        #                                        center=[image_size/2, image_size/2]).T
-        # print(points1_2_predicted.shape, points2.shape, points1.shape)
 
         if points1 is not None and points2 is not None:
             # print(points1.shape, points2.shape, points1_2_predicted.shape)
@@ -549,8 +538,7 @@ def test(model_name, models, model_params, timestamp,
                 if k == len(active_beams)-1:
                     transformed_source = tensor_affine_transform0(source_image0, M)
                     points1_2 = apply_elastix_transform(kp1_0.cpu().detach().T,
-                                M[0].cpu().detach().numpy(),
-                                center=[image_size/2, image_size/2]).T
+                                M[0].cpu().detach().numpy(), [0, 0]).T
                     
                     results = DL_affine_plot(f"test_{i:03d}", output_dir,
                         f"beam{b}", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
@@ -571,8 +559,7 @@ def test(model_name, models, model_params, timestamp,
                 else:
                     source_image = tensor_affine_transform0(source_image0, M)
                     points1_2 = apply_elastix_transform(kp1_0.cpu().detach().T,
-                                M[0].cpu().detach().numpy(),
-                                center=[image_size/2, image_size/2]).T
+                                M[0].cpu().detach().numpy(), [0, 0]).T
                     results = DL_affine_plot(f"test_{i:03d}", output_dir,
                         f"beam{b}", f"beam{b}_rep_{k:02d}_{active_beams[-20:]}",
                         source_image0[0, 0, :, :].cpu().numpy(),
